@@ -1,0 +1,17 @@
+mbk             6
+nts             1
+nscrn-sgnl      1,200
+ndata-fl-av     10,0,1
+nkrk            4
+nviscous        1
+nsmf            1
+nrestart        1
+nextrabc-gcic   0,0
+reoo-tempoo     5.0e5,300.0e0
+amachoo-aoa1-2  0.7725e0,2.5e0,0.0e0
+wtemp           1.0e0
+cfl             1.0e0
+tmax-timf-tsam  37.5e0,5.0e0,0.0001e0
+fltk-ke-exr     0.8e0,0.8e0,0.85e0
+shockr          0.0e0
+dto             -4.0e-5
