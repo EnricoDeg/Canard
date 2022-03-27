@@ -20,7 +20,7 @@
 
     open(9,file='inputp.dat',status='old')
     read(9,*) cinput,lxi0,lxi1,lxi2
-    read(9,*) cinput,let0,let1
+    read(9,*) cinput,let0
     read(9,*) cinput,lze0
     read(9,*) cinput,nbody,nthick
     read(9,*) cinput,ngridv
@@ -50,19 +50,22 @@
 
  subroutine domdcomp
 
- ip=30*nthick+35*(1-nthick); jp=35*(1-nbody)+nbody*(20+5*nviscous)
+    ip=30*nthick+35*(1-nthick); jp=35*(1-nbody)+nbody*(20+5*nviscous)
  do mm=0,mbk
-   select case(mm)
-     case(0); nbbc(mm,1,:)=(/10,30/); mbcd(mm,1,:)=(/-1,1/); nbbc(mm,2,:)=(/10,30/); mbcd(mm,2,:)=(/-1,3/)
-     case(1); nbbc(mm,1,:)=(/30,30/); mbcd(mm,1,:)=(/0,2/); nbbc(mm,2,:)=(/10,25/); mbcd(mm,2,:)=(/-1,-1/)
-     case(2); nbbc(mm,1,:)=(/30,10/); mbcd(mm,1,:)=(/1,-1/); nbbc(mm,2,:)=(/10,35/); mbcd(mm,2,:)=(/-1,6/)
-     case(3); nbbc(mm,1,:)=(/10,30/); mbcd(mm,1,:)=(/-1,4/); nbbc(mm,2,:)=(/30,10/); mbcd(mm,2,:)=(/0,-1/)
-     case(4); nbbc(mm,1,:)=(/30,30/); mbcd(mm,1,:)=(/3,5/); nbbc(mm,2,:)=(/25,10/); mbcd(mm,2,:)=(/-1,-1/)
-     case(5); nbbc(mm,1,:)=(/30,10/); mbcd(mm,1,:)=(/4,-1/); nbbc(mm,2,:)=(/35,10/); mbcd(mm,2,:)=(/6,-1/)
-     case(6); nbbc(mm,1,:)=(/25,10/); mbcd(mm,1,:)=(/-1,-1/); nbbc(mm,2,:)=(/35,35/); mbcd(mm,2,:)=(/2,5/)
-   end select
-   nbbc(mm,3,:)=(/45,45/); mbcd(mm,3,:)=(/mm,mm/)
+ select case(mm)
+ case(0,3); nbbc(mm,1,:)=(/10,ip/); mbcd(mm,1,:)=(/-1,mm+1/)
+ case(1,4); nbbc(mm,1,:)=(/ip,ip/); mbcd(mm,1,:)=(/mm-1,mm+1/)
+ case(2,5); nbbc(mm,1,:)=(/ip,10/); mbcd(mm,1,:)=(/mm-1,-1/)
+ end select
+ select case(mm)
+ case(0,2); nbbc(mm,2,:)=(/45,ip/); mbcd(mm,2,:)=(/mm+3,mm+3/)
+ case(1); nbbc(mm,2,:)=(/45,ip/); mbcd(mm,2,:)=(/mm+3,mm+3/)
+ case(3,5); nbbc(mm,2,:)=(/ip,45/); mbcd(mm,2,:)=(/mm-3,mm-3/)
+ case(4); nbbc(mm,2,:)=(/ip,45/); mbcd(mm,2,:)=(/mm-3,mm-3/)
+ end select
+    nbbc(mm,3,:)=(/45,45/); mbcd(mm,3,:)=(/mm,mm/)
  end do
+
 
  end subroutine domdcomp
 
@@ -80,7 +83,6 @@
  radv = 1.0e0
  k1 = 12.5e0
  k2 = 1.0e0
-!    vtxr=0.2_nr*span; vtxs=-0.02_nr; fctr=vtxs/twopi; ra0=-half-span; ra1=-span*tan(aoa1); ra2=one/vtxr; ra3=one/vtxr**2
  do l=0,lmx
     ao = half*k2/pi * sqrt(exp(one - k1**2 * ((ss(l,1) + 1.0e0)**2 + ss(l,2)**2 + ss(l,3)**2)/(radv**2)))
    bo = (one-half*gamm1*ao*ao)**hamm1
@@ -89,14 +91,6 @@
    hv2 = half*(ve(1)*ve(1)+ve(2)*ve(2)+ve(3)*ve(3))
    qa(l,2:4) = bo*ve(:)
    qa(l,5) = hamhamm1*bo**gam + hv2*bo
-
-!    rv(1)=ra3*((ss(l,1)-ra0)**two+(ss(l,2)-ra1)**two+ss(l,3)**two); rv(2)=ra2*(1.5_nr/(rv(1)+1.0e-32)-one)
-!    ao=fctr*exp(half*(one-rv(1)))*rv(1)**0.75_nr; bo=one-half*gamm1*ao*ao
-!    qa(l,1)=bo; 
-!    ve(:)=rv(2)*ao*(/-(ss(l,2)-ra1),(ss(l,1)-ra0),zero/) + uoo(:);
-!    hv2=half*(ve(1)*ve(1)+ve(2)*ve(2)+ve(3)*ve(3))
-!    qa(l,2:4)=bo*ve(:);
-!    qa(l,5)=hamhamm1*bo**gam+hv2*bo
  end do
 
  end subroutine initialo

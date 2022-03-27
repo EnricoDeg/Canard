@@ -33,14 +33,14 @@
 
  subroutine gridaerofoil(ngridv,nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
 
- integer(kind=ni),intent(in) :: ngridv,nthick
+integer(kind=ni),intent(in) :: ngridv,nthick
  real(kind=nr),intent(in) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
+
 
     lxit=lxi0+lxi1+lxi2+2; lett=2*let0+1
     lxie0=lxi0; lxis1=lxie0+1; lxie1=lxis1+lxi1; lxis2=lxie1+1
     lete0=let0; lets1=lete0+1
-    lete1=lets1+let1; lets2=lete1+1; lettr=2*let0+let1+2;
-
+    
     shs=smg; she=shs
 
     np=3*(lxio+1)*(leto+1)-1
@@ -52,40 +52,36 @@
  if(myid==mo(mb)) then
  open(9,file=cgrid,status='unknown'); close(9,status='delete') ! 'replace' not suitable as 'recl' may vary
  open(9,file=cgrid,access='direct',form='unformatted',recl=nrecd*(np+1),status='new')
- 
-write(mbchar, "(I0)") mb
- open(97, file='grid/v2c_sweep25_'//trim(mbchar)//'.dat')
 
  do k=0,lze0
  
  zs(k) = span*(real(lze0-k,kind=nr)/lze0-half)
  
-! write(nfle,"(I0)") k
-! write(mbchar, "(I0)") mb
-! open(97, file='grid/oat15a_out_'//trim(mbchar)//'.dat')
- select case(mb);
-        case(0); js=0; je=lete0; is=0; ie=lxie0;
-        case(1); js=0; je=lete0; is=lxis1; ie=lxie1;
-        case(2); js=0; je=lete0; is=lxis2; ie=lxit;
-        case(3); js=lets1; je=lett; is=0; ie=lxie0;
-        case(4); js=lets1; je=lett; is=lxis1; ie=lxie1;
-        case(5); js=lets2; je=lettr; is=lxis2; ie=lxit;
-        case(6); js=lets1; je=lete1; is=lxis2; ie=lxit;
+ select case(mb)
+ case(0,1,2)
+   js=0; je=lete0; ra3=0
+ case(3,4,5)
+   js=lets1; je=lett; ra3=1
  end select
- 
- do j=0,je-js
-   do i=0,ie-is
-     read(97,*) xx(i,j), yy(i,j)
-   end do
- end do
- 
- l=-3
- do j=0,je-js; do i=0,ie-is; l=l+3
+ select case(mb)
+ case(0,3)
+   is=0; ie=lxie0; ra2=0; ra0 = doml0/lxi0;
+ case(1,4)
+   is=lxis1; ie=lxie1; ra2=1; ra0 = 0.5e0/lxi0;
+ case(2,5)
+   is=lxis2; ie=lxit; ra2=2; ra0 = (doml1-0.5e0)/lxi2;
+ end select
+
+ra1 = domh/(2.0*let0)*2.0
+   l=-3
+ do j=js,je; do i=is,ie; l=l+3
+    xx(i,j) = -doml0 + (i-ra2)*ra0
+    yy(i,j) = -domh + (j-ra3)*ra1
     xyzmb(l:l+2)=(/xx(i,j),yy(i,j),zs(k)/)
  end do; end do
- write(9,rec=k+1) xyzmb(:)
+    write(9,rec=k+1) xyzmb(:)
  end do
-  
+   
  close(9)
  
  !----- GRID CHECKING
