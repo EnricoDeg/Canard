@@ -1,7 +1,9 @@
 !*****
 !***** 3D AEROFOIL-TURBULENCE INTERACTION
 !*****
+
  module problemcase
+
  use mpi
  use subroutineso
  use gridgen
@@ -9,8 +11,8 @@
 
  integer(kind=ni) :: nbody,nthick,ngridv
  integer(kind=ni),dimension(:),allocatable :: idsgnl,lsgnl
- real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,szco,skew,spx,prin,prex
- real(kind=nr) :: vtxr,vtxs,radv,k1,k2
+ real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,szco,skew,spx
+ real(kind=nr) :: vtxr,vtxs, radv, k1, k2
 
  contains
 
@@ -33,18 +35,15 @@
     read(9,*) cinput,wlew,wlea
     read(9,*) cinput,szth0,szth1,szco
     read(9,*) cinput,skew,spx
-    read(9,*) cinput,prin,prex
     close(9)
 
-    lximb(:)=(/lxi0,lxi1,lxi2,lxi0,lxi1,lxi2,lxi2/)
-    letmb(:)=(/let0,let0,let0,let0,let0,let0,let1/)
-    lzemb(:)=(/lze0,lze0,lze0,lze0,lze0,lze0,lze0/)
+    lximb(:)=(/lxi0,lxi1,lxi2,lxi0,lxi1,lxi2/)
+    letmb(:)=(/let0,let0,let0,let0,let0,let0/)
+    lzemb(:)=(/lze0,lze0,lze0,lze0,lze0,lze0/)
+
     allocate(idsgnl(0:lze0),lsgnl(0:lze0))
 
  end subroutine inputext
-
-
-
 
 !===== DOMAIN DECOMPOSITION & BOUNDARY INFORMATION
 
@@ -66,7 +65,6 @@
     nbbc(mm,3,:)=(/45,45/); mbcd(mm,3,:)=(/mm,mm/)
  end do
 
-
  end subroutine domdcomp
 
 !===== GRID GENERATION
@@ -80,50 +78,52 @@
 !===== INITIAL CONDITIONS
 
  subroutine initialo
- radv = 1.0e0
- k1 = 12.5e0
- k2 = 1.0e0
- do l=0,lmx
-    ao = half*k2/pi * sqrt(exp(one - k1**2 * ((ss(l,1) + 1.0e0)**2 + ss(l,2)**2 + ss(l,3)**2)/(radv**2)))
-   bo = (one-half*gamm1*ao*ao)**hamm1
-   qa(l,1) = bo
-   ve(:) = (/k1*ss(l,2)*ao/radv, -k1*(ss(l,1) + 1.0e0)*ao/radv, zero/) + uoo(:)
-   hv2 = half*(ve(1)*ve(1)+ve(2)*ve(2)+ve(3)*ve(3))
-   qa(l,2:4) = bo*ve(:)
-   qa(l,5) = hamhamm1*bo**gam + hv2*bo
+
+!vtxr=0.2_nr*span; 
+!vtxs=-0.02_nr; 
+!fctr=vtxs/twopi; 
+!ra0=-half-span; 
+!ra1=-span*tan(11*pi/180); 
+!ra2=one/vtxr; ra3=one/vtxr**2
+radv = 1.0
+k1 = 12.5
+k2 = 1.0
+
+do l=0,lmx
+!    rv(1)=ra3*((ss(l,1)-ra0)**two+(ss(l,2)-ra1)**two+ss(l,3)**two);
+!    rv(2)=ra2*(1.5_nr/(rv(1)+1.0e-32)-one)
+!    ao=fctr*exp(half*(one-rv(1)))*rv(1)**0.75_nr;
+    ao = k2/2.0/pi * sqrt(exp(1 - k1**2 * (ss(l,1)**2 + ss(l,2)**2)/radv**2))
+    bo=(one-half*gamm1*ao*ao)**hamm1
+    qa(l,1)=bo;
+!    ve(:)=rv(2)*ao*(/-(ss(l,2)-ra1),(ss(l,1)-ra0),zero/);
+    ve(:) = (/k1*ss(l,2)*ao/radv, -k1*ss(l,1)*ao/radv, zero/)
+    hv2=half*(ve(1)*ve(1)+ve(2)*ve(2)+ve(3)*ve(3))
+    qa(l,2:4)=bo*ve(:);
+    qa(l,5)=hamhamm1*bo**gam+hv2*bo
  end do
 
  end subroutine initialo
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-
  subroutine spongeup
 
     ll=-1; ra2=skew/domh; tmpa=pi/szth0; tmpb=pi/szth1
  do l=0,lmx
     ra3=ra2*ss(l,2)
-!    ra0=tmpa*(ss(l,1)-(ra3-doml0+szth0));
-!    ra1=tmpb*(ra3+doml1-szth1-ss(l,1))
-!    de(l,1)=szco*half*(one+cos(max(min(ra0,pi),zero)));
-!    de(l,2)=szco*(one-amachoo**two)*half*(one+cos(max(min(ra1,pi),zero)))
-    ra0 = one - max(one - (ss(l,1)-(-doml0))/szth0, zero) - max(one - (doml1 - ss(l,1))/szth1, zero)
-    ra1 = one - max(one - (ss(l,2)-(-domh))/szth0, zero) - max(one - (domh - ss(l,2))/szth0, zero)
-    fctr = tmpa * ( ss(l,1) - (ra3-doml0+szth0) )
-    de(l,1) = szco * half * (one + cos(pi*ra0*ra1))
-!    de(l,2) = half * (one + cos(max(min(fctr,pi),zero)))
-    de(l,2) = szco * half * (one + cos(pi*(one - max(one-(ss(l,1)-(-doml0))/szth0, zero))))
-!    de(l,2) = de(l,2)*de(l,1)
-
- if(de(l,1)+de(l,2)>sml) then
+    ra0=tmpa*(ss(l,1)-(ra3-doml0+szth0)); ra1=tmpb*(ra3+doml1-szth1-ss(l,1))
+    de(l,1)=szco*half*(two+cos(max(min(ra0,pi),zero))+cos(max(min(ra1,pi),zero)))
+    de(l,2)=szco*half*(one+cos(max(min(ra0,pi),zero)))
+ if(de(l,1)>sml) then
     ll=ll+1; de(ll,5)=l+sml
  end if
  end do
     lsz=ll
  if(lsz/=-1) then
-    allocate(lcsz(0:lsz),asz(0:lsz,2))
+    allocate(lcsz(0:lsz),asz(0:lsz),bsz(0:lsz))
  do ll=0,lsz; l=de(ll,5); lcsz(ll)=l
-    asz(ll,1)=de(l,1)/yaco(l); asz(ll,2)=de(l,2)/yaco(l)
+    asz(ll)=de(l,1)/yaco(l); bsz(ll)=de(l,2)/yaco(l)
  end do
  end if
 
@@ -133,32 +133,14 @@
 
  subroutine spongego
 
- !   res=sum(umf(:)*umf(:)); 
- !   fctr=sqrt(res)/amachoo
- !   ao=hamm1*(one+fctr*(prin-one))+half*res;
- !   ra2=hamhamm1*(one+fctr*(prex-one))
- 
  do ll=0,lsz; l=lcsz(ll)
- !   cha(2:4)=qa(l,2:4)+umf(:)
- !   ra0=ham*qa(l,1)*(ao-half*sum(cha(2:4)*cha(2:4)))
- !   ra1=qa(l,5)-half*sum(qa(l,2:4)*qa(l,2:4))/qa(l,1)
-    
- !   de(l,1)=de(l,1)+asz(ll,1)*(qa(l,1)-one)
- !   de(l,2:4)=de(l,2:4)+(asz(ll,1)+asz(ll,2))*(qa(l,2:4)-zero)
- !   de(l,5)=de(l,5)+asz(ll,1)*(ra1-ra0)+asz(ll,2)*(ra1-ra2)
-
-   de(l,1) = de(l,1) + asz(ll,1) * (qa(l,1) - one)
-   de(l,2:4) = de(l,2:4) + asz(ll,2) * (qa(l,2:4) - uoo(:))
-
-   hv2 = half * ( qa(l,2)*qa(l,2) + qa(l,3)*qa(l,3) + qa(l,4)*qa(l,4) )
-   ra0 = gamm1 * ( qa(l,5) - qa(l,1)*hv2 ) ! local pressure
-   ra1 = hamm1 + half*(uoo(1)*uoo(1)+uoo(2)*uoo(2)+uoo(3)*uoo(3)) ! infinity enthalpy
-
-   de(l,5) = de(l,5) + asz(ll,1) * hamm1 * ( ra0 - gamm1*ham*qa(l,1)*(ra1-hv2)) ! target pressure
-end do
+    de(l,1)=de(l,1)+asz(ll)*(qa(l,1)-one)
+    de(l,2:4)=de(l,2:4)+bsz(ll)*(qa(l,2:4)-zero)
+    de(l,5)=de(l,5)+asz(ll)*(qa(l,5)-hamhamm1)
+ end do
 
  end subroutine spongego
-!
+
 !===== EXTRA CONDITION
 
  subroutine extracon
@@ -169,7 +151,6 @@ end do
     open(2,file=cdata,access='direct',form='unformatted',recl=nrecs*(lmx+1),status='old')
     read(2,rec=1) varr(:); ss(:,1)=varr(:)
     close(2)
-!    open(2,file='misc/wall'//cnnode//'.dat',status='unknown'); close(2,status='delete')
     open(2,file='misc/wall'//cnnode//'.dat',status='replace')
     write(2,*) 'variables=x,v1,v2,v3'
     write(2,*) 'zone'
