@@ -4,11 +4,27 @@
 
  module subroutineso
 
-! use mainvar2d
  use mainvar3d
  implicit none
 
  contains
+
+!===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
+
+  SUBROUTINE init_extracoeff_bounds
+
+    call fcbcm(fltk,fltrbc)
+    call fcint(fltk,half,alphf,betf,fa,fb,fc)
+    albef(:,0,1)=(/zero,zero,one,alphf,betf/)
+    albef(:,1,1)=(/zero,alphf,one,alphf,betf/)
+    albef(:,2,1)=(/betf,alphf,one,alphf,betf/)
+
+    pbco(:,:,:)=zero; pbci(:,:,:)=zero; call sbcco
+ do nt=0,1; do j=0,1; ii=lmd+nt*(lmf-lmd)
+    pbcot(j,nt)=sum(pbco(0:ii,j,nt))
+ end do; end do
+
+  END SUBROUTINE init_extracoeff_bounds
 
 !===== SUBROUTINE FOR CHOLESKY DECOMPOSITION OF PENTADIAGONAL MATRICES
 
@@ -21,7 +37,13 @@
  real(kind=nr) :: alpho,beto
 
  if(nt==0) then
-    albe=albed; alpho=alpha; beto=beta
+    albe(:,0,0)=(/zero,zero,one,alpha01,beta02/)
+    albe(:,1,0)=(/zero,alpha10,one,alpha12,beta13/)
+    albe(:,2,0)=(/beta,alpha,one,alpha,beta/)
+    alpho=alpha; beto=beta
+    albe(:,0,1)=(/zero,zero,one,alpha,beta/)
+    albe(:,1,1)=(/zero,alpha,one,alpha,beta/)
+    albe(:,2,1)=(/beta,alpha,one,alpha,beta/)
  else
     albe=albef; alpho=alphf; beto=betf
  end if
@@ -74,39 +96,21 @@
 
 !===== SUBROUTINE FOR BOUNDARY FILTER COEFFICIENTS
 
- subroutine fcbcm(fltk,fltke,fltexr)
+ subroutine fcbcm(fltk,fltrbc)
  
- real(kind=nr),intent(in) :: fltk,fltke,fltexr
- real(kind=nr),dimension(0:2) :: fltkbc
+ real(kind=nr),intent(in) :: fltk,fltrbc
  real(kind=nr) :: alphz,betz,za,zb,zc
 
-    ao=log(fltexr); fltkbc(:)=(fltke-fltk)*(one+cos(pi*(/3,4,5/)/6))+fltk
+    ao=log(fltrbc); call fcint(fltk,half,alphz,betz,za,zb,zc); fctr=one/(one+alphz*fltrbc+betz*fltrbc**two)
 
-    call fcint(fltkbc(0),half,alphz,betz,za,zb,zc); fctr=one/(one+alphz*fltexr+betz*fltexr**two)
-    albef(:,0,0)=(/zero,zero,one,alphz*fctr,betz*fctr/); res=(fltexr-1)*(za+zc+(fltexr+1)*(zb+fltexr*zc))/ao
-    fbc(:,0)=(/za-5*res/3,zb+10*res/21,zc-5*res/42,5*res/252,-res/630,zero/)*fctr
+    albef(:,0,0)=(/zero,zero,one,alphz*fctr,betz*fctr/); res=(fltrbc-1)*(za+zc+(fltrbc+1)*(zb+fltrbc*zc))/ao
+    fbc(:,0)=(/za-5*res/3,zb+10*res/21,zc-5*res/42,5*res/252,-res/630/)*fctr
 
-    call fcint(fltkbc(1),half,alphz,betz,za,zb,zc)
-    albef(:,1,0)=(/zero,alphz+betz*fltexr,one,alphz,betz/); res=(fltexr-1)*(zb+zc*(fltexr+1))/ao
-    fbc(:,1)=(/za+zb+zc+1627*res/1260,za+10*res/21,zb-5*res/42,zc+5*res/252,-res/630,zero/)
+    albef(:,1,0)=(/zero,alphz+betz*fltrbc,one,alphz,betz/); res=(fltrbc-1)*(zb+zc*(fltrbc+1))/ao
+    fbc(:,1)=(/za+zb+zc+1627*res/1260,za+10*res/21,zb-5*res/42,zc+5*res/252,-res/630/)
 
-    call fcint(fltkbc(2),half,alphz,betz,za,zb,zc)
-    albef(:,2,0)=(/betz,alphz,one,alphz,betz/); res=zc*(fltexr-1)/ao
-    fbc(:,2)=(/zb+zc+1627*res/1260,za-5*res/3,za-5*res/42,zb+5*res/252,zc-res/630,zero/)
-
-!    fltkbc(:)=(fltke-fltk)*(one+cos(pi*(/3,4,5/)/6))+fltk
-!    
-!    call fcint(fltkbc(0),half,alphz,betz,za,zb,zc); fctr=one+(alphz+betz)*(one-fltexr); res=one+fltexr
-!    albef(:,0,0)=(/zero,zero,fctr,alphz*res,betz*res/)/fctr
-!    fbc(:,0)=(/za*res,zb*res,zc*res,zero,zero/)/fctr
-!
-!    call fcint(fltkbc(1),half,alphz,betz,za,zb,zc); fctr=one+betz*fltexr
-!    albef(:,1,0)=(/zero,alphz+betz*(one-fltexr),fctr,alphz,betz/)/fctr
-!    fbc(:,1)=(/za+zb+zc-(zb+zc)*fltexr,za+zc*fltexr,zb,zc,zero/)/fctr
-!
-!    call fcint(fltkbc(2),half,alphz,betz,za,zb,zc)
-!    albef(:,2,0)=(/betz,alphz,one,alphz,betz/)
-!    fbc(:,2)=(/zb+zc*(one-fltexr),za+zc*fltexr,za,zb,zc/)
+    albef(:,2,0)=(/betz,alphz,one,alphz,betz/); res=zc*(fltrbc-1)/ao
+    fbc(:,2)=(/zb+zc+1627*res/1260,za-5*res/3,za-5*res/42,zb+5*res/252,zc-res/630/)
 
  end subroutine fcbcm
 
@@ -128,56 +132,57 @@
 
 !===== SUBROUTINE FOR SUBDOMAIN-BOUNDARY COEFFICIENTS
 
- subroutine sbcco(nt)
+ subroutine sbcco
 
- integer(kind=ni),intent(in) :: nt
  real(kind=nr),dimension(:,:),allocatable :: ax,bx,rx,sx
- real(kind=nr),dimension(-2:2,0:2,0:1) :: albe
- real(kind=nr),dimension(0:5,0:2) :: abc
 
-    lp=2*nt-1
- select case(nt)
- case(0); ll=lmd; albe=albed; abc=dbc
- case(1); ll=lmf; albe=albef; abc=fbc
- end select
-    is=1; ie=2*(ll+1)
-    allocate(ax(is:ie,is:ie),bx(is:ie,is:ie),rx(is:ie,is:ie),sx(is:ie,is:ie)); ax(:,:)=zero; bx(:,:)=zero
-
-    ax(is,is:is+2)=albe(0:2,0,0); bx(is,is+(/1,2,3,4,5,6/))=abc(0:5,0); bx(is,is)=-sum(abc(0:5,0))
-    ax(is+1,is:is+3)=albe(-1:2,1,0); bx(is+1,is+(/0,2,3,4,5,6/))=abc(0:5,1); bx(is+1,is+1)=-sum(abc(0:5,1))
-    ax(is+2,is:is+4)=albe(-2:2,2,0); bx(is+2,is+(/0,1,3,4,5,6/))=abc(0:5,2); bx(is+2,is+2)=-sum(abc(0:5,2))
- do i=is+3,ie-3
-    ax(i,i-2:i+2)=(1-nt)*(/beta,alpha,one,alpha,beta/)+nt*(/betf,alphf,one,alphf,betf/)
-    bx(i,i-3:i+3)=(1-nt)*(/-ac,-ab,-aa,zero,aa,ab,ac/)+nt*(/fc,fb,fa,-two*(fa+fb+fc),fa,fb,fc/)
+ do nt=0,1; lp=2*nt-1
+ if(nt==0) then; ll=lmd; is=1; ie=2*(ll+1)
+    allocate(ax(ie,ie),bx(ie,ie),rx(ie,ie),sx(ie,ie)); ax(:,:)=0; bx(:,:)=0
+    ax(is,is:is+2)=(/one,alpha01,beta02/); bx(is,is:is+4)=(/-(a01+a02+a03+a04),a01,a02,a03,a04/)
+    ax(is+1,is:is+3)=(/alpha10,one,alpha12,beta13/); bx(is+1,is:is+4)=(/a10,-(a10+a12+a13+a14),a12,a13,a14/)
+ do i=is+2,ie-2
+    ax(i,i-2:i+2)=(/beta,alpha,one,alpha,beta/); bx(i,i-2:i+2)=(/-ab,-aa,zero,aa,ab/)
  end do
-    ax(ie-2,ie:is:-1)=ax(is+2,is:ie); bx(ie-2,ie:is:-1)=lp*bx(is+2,is:ie)
-    ax(ie-1,ie:is:-1)=ax(is+1,is:ie); bx(ie-1,ie:is:-1)=lp*bx(is+1,is:ie)
-    ax(ie,ie:is:-1)=ax(is,is:ie); bx(ie,ie:is:-1)=lp*bx(is,is:ie)
+    ax(ie-1,ie:ie-3:-1)=ax(is+1,is:is+3); bx(ie-1,ie:ie-4:-1)=-bx(is+1,is:is+4)
+    ax(ie,ie:ie-2:-1)=ax(is,is:is+2); bx(ie,ie:ie-4:-1)=-bx(is,is:is+4)
+ end if
+ if(nt==1) then; ll=lmf; is=1; ie=2*(ll+1)
+    allocate(ax(ie,ie),bx(ie,ie),rx(ie,ie),sx(ie,ie)); ax(:,:)=0; bx(:,:)=0
+    ax(is,is:is+2)=albef(0:2,0,0); bx(is,is+(/1,2,3,4,5/))=fbc(:,0); bx(is,is)=-sum(fbc(:,0))
+    ax(is+1,is:is+3)=albef(-1:2,1,0); bx(is+1,is+(/0,2,3,4,5/))=fbc(:,1); bx(is+1,is+1)=-sum(fbc(:,1))
+    ax(is+2,is:is+4)=albef(-2:2,2,0); bx(is+2,is+(/0,1,3,4,5/))=fbc(:,2); bx(is+2,is+2)=-sum(fbc(:,2))
+ do i=is+3,ie-3
+    ax(i,i-2:i+2)=(/betf,alphf,one,alphf,betf/); bx(i,i-3:i+3)=(/fc,fb,fa,-2*(fa+fb+fc),fa,fb,fc/)
+ end do
+    ax(ie-2,ie:ie-4:-1)=ax(is+2,is:is+4); bx(ie-2,ie:ie-5:-1)=bx(is+2,is:is+5)
+    ax(ie-1,ie:ie-3:-1)=ax(is+1,is:is+3); bx(ie-1,ie:ie-5:-1)=bx(is+1,is:is+5)
+    ax(ie,ie:ie-2:-1)=ax(is,is:is+2); bx(ie,ie:ie-5:-1)=bx(is,is:is+5)
+ end if
 
     call mtrxi(ax(:,:),sx(:,:),is,ie)
 
     rx(:,:)=ax(:,:)
-    i=ie/2-1; rx(i,i+2)=zero; rx(i+1,i+2)=zero; rx(i+1,i+3)=zero
-    i=ie/2+2; rx(i,i-2)=zero; rx(i-1,i-2)=zero; rx(i-1,i-3)=zero
+    i=ie/2-1; rx(i,i+2)=0; rx(i+1,i+2)=0; rx(i+1,i+3)=0
+    i=ie/2+2; rx(i,i-2)=0; rx(i-1,i-2)=0; rx(i-1,i-3)=0
     ax(:,:)=matmul(rx(:,:),matmul(sx(:,:),bx(:,:)))
     i=ie/2+1; pbco(ll:0:-1,0,nt)=ax(i,is:is+ll); pbci(0:ll,0,nt)=ax(i,is+ll+1:ie)
     i=ie/2+2; pbco(ll:0:-1,1,nt)=ax(i,is:is+ll); pbci(0:ll,1,nt)=ax(i,is+ll+1:ie)
-
     deallocate(ax,bx,rx,sx)
-
+ end do
  end subroutine sbcco
+
 
 !===== SUBROUTINE FOR MATRIX INVERSION
 
- subroutine mtrxi(ax,sx,is,ie)
+subroutine mtrxi(ax,sx,is,ie)
 
  integer(kind=ni),intent(in) :: is,ie
  real(kind=nr),dimension(is:ie,is:ie),intent(in) :: ax
  real(kind=nr),dimension(is:ie,is:ie),intent(inout) :: sx
 
- integer(kind=ni),dimension(is:ie) :: ipvt
  integer(kind=ni),dimension(1) :: imax
- integer(kind=ni) :: i,j,m
+ integer(kind=ni),dimension(is:ie) :: ipvt
  real(kind=nr),dimension(is:ie,is:ie) :: rx
  real(kind=nr),dimension(is:ie) :: temp
 
@@ -203,15 +208,20 @@
 
  real(kind=nr),intent(in) :: dtko,dtk
 
- if(nsmf==1) then
-    ra0=one/timf; ra1=ra0*min(timo,timf); ra2=ra0*min(timo+dtko,timf)
+ if(nsmf==0) then
+    ra0=pi/timf; ra1=ra0*min(timo,timf); ra2=ra0*min(timo+dtko,timf)
 
-    fctr=(one-ra1)**three
-    dfdt=three*ra0*(one-ra2)**two
-    progmf=fctr+dtk*dfdt
+    fctr=one-cos(ra1)
+    dfdt=ra0*sin(ra2)
+    progmf=half*(fctr+dtk*dfdt)
     umf(:)=progmf*uoo(:)
+
+    fctr=sin(ra1)
+    dfdt=ra0*cos(ra2)
+    progmf=half*ra0*(fctr+dtk*dfdt)
+    dudtmf(:)=progmf*uoo(:)
  else
-    umf(:)=zero
+    umf(:)=uoo(:); dudtmf(:)=zero
  end if
 
  end subroutine movef
@@ -252,10 +262,10 @@
  real(kind=nr) :: dxoo,dxnn,aa,bb,cc,dd,xi,fctr
 
     dxoo=dxo; dxnn=dxn; xi=mxin
- if(dxo==free) then
+ if(int((dxo+sml)/free,kind=ni)==1) then
     dxoo=two*(xn-xo)/xi-dxnn
  end if
- if(dxn==free) then
+ if(int((dxn+sml)/free,kind=ni)==1) then
     dxnn=two*(xn-xo)/xi-dxoo
  end if
     aa=6.0_nr*(xn-xo)-3.0_nr*xi*(dxoo+dxnn)
