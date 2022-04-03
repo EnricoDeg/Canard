@@ -1,3 +1,7 @@
+!*****
+!***** MPI MODULE
+!*****
+
 MODULE mo_mpi
 
   use mpi
