@@ -4,7 +4,7 @@
 
 MODULE mo_gcbc
    use mainvar3d
-   use mo_mpi
+   use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall
    use subroutineso
    use subroutines3d
    IMPLICIT NONE

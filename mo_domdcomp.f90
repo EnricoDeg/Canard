@@ -4,7 +4,8 @@
 
 MODULE mo_domdcomp
    use mainvar3d
-   use mo_mpi
+   use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
+                      p_recv, p_send, p_bcast, mpro
    use problemcase
    IMPLICIT NONE
    PUBLIC

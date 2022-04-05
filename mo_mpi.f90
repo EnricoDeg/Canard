@@ -7,15 +7,19 @@ MODULE mo_mpi
   use mpi
   use mainvar3d
   IMPLICIT NONE
-  PUBLIC
+  PRIVATE
 
   integer(kind=ni),dimension(:,:),allocatable :: ista
   integer(kind=ni),dimension(:),allocatable :: ireq
-  integer(kind=ni) :: ir,mpro,npro,myid,itag,info,icom,ierr,lmpi
+  integer(kind=ni) :: ir,mpro,npro,myid,info,icom,ierr
 
   INTEGER :: p_status(MPI_STATUS_SIZE) 
 
   INTEGER, PARAMETER :: nerr = 0
+
+  PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv
+  PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier
+  PUBLIC :: mpro, npro, myid
 
   INTERFACE p_send
     MODULE PROCEDURE p_send_int
@@ -490,7 +494,6 @@ MODULE mo_mpi
 #endif
 
   END SUBROUTINE p_isend_real_2d
-
 
   SUBROUTINE p_irecv_real_1d (buffer, p_source, p_tag, p_count, comm)
 

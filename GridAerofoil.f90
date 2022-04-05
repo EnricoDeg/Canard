@@ -4,7 +4,7 @@
 
 module gridgen
 
-   use mo_mpi
+   use mo_mpi, ONLY : myid
    use subroutineso
    implicit none
 

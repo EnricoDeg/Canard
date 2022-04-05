@@ -3,10 +3,11 @@
 !*****
 
 MODULE mo_grid
+   use mo_mpi, ONLY : myid, p_barrier
    use mainvar3d
    use subroutines3d
    use problemcase
-   use mo_mpi
+   
    IMPLICIT NONE
    PUBLIC
    CONTAINS

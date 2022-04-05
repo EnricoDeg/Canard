@@ -4,7 +4,7 @@
 
 MODULE mo_io
    use mainvar3d
-   use mo_mpi
+   use mo_mpi, ONLY : mpro, myid, p_barrier, p_recv, p_send
    use problemcase
    use subroutines3d
    IMPLICIT NONE

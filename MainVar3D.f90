@@ -107,6 +107,7 @@ module mainvar3d
    integer(kind=ni) :: i,ii,is,ie,ip,iq,j,jj,js,je,jp,jq,jk,k,kk,ks,ke,kp,l,lh,ll,lp,lq,ltomb
    integer(kind=ni) :: m,ma,mb,mm,mp,mq,mbk,mps,mpe,n,ndt,nn,nk,ns,ne,np,nq,nt,nz,ndati,nsigi,nout,nfile
    integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nviscous,nkrk,nsmf,nrestart,nextrabc,nextgcic
+   integer(kind=ni) :: itag, lmpi
    integer(kind=int64) :: nlmx,llmb,llmo,lis,lie,ljs,lje
 
    real(kind=nr),dimension(0:lmp,0:1,0:1) :: pbci,pbco

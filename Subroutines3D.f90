@@ -4,7 +4,8 @@
 
 module subroutines3d
 
-   use mo_mpi
+   use mo_mpi, ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
+                      p_send, myid
    use mainvar3d
    use subroutineso
    implicit none

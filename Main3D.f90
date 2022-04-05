@@ -4,7 +4,8 @@
 
 program main3d
 
-   use mo_mpi
+   use mo_mpi, ONLY : mpro, npro, myid, p_start, p_stop, &
+                      p_barrier, p_sum
    use mo_io
    use mo_domdcomp
    use mo_grid
