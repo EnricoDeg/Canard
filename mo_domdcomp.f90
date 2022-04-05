@@ -10,9 +10,39 @@ MODULE mo_domdcomp
    IMPLICIT NONE
    PUBLIC
 
+   integer(kind=ni),parameter                    :: ljpl=100
+
+   integer(kind=ni),dimension(3,0:1)             :: mmcd
+   integer(kind=ni),dimension(3)                 :: ijkp
+   integer(kind=ni),dimension(0:3,3,0:1)         :: ijp
+   integer(kind=ni),dimension(0:3,3,0:1)         :: ijl
+   integer(kind=ni),dimension(0:11,ljpl)         :: jlcd
+   integer(kind=ni),dimension(0:7,ljpl)          :: jpcd
+
+   integer(kind=ni),dimension(:,:,:),allocatable :: nbbc,mbcd
+   integer(kind=ni),dimension(:,:),allocatable   :: jjp
+   integer(kind=ni),dimension(:,:),allocatable   :: jjl
+   integer(kind=ni),dimension(:),allocatable     :: imjp
+   integer(kind=ni),dimension(:),allocatable     :: jptag
+   integer(kind=ni),dimension(:),allocatable     :: imjl
+   integer(kind=ni),dimension(:),allocatable     :: jltag
+
    CONTAINS
 
-   subroutine domdcomp_info
+   subroutine allocate_domdcomp(nblocks)
+      integer(kind=ni), INTENT(IN) :: nblocks
+      integer(kind=ni)             :: lpp, lqq
+
+      lpp=8*nblocks+7
+      lqq=12*nblocks+11
+      allocate(nbbc(0:nblocks,3,0:1), mbcd(0:nblocks,3,0:1))
+      allocate(imjp(0:lpp), jptag(0:lpp), imjl(0:lqq), jltag(0:lqq))
+      allocate(jjp(0:lpp,0:ljpl))
+      allocate(jjl(0:lqq,0:ljpl))
+
+   end subroutine allocate_domdcomp
+
+   subroutine multiblock_info
 
       ip=30*nthick+35*(1-nthick)
       jp=35*(1-nbody)+nbody*(20+5*nviscous)
@@ -48,7 +78,7 @@ MODULE mo_domdcomp
          mbcd(mm,3,:)=(/mm,mm/)
       end do
 
-   end subroutine domdcomp_info
+   end subroutine multiblock_info
 
    SUBROUTINE domdcomp_init
 

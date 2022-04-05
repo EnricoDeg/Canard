@@ -42,13 +42,10 @@ program main3d
 
    call allocate_io_memory
 
-   lp=8*mbk+7
-   lq=12*mbk+11
    allocate(lximb(0:mbk), letmb(0:mbk), lzemb(0:mbk), &
             lhmb(0:mbk), mo(0:mbk), nbpc(0:mbk,3),    &
-            nbbc(0:mbk,3,0:1), mbcd(0:mbk,3,0:1))
-   allocate(imjp(0:lp), jptag(0:lp), jjp(0:lp,0:ljpl))
-   allocate(imjl(0:lq), jltag(0:lq), jjl(0:lq,0:ljpl))
+            )
+   call allocate_domdcomp(mbk)
 
    call read_inputp
 
@@ -71,7 +68,7 @@ program main3d
 
    call filename_init
 
-   call domdcomp_info
+   call multiblock_info
 
    call domdcomp_init
 

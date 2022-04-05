@@ -17,7 +17,7 @@ module mainvar3d
 
    integer(kind=ni),parameter :: nrall=0,nrone=1,n45no=0,n45go=1
    integer(kind=ni),parameter :: lmd=11,lmf=11,lmp=max(lmd,lmf),mbci=4
-   integer(kind=ni),parameter :: liofs=16,liofl=24,ljpl=100
+   integer(kind=ni),parameter :: liofs=16,liofl=24
 
    character(len=*),parameter :: fmts='es15.8',fmtl='es23.16',fmtsa=fmts//',a',fmtla=fmtl//',a'
 
@@ -50,9 +50,7 @@ module mainvar3d
 
 !===== ALLOCATABLE MAIN ARRAYS
 
-   integer(kind=ni),dimension(:,:,:),allocatable :: nbbc,mbcd
-   integer(kind=ni),dimension(:,:),allocatable :: nbpc,lio,jjp,jjl
-   integer(kind=ni),dimension(:),allocatable :: imjp,imjl,jptag,jltag
+   integer(kind=ni),dimension(:,:),allocatable :: nbpc,lio
    integer(kind=ni),dimension(:),allocatable :: li,lcsz
    integer(kind=ni),dimension(:),allocatable :: lxim,letm,lzem,lpos
    integer(kind=ni),dimension(:),allocatable :: lximb,letmb,lzemb,mo,nrr,npex
@@ -93,16 +91,13 @@ module mainvar3d
 
 !===== CONSTANT-SIZED MAIN VARIABLES
 
-   integer(kind=ni),dimension(0:3,3,0:1) :: ijl,ijp
    integer(kind=ni),dimension(3,0:1,0:1) :: ndf
-   integer(kind=ni),dimension(0:11,ljpl) :: jlcd
-   integer(kind=ni),dimension(0:7,ljpl) :: jpcd
    integer(kind=ni),dimension(3,3) :: ijk
-   integer(kind=ni),dimension(3,0:1) :: nbc,mcd,mmcd,nsz
+   integer(kind=ni),dimension(3,0:1) :: nbc,mcd,nsz
    integer(kind=ni),dimension(0:11) :: njl
    integer(kind=ni),dimension(0:7) :: njp
    integer(kind=ni),dimension(0:4) :: no
-   integer(kind=ni),dimension(3) :: ms,me,nbsize,ijkp,nnf
+   integer(kind=ni),dimension(3) :: ms,me,nbsize,nnf
    integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,lsz,nrecs,nrecd
    integer(kind=ni) :: i,ii,is,ie,ip,iq,j,jj,js,je,jp,jq,jk,k,kk,ks,ke,kp,l,lh,ll,lp,lq,ltomb
    integer(kind=ni) :: m,ma,mb,mm,mp,mq,mbk,mps,mpe,n,ndt,nn,nk,ns,ne,np,nq,nt,nz,ndati,nsigi,nout,nfile
