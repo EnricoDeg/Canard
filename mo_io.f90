@@ -205,7 +205,7 @@ MODULE mo_io
                lie=lis+mq*(lxim(mp)+1)*(letm(mp)+1)*(lzem(mp)+1)-1
                lmpi = lie-lis+1
                itag=1
-               call MPI_RECV(vara(lis:lie),lmpi,MPI_REAL4,mp,itag,icom,ista(:,mp),ierr)
+               call p_recv(vara(lis:lie), mp, itag, lmpi)
             end do
             lis=0
             do mp=mps,mpe
@@ -230,7 +230,7 @@ MODULE mo_io
             if(mb==0) then !---------------------
                do mm=1,mbk
                   itag=2
-                  call MPI_RECV(lhmb(mm),1,MPI_INTEGER8,mo(mm),itag,icom,ista(:,mp),ierr)
+                  call p_recv(lhmb(mm), mo(mm), itag)
                end do
                llmo=sum(lhmb(:))-1
                deallocate(varb)
@@ -243,7 +243,7 @@ MODULE mo_io
                   lie=lis+lhmb(mm)-1
                   lmpi = lie-lis+1
                   itag=3
-                  call MPI_RECV(varb(lis:lie),lmpi,MPI_REAL4,mo(mm),itag,icom,ista(:,mp),ierr)
+                  call p_recv(varb(lis:lie), mo(mm), itag, lmpi)
                end do
                open(0,file=ctecplt(n),status='unknown')
                close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
@@ -252,15 +252,15 @@ MODULE mo_io
                close(0)
             else !-------------------
                itag=2
-               call MPI_SEND(lhmb(mb),1,MPI_INTEGER8,mo(0),itag,icom,ierr)
+               call p_send(lhmb(mb), mo(0), itag)
                lmpi = lhmb(mb)
                itag=3
-               call MPI_SEND(vara(:),lmpi,MPI_REAL4,mo(0),itag,icom,ierr)
+               call p_send(vara(:), mo(0), itag, lmpi)
             end if !-----------
          else !===========================
             lmpi = lje-ljs+1
             itag=1
-            call MPI_SEND(vart(ljs:lje),lmpi,MPI_REAL4,mo(mb),itag,icom,ierr)
+            call p_send(vart(ljs:lje), mo(mb), itag, lmpi)
          end if !=========================
          deallocate(vara,varb)
       end do

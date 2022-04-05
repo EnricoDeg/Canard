@@ -2,7 +2,6 @@
 !***** 3D AEROFOIL-TURBULENCE INTERACTION
 !*****
 module problemcase
-   use mpi
    use subroutineso
    use gridgen
    implicit none

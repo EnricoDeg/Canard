@@ -4,7 +4,6 @@
 
 module subroutines3d
 
-   use mpi
    use mo_mpi
    use mainvar3d
    use subroutineso
@@ -60,7 +59,7 @@ module subroutines3d
          mp=lmf
       end select
 
-      ir=0
+      call p_null_req
       do nn=1,3
          nz=(1-nrt)*(nn-1)+1
          if(nt==0) then
@@ -120,22 +119,16 @@ module subroutines3d
                   end do
                end do
                if(nt==0) then
-                  ir=ir+1
-                  call MPI_ISEND(send(:,:,ip),2*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+iq,icom,ireq(ir),ierr)
-                  ir=ir+1
-                  call MPI_IRECV(recv(:,:,ip),2*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+ip,icom,ireq(ir),ierr)
+                  call p_isend(send(:,:,ip), mcd(nn,ip), itag+iq, 2*nbsize(nn))
+                  call p_irecv(recv(:,:,ip), mcd(nn,ip), itag+ip, 2*nbsize(nn))
                else
-                  ir=ir+1
-                  call MPI_ISEND(send(:,:,ip),3*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+iq,icom,ireq(ir),ierr)
-                  ir=ir+1
-                  call MPI_IRECV(recv(:,:,ip),3*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+ip,icom,ireq(ir),ierr)
+                  call p_isend(send(:,:,ip), mcd(nn,ip), itag+iq, 3*nbsize(nn))
+                  call p_irecv(recv(:,:,ip), mcd(nn,ip), itag+ip, 3*nbsize(nn))
                end if
             end if
          end do
       end do
-      if(ir/=0) then
-         call MPI_WAITALL(ir,ireq,ista,ierr)
-      end if
+      call p_waitall
 
       if(n45==n45go) then
          do nn=1,3
@@ -382,22 +375,19 @@ module subroutines3d
       varmax(nn)=maxval(varr)
       varm(:,myid)=(/varmin(nn),varmax(nn)/)
 
-      ir=0
+      call p_null_req
       itag=nn
       if(myid==mo(mb)) then
          mps=mo(mb)
          mpe=mps+nbpc(mb,1)*nbpc(mb,2)*nbpc(mb,3)-1
          do mp=mps+1,mpe
-            ir=ir+1
-            call MPI_IRECV(varm(:,mp),2,MPI_REAL4,mp,itag,icom,ireq(ir),ierr)
+            call p_irecv(varm(:,mp), mp, itag, 2)
          end do
-         if(ir/=0) then
-            call MPI_WAITALL(ir,ireq,ista,ierr)
-         end if
+         call p_waitall
          varmin(nn)=minval(varm(0,mps:mpe))
          varmax(nn)=maxval(varm(1,mps:mpe))
       else
-         call MPI_SEND(varm(:,myid),2,MPI_REAL4,mo(mb),itag,icom,ierr)
+         call p_send(varm(:,myid), mo(mb), itag, 2)
       end if
 
    end subroutine vminmax

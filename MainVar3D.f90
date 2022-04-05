@@ -13,7 +13,7 @@ module mainvar3d
 
    integer,parameter :: int32=selected_int_kind(9),int64=selected_int_kind(18)
    integer,parameter :: ieee32=selected_real_kind(6,37),ieee64=selected_real_kind(15,307)
-   integer,parameter :: ni=int32,nr=ieee64
+   integer,parameter :: ni=int32,nr=ieee64,nsp=ieee32, nli=int64
 
    integer(kind=ni),parameter :: nrall=0,nrone=1,n45no=0,n45go=1
    integer(kind=ni),parameter :: lmd=11,lmf=11,lmp=max(lmd,lmf),mbci=4
@@ -72,7 +72,7 @@ module mainvar3d
    real(kind=nr),dimension(:),allocatable :: sa,sb
 
    real(kind=nr),dimension(:),allocatable :: asz,bsz
-   real(kind=nr),dimension(:),allocatable :: times,vmpi
+   real(kind=nr),dimension(:),allocatable :: times
 
    real(kind=nr),dimension(:,:,:),pointer :: drva,drvb,send,recv,cm
 

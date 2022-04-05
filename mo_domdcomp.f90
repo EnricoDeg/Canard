@@ -132,23 +132,23 @@ MODULE mo_domdcomp
          lzem(0)=lze
          do mp=1,mpro
             itag=1
-            call MPI_RECV(lxim(mp),1,MPI_INTEGER4,mp,itag,icom,ista(:,mp),ierr)
+            call p_recv(lxim(mp), mp, itag)
             itag=2
-            call MPI_RECV(letm(mp),1,MPI_INTEGER4,mp,itag,icom,ista(:,mp),ierr)
+            call p_recv(letm(mp), mp, itag)
             itag=3
-            call MPI_RECV(lzem(mp),1,MPI_INTEGER4,mp,itag,icom,ista(:,mp),ierr)
+            call p_recv(lzem(mp), mp, itag)
          end do
       else
          itag=1
-         call MPI_SEND(lxi,1,MPI_INTEGER4,0,itag,icom,ierr)
+         call p_send(lxi, 0, itag)
          itag=2
-         call MPI_SEND(let,1,MPI_INTEGER4,0,itag,icom,ierr)
+         call p_send(let, 0, itag)
          itag=3
-         call MPI_SEND(lze,1,MPI_INTEGER4,0,itag,icom,ierr)
+         call p_send(lze, 0, itag)
       end if
-      call MPI_BCAST(lxim(:),npro,MPI_INTEGER4,0,icom,ierr)
-      call MPI_BCAST(letm(:),npro,MPI_INTEGER4,0,icom,ierr)
-      call MPI_BCAST(lzem(:),npro,MPI_INTEGER4,0,icom,ierr)
+      call p_bcast(lxim(:), 0)
+      call p_bcast(letm(:), 0)
+      call p_bcast(lzem(:), 0)
 
       ltomb=(lxio+1)*(leto+1)*(lzeo+1)
 
@@ -326,7 +326,7 @@ MODULE mo_domdcomp
 
    SUBROUTINE average_point
 
-      ir=0
+      call p_null_req
       lp=-5
       lq=-5
       do i=0,7
@@ -341,16 +341,12 @@ MODULE mo_domdcomp
             rr(lp:lp+4,1)=qa(l,:)
             do j=1,imjp(ii)
                lq=lq+5
-               ir=ir+1
-               call MPI_ISEND(rr(lp:lp+4,1),5,MPI_REAL8,jpcd(i,j),itag,icom,ireq(ir),ierr)
-               ir=ir+1
-               call MPI_IRECV(rr(lq:lq+4,2),5,MPI_REAL8,jpcd(i,j),itag,icom,ireq(ir),ierr)
+               call p_isend(rr(lp:lp+4,1), jpcd(i,j), itag)
+               call p_irecv(rr(lq:lq+4,2), jpcd(i,j), itag)
             end do
          end if
       end do
-      if(ir/=0) then
-         call MPI_WAITALL(ir,ireq,ista,ierr)
-      end if
+      call p_waitall
       lp=-5
       lq=-5
       do i=0,7
@@ -375,7 +371,7 @@ MODULE mo_domdcomp
 
    SUBROUTINE average_line
 
-      ir=0
+      call p_null_req
       lp=0
       lq=0
       do i=0,11
@@ -397,16 +393,12 @@ MODULE mo_domdcomp
                js=lq
                je=js+ke-ks
                lq=lq+je-js+1
-               ir=ir+1
-               call MPI_ISEND(rr(ks:ke,1),ke-ks+1,MPI_REAL8,jlcd(i,j),itag,icom,ireq(ir),ierr)
-               ir=ir+1
-               call MPI_IRECV(rr(js:je,2),je-js+1,MPI_REAL8,jlcd(i,j),itag,icom,ireq(ir),ierr)
+               call p_isend(rr(ks:ke,1), jlcd(i,j), itag)
+               call p_irecv(rr(js:je,2), jlcd(i,j), itag)
             end do
          end if
       end do
-      if(ir/=0) then
-         call MPI_WAITALL(ir,ireq,ista,ierr)
-      end if
+      call p_waitall
       lp=0
       lq=0
       do i=0,11
@@ -437,7 +429,7 @@ MODULE mo_domdcomp
 
    SUBROUTINE average_surface
 
-      ir=0
+      call p_null_req
       itag=30
       do nn=1,3
          select case(nn)
@@ -466,16 +458,12 @@ MODULE mo_domdcomp
                      rr(l,1)=one
                   end do
                end do
-               ir=ir+1
-               call MPI_ISEND(drva(:,:,ip),5*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+iq,icom,ireq(ir),ierr)
-               ir=ir+1
-               call MPI_IRECV(drvb(:,:,ip),5*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+ip,icom,ireq(ir),ierr)
+               call p_isend(drva(:,:,ip), mcd(nn,ip), itag+iq, 5*nbsize(nn))
+               call p_irecv(drvb(:,:,ip), mcd(nn,ip), itag+ip, 5*nbsize(nn))
             end if
          end do
       end do
-      if(ir/=0) then
-         call MPI_WAITALL(ir,ireq,ista,ierr)
-      end if
+      call p_waitall
       do nn=1,3
          select case(nn)
          case(1)

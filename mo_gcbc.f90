@@ -121,7 +121,7 @@ MODULE mo_gcbc
 
    SUBROUTINE gcbc_comm
 
-      ir=0
+      call p_null_req
       itag=30
       do nn=1,3
          select case(nn)
@@ -139,16 +139,12 @@ MODULE mo_gcbc
             iq=1-ip
             np=nbc(nn,ip)
             if((np-30)*(abs(nextgcic-1)+abs((np-20)*(np-25)))==0) then
-               ir=ir+1
-               call MPI_ISEND(drva(:,:,ip),5*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+iq,icom,ireq(ir),ierr)
-               ir=ir+1
-               call MPI_IRECV(drvb(:,:,ip),5*nbsize(nn),MPI_REAL8,mcd(nn,ip),itag+ip,icom,ireq(ir),ierr)
+               call p_isend(drva(:,:,ip), mcd(nn,ip), itag+iq, 5*nbsize(nn))
+               call p_irecv(drvb(:,:,ip), mcd(nn,ip), itag+ip, 5*nbsize(nn))
             end if
          end do
       end do
-      if(ir/=0) then
-         call MPI_WAITALL(ir,ireq,ista,ierr)
-      end if
+      call p_waitall
 
    END SUBROUTINE gcbc_comm
 

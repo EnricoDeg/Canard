@@ -4,7 +4,6 @@
 
 program main3d
 
-   use mpi
    use mo_mpi
    use mo_io
    use mo_domdcomp
@@ -19,10 +18,7 @@ program main3d
 
    CALL p_start
 
-   allocate(lxim(0:mpro),letm(0:mpro),lzem(0:mpro),lpos(0:mpro),vmpi(0:mpro))
-
-   ll=max(npro,12)
-   allocate(ista(MPI_STATUS_SIZE,ll),ireq(ll))
+   allocate(lxim(0:mpro),letm(0:mpro),lzem(0:mpro),lpos(0:mpro))
 
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
    inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
@@ -154,8 +150,6 @@ program main3d
    end if
    call p_barrier
 
-   wts=MPI_WTIME()
-
    ndati=-1
    nsigi=-1
    dtsum=zero
@@ -217,12 +211,12 @@ program main3d
                          +abs(zem(:,1)*(de(:,2)+umf(1))+zem(:,2)*(de(:,3)+umf(2))+zem(:,3)*(de(:,4)+umf(3)))
                   ss(:,2)=abs(yaco(:))
                   res=maxval((sqrt(de(:,5)*rr(:,1))+rr(:,2))*ss(:,2))
-                  call MPI_ALLREDUCE(res,fctr,1,MPI_REAL8,MPI_MAX,icom,ierr)
+                  call p_sum(res, fctr)
                   ra0=cfl/fctr
                   ra1=ra0
                   if(nviscous==1) then
                      res=maxval(de(:,1)*ss(:,1)*rr(:,1)*ss(:,2)*ss(:,2))
-                     call MPI_ALLREDUCE(res,fctr,1,MPI_REAL8,MPI_MAX,icom,ierr)
+                     call p_sum(res, fctr)
                      ra1=half/fctr
                   end if
                   dte=min(ra0,ra1)
@@ -482,8 +476,8 @@ program main3d
 
    end do
 
-   wte=MPI_WTIME(); res=wte-wts
-   call MPI_ALLREDUCE(res,wtime,1,MPI_REAL8,MPI_SUM,icom,ierr)
+   res=wte-wts
+   call p_sum(res, wtime)
    if(myid==0) then
       open(9,file='timeouts.dat',status='replace')
       write(9,'(es15.7)') times(:)
@@ -561,7 +555,7 @@ program main3d
       write(*,*) "Finished."
    end if
 
-   call MPI_FINALIZE(ierr)
+   call p_stop
 
  end program main3d
 
