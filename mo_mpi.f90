@@ -18,7 +18,7 @@ MODULE mo_mpi
   INTEGER, PARAMETER :: nerr = 0
 
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv
-  PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier
+  PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
   PUBLIC :: mpro, npro, myid
 
   INTERFACE p_send
