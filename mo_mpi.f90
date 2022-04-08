@@ -42,6 +42,10 @@ MODULE mo_mpi
     MODULE PROCEDURE p_sum_all_dp_0d
   END INTERFACE
 
+  INTERFACE p_max
+    MODULE PROCEDURE p_max_all_dp_0d
+  END INTERFACE
+
   INTERFACE p_isend
      MODULE PROCEDURE p_isend_real_1d
      MODULE PROCEDURE p_isend_real_1d_sp
@@ -385,6 +389,29 @@ MODULE mo_mpi
 #endif
 
   END SUBROUTINE p_sum_all_dp_0d
+
+  SUBROUTINE p_max_all_dp_0d(zfield, ssum, comm)
+
+    REAL(nr),          INTENT(out) :: ssum
+    REAL(nr),          INTENT(in)  :: zfield
+    INTEGER, OPTIONAL, INTENT(in)  :: comm
+
+#ifndef NOMPI
+    INTEGER :: p_comm
+
+    IF (PRESENT(comm)) THEN
+       p_comm = comm
+    ELSE
+       p_comm = icom
+    ENDIF
+
+    CALL MPI_ALLREDUCE (zfield, ssum, 1, MPI_REAL8, &
+         MPI_MAX, p_comm, ierr)
+#else
+    ssum = zfield
+#endif
+
+  END SUBROUTINE p_max_all_dp_0d
 
   SUBROUTINE p_isend_real_1d (buffer, p_destination, p_tag, p_count, comm)
 

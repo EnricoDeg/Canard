@@ -209,12 +209,12 @@ program main3d
                          +abs(zem(:,1)*(de(:,2)+umf(1))+zem(:,2)*(de(:,3)+umf(2))+zem(:,3)*(de(:,4)+umf(3)))
                   ss(:,2)=abs(yaco(:))
                   res=maxval((sqrt(de(:,5)*rr(:,1))+rr(:,2))*ss(:,2))
-                  call p_sum(res, fctr)
+                  call p_max(res, fctr)
                   ra0=cfl/fctr
                   ra1=ra0
                   if(nviscous==1) then
                      res=maxval(de(:,1)*ss(:,1)*rr(:,1)*ss(:,2)*ss(:,2))
-                     call p_sum(res, fctr)
+                     call p_max(res, fctr)
                      ra1=half/fctr
                   end if
                   dte=min(ra0,ra1)
@@ -474,14 +474,9 @@ program main3d
 
    end do
 
-   res=wte-wts
-   call p_sum(res, wtime)
    if(myid==0) then
       open(9,file='timeouts.dat',status='replace')
       write(9,'(es15.7)') times(:)
-      close(9)
-      open(9,file='walltime.dat',position='append',status='unknown')
-      write(9,'(2es15.7)') real(npro,kind=nr),wtime/npro
       close(9)
    end if
 
