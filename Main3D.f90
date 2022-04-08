@@ -5,7 +5,7 @@
 program main3d
 
    use mo_mpi, ONLY : mpro, npro, myid, p_start, p_stop, &
-                      p_barrier, p_sum
+                      p_barrier, p_sum, p_max
    use mo_io
    use mo_domdcomp
    use mo_grid
@@ -43,7 +43,7 @@ program main3d
    call allocate_io_memory
 
    allocate(lximb(0:mbk), letmb(0:mbk), lzemb(0:mbk), &
-            lhmb(0:mbk), mo(0:mbk), nbpc(0:mbk,3),    &
+            lhmb(0:mbk), mo(0:mbk), nbpc(0:mbk,3)     &
             )
    call allocate_domdcomp(mbk)
 
