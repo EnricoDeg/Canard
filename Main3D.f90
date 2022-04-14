@@ -42,41 +42,17 @@ program main3d
 
    call allocate_io_memory
 
-   allocate(lximb(0:mbk), letmb(0:mbk), lzemb(0:mbk), &
-            lhmb(0:mbk), mo(0:mbk), nbpc(0:mbk,3)     &
-            )
    call allocate_domdcomp(mbk)
 
    call read_inputp
 
-!===== DOMAIN DECOMPOSITION & BOUNDARY INFORMATION
+!===== DOMAIN DECOMPOSITION / BOUNDARY INFORMATION / SUBDOMAIN SIZES
 
-   mo(0)=0
-   do mm=1,mbk
-      mo(mm) = mo(mm-1) + nbpc(mm-1,1) * &
-                          nbpc(mm-1,2) * &
-                          nbpc(mm-1,3)
-   end do
-   do mm=0,mbk
-      if(myid>=mo(mm)) then
-         mb=mm
-      end if
-   end do
-   lxio=lximb(mb)
-   leto=letmb(mb)
-   lzeo=lzemb(mb)
+   call domdcomp_init(mbk, nthick, nbody, nviscous)
 
-   call filename_init
+!===== WRITING START POSITIONS IN OUTPUT FILE
 
-   call multiblock_info
-
-   call domdcomp_init
-
-!===== SUBDOMAIN SIZES & WRITING START POSITIONS IN OUTPUT FILE
-
-   call subdomain_init
-
-   call file_start_position
+   call output_init
 
 !===== ALLOCATION OF MAIN ARRAYS
 
