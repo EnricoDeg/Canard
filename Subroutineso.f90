@@ -6,6 +6,10 @@ module subroutineso
 
    use mainvar3d
    implicit none
+   public
+
+   private :: fcbcm, fcint, sbcco
+   real(kind=nr) :: alphf, betf
 
    contains
 
