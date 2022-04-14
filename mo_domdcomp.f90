@@ -39,123 +39,144 @@ MODULE mo_domdcomp
       allocate(imjp(0:lpp), jptag(0:lpp), imjl(0:lqq), jltag(0:lqq))
       allocate(jjp(0:lpp,0:ljpl))
       allocate(jjl(0:lqq,0:ljpl))
+      allocate(lximb(0:nblocks), letmb(0:nblocks), lzemb(0:nblocks))
+      allocate(mo(0:nblocks), nbpc(0:nblocks,3))
 
    end subroutine allocate_domdcomp
 
-   subroutine multiblock_info
+   subroutine domdcomp_init(nblocks, nkthick, nkbody, nkviscous)
+      integer(kind=ni), intent(in) :: nblocks, nkthick
+      integer(kind=ni), intent(in) :: nkbody, nkviscous
+      integer(kind=ni) :: ipk, jpk, mmk, nnk, nstart, nend
+      integer(kind=ni) :: llk, mpk, lpk, mak, lk
 
-      ip=30*nthick+35*(1-nthick)
-      jp=35*(1-nbody)+nbody*(20+5*nviscous)
-      do mm=0,mbk
-         select case(mm)
-         case(0,3)
-            nbbc(mm,1,:)=(/10,ip/)
-            mbcd(mm,1,:)=(/-1,mm+1/)
-         case(1,4)
-            nbbc(mm,1,:)=(/ip,ip/)
-            mbcd(mm,1,:)=(/mm-1,mm+1/)
-         case(2,5)
-            nbbc(mm,1,:)=(/ip,10/)
-            mbcd(mm,1,:)=(/mm-1,-1/)
-         end select
-
-         select case(mm)
-         case(0,2)
-            nbbc(mm,2,:)=(/45,ip/)
-            mbcd(mm,2,:)=(/mm+3,mm+3/)
-         case(1)
-            nbbc(mm,2,:)=(/45,ip/)
-            mbcd(mm,2,:)=(/mm+3,mm+3/)
-         case(3,5)
-            nbbc(mm,2,:)=(/ip,45/)
-            mbcd(mm,2,:)=(/mm-3,mm-3/)
-         case(4)
-            nbbc(mm,2,:)=(/ip,45/)
-            mbcd(mm,2,:)=(/mm-3,mm-3/)
-         end select
-
-         nbbc(mm,3,:)=(/45,45/)
-         mbcd(mm,3,:)=(/mm,mm/)
+      mo(0) = 0
+      do mmk = 1,nblocks
+         mo(mmk) = mo(mmk-1) + nbpc(mmk-1,1) * &
+                               nbpc(mmk-1,2) * &
+                               nbpc(mmk-1,3)
+      end do
+      
+      do mmk = 0,nblocks
+         if(myid >= mo(mmk)) then
+            mb = mmk
+         end if
       end do
 
-   end subroutine multiblock_info
+      lxio = lximb(mb)
+      leto = letmb(mb)
+      lzeo = lzemb(mb)
 
-   SUBROUTINE domdcomp_init
+      ! multiblock info
+      ipk = 30 * nkthick + 35 * (1 - nkthick)
+      jpk = 35 * (1 - nkbody) + nkbody * (20 + 5 * nkviscous)
+      do mmk = 0,nblocks
+         select case(mmk)
+         case(0,3)
+            nbbc(mmk,1,:) = (/ 10, ipk /)
+            mbcd(mmk,1,:) = (/ -1, mmk+1 /)
+         case(1,4)
+            nbbc(mmk,1,:) = (/ ipk, ipk  /)
+            mbcd(mmk,1,:) = (/ mmk-1, mmk+1 /)
+         case(2,5)
+            nbbc(mmk,1,:) = (/ipk,10/)
+            mbcd(mmk,1,:) = (/mmk-1,-1/)
+         end select
 
-      ijkp(1)=mod(myid-mo(mb),nbpc(mb,1))
-      ijkp(2)=mod((myid-mo(mb))/nbpc(mb,1),nbpc(mb,2))
-      ijkp(3)=mod((myid-mo(mb))/(nbpc(mb,1)*nbpc(mb,2)),nbpc(mb,3))
+         select case(mmk)
+         case(0,2)
+            nbbc(mmk,2,:) = (/45,ipk/)
+            mbcd(mmk,2,:) = (/mmk+3,mmk+3/)
+         case(1)
+            nbbc(mmk,2,:) = (/45,ipk/)
+            mbcd(mmk,2,:) = (/mmk+3,mmk+3/)
+         case(3,5)
+            nbbc(mmk,2,:) = (/ipk,45/)
+            mbcd(mmk,2,:) = (/mmk-3,mmk-3/)
+         case(4)
+            nbbc(mmk,2,:) = (/ipk,45/)
+            mbcd(mmk,2,:) = (/mmk-3,mmk-3/)
+         end select
 
-      do nn=1,3
-         ns=mod(nn,3)+1
-         ne=mod(ns,3)+1
-         do ip=0,1
-            mm=mbcd(mb,nn,ip)
-            if(mm==-1) then
-               mmcd(nn,ip)=-1
+         nbbc(mmk,3,:) = (/45,45/)
+         mbcd(mmk,3,:) = (/mmk,mmk/)
+      end do
+
+      ! domdcomp initialize
+      ijkp(1) = mod(myid-mo(mb),nbpc(mb,1))
+      ijkp(2) = mod((myid-mo(mb))/nbpc(mb,1),nbpc(mb,2))
+      ijkp(3) = mod((myid-mo(mb))/(nbpc(mb,1)*nbpc(mb,2)),nbpc(mb,3))
+
+      do nnk = 1,3
+         nstart = mod(nnk,3)+1
+         nend   = mod(nstart,3)+1
+         do ipk = 0,1
+            mm = mbcd(mb,nnk,ipk)
+            if(mm == -1) then
+               mmcd(nnk,ipk) = -1
             else
-               mmcd(nn,ip)=idsd3((1-ip)*(nbpc(mm,nn)-1),ijkp(ns),ijkp(ne),mm,nn) 
+               mmcd(nnk,ipk) = idsd3( (1 - ipk) * (nbpc(mm,nnk) - 1), &
+                                      ijkp(nstart),                   &
+                                      ijkp(nend),                     &
+                                      mm,                             &
+                                      nnk ) 
             end if
          end do
       end do
 
-      do nn=1,3
-         select case(nn)
+      do nnk = 1,3
+         select case(nnk)
          case (1)
-            ll=lxio
-            mp=1
+            llk = lxio
+            mpk = 1
          case (2)
-            ll=leto
-            mp=nbpc(mb,1)
+            llk = leto
+            mpk = nbpc(mb,1)
          case (3)
-            ll=lzeo
-            mp=nbpc(mb,1)*nbpc(mb,2)
+            llk = lzeo
+            mpk = nbpc(mb,1) * nbpc(mb,2)
          end select
-         lp=ijkp(nn)
-         ma=nbpc(mb,nn)
-         if(ma==1) then
-            l=ll
-            nbc(nn,0)=nbbc(mb,nn,0)
-            nbc(nn,1)=nbbc(mb,nn,1)
-            mcd(nn,0)=mmcd(nn,0)
-            mcd(nn,1)=mmcd(nn,1)
+         lpk = ijkp(nnk)
+         mak = nbpc(mb,nnk)
+         if(mak == 1) then
+            lk = llk
+            nbc(nnk,0) = nbbc(mb,nnk,0)
+            nbc(nnk,1) = nbbc(mb,nnk,1)
+            mcd(nnk,0) = mmcd(nnk,0)
+            mcd(nnk,1) = mmcd(nnk,1)
          end if
-         if(ma>=2) then
-            if(lp==0) then
-               l=ll-((ll+1)/ma)*(ma-1)
-               nbc(nn,0)=nbbc(mb,nn,0)
-               nbc(nn,1)=40
-               mcd(nn,0)=mmcd(nn,0)
-               mcd(nn,1)=myid+mp
+         if(mak >= 2) then
+            if(lpk == 0) then
+               lk = llk - ( ( llk + 1 ) / mak ) * ( mak - 1 )
+               nbc(nnk,0) = nbbc(mb,nnk,0)
+               nbc(nnk,1) = 40
+               mcd(nnk,0) = mmcd(nnk,0)
+               mcd(nnk,1) = myid+mpk
             end if
-            if(lp>0.and.lp<ma-1) then
-               l=(ll+1)/ma-1
-               nbc(nn,0)=40
-               nbc(nn,1)=40
-               mcd(nn,0)=myid-mp
-               mcd(nn,1)=myid+mp
+            if(lpk > 0 .and. lpk < mak-1) then
+               lk = ( llk + 1 ) / mak - 1
+               nbc(nnk,0) = 40
+               nbc(nnk,1) = 40
+               mcd(nnk,0) = myid-mpk
+               mcd(nnk,1) = myid+mpk
             end if
-            if(lp==ma-1) then
-               l=(ll+1)/ma-1
-               nbc(nn,0)=40
-               nbc(nn,1)=nbbc(mb,nn,1)
-               mcd(nn,0)=myid-mp
-               mcd(nn,1)=mmcd(nn,1)
+            if(lpk == mak-1) then
+               lk = ( llk + 1 ) / mak - 1
+               nbc(nnk,0) = 40
+               nbc(nnk,1) = nbbc(mb,nnk,1)
+               mcd(nnk,0) = myid - mpk
+               mcd(nnk,1) = mmcd(nnk,1)
             end if
          end if
-         select case(nn)
+         select case(nnk)
          case (1)
-            lxi=l
+            lxi=lk
          case (2)
-            let=l
+            let=lk
          case (3)
-            lze=l
+            lze=lk
          end select
       end do
-
-   END SUBROUTINE domdcomp_init
-
-   SUBROUTINE subdomain_init
 
       if(myid==0) then
          lxim(0)=lxi
@@ -198,7 +219,7 @@ MODULE mo_domdcomp
 
       nbsize(:)=(ijk(2,:)+1)*(ijk(3,:)+1)
 
-   END SUBROUTINE subdomain_init
+   END SUBROUTINE domdcomp_init
 
    SUBROUTINE search_point
 
