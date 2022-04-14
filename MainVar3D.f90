@@ -54,7 +54,6 @@ module mainvar3d
    integer(kind=ni),dimension(:),allocatable :: li,lcsz
    integer(kind=ni),dimension(:),allocatable :: lxim,letm,lzem,lpos
    integer(kind=ni),dimension(:),allocatable :: lximb,letmb,lzemb,mo,nrr,npex
-   integer(kind=int64),dimension(:),allocatable :: lhmb
 
    real(kind=nr),dimension(:,:),allocatable :: qo,qa,qb,de
    real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz
@@ -115,7 +114,7 @@ module mainvar3d
    real(kind=nr),dimension(mbci) :: rbci,sbci
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: ve,dm,rv,uoo,umf,dudtmf
-   real(kind=nr) :: alphf,betf,fa,fb,fc
+   real(kind=nr) :: fa,fb,fc
    real(kind=nr) :: ra0,ra1,ra2,ra3,res,fctr,dfdt
    real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3,wtemp,cfl,tmax,timf,fltk,fltrbc,dto
    real(kind=nr) :: aoo,amachoo,srefoo,srefp1dre
