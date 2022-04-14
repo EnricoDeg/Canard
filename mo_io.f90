@@ -9,7 +9,10 @@ MODULE mo_io
    use subroutines3d
    IMPLICIT NONE
    PUBLIC
-   integer(kind=ni),dimension(:),allocatable :: idsgnl,lsgnl
+
+   integer(kind=ni),   dimension(:),allocatable :: idsgnl,lsgnl
+   integer(kind=int64),dimension(:),allocatable :: lhmb
+   
    CONTAINS
 
    SUBROUTINE read_inputo
@@ -68,10 +71,10 @@ MODULE mo_io
       allocate(times(0:ndata),cfilet(-1:ndata),     &
                ctecplt(-1:ndata),varm(0:1,0:mpro),  &
                varmin(ll),varmax(ll),cthead(0:mbk), &
-               czonet(0:mbk))
+               czonet(0:mbk),lhmb(0:mbk))
    END SUBROUTINE allocate_io_memory
 
-   SUBROUTINE filename_init
+   SUBROUTINE output_init
 
       cfilet(-1)='grid'
       do n=0,ndata
@@ -104,10 +107,6 @@ MODULE mo_io
       cnnode=cno(4)//cno(3)//cno(2)//cno(1)//cno(0)
       cdata='misc/data'//cnnode//'.dat'
 
-   END SUBROUTINE filename_init
-
-   SUBROUTINE file_start_position
-
       do mm=0,mbk
          lpos(mo(mm))=0
          do i=1,nbpc(mm,1)-1
@@ -132,7 +131,7 @@ MODULE mo_io
          end do
       end do
 
-   END SUBROUTINE file_start_position
+   END SUBROUTINE output_init
 
    SUBROUTINE read_restart_file
 
@@ -377,5 +376,32 @@ MODULE mo_io
       lh=lh+1
 
    end subroutine strio
+
+!===== SUBROUTINE FOR FINDING VARIABLE MIN/MAX VALUES FOR TECPLOT DATA FILE
+
+   subroutine vminmax(nn)
+
+      integer(kind=ni),intent(in) :: nn
+
+      varmin(nn)=minval(varr)
+      varmax(nn)=maxval(varr)
+      varm(:,myid)=(/varmin(nn),varmax(nn)/)
+
+      call p_null_req
+      itag=nn
+      if(myid==mo(mb)) then
+         mps=mo(mb)
+         mpe=mps+nbpc(mb,1)*nbpc(mb,2)*nbpc(mb,3)-1
+         do mp=mps+1,mpe
+            call p_irecv(varm(:,mp), mp, itag, 2)
+         end do
+         call p_waitall
+         varmin(nn)=minval(varm(0,mps:mpe))
+         varmax(nn)=maxval(varm(1,mps:mpe))
+      else
+         call p_send(varm(:,myid), mo(mb), itag, 2)
+      end if
+
+   end subroutine vminmax
 
 END MODULE mo_io
