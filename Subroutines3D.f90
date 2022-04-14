@@ -366,33 +366,6 @@ module subroutines3d
 
    end subroutine vorti
 
-!===== SUBROUTINE FOR FINDING VARIABLE MIN/MAX VALUES FOR TECPLOT DATA FILE
-
-   subroutine vminmax(nn)
-
-      integer(kind=ni),intent(in) :: nn
-
-      varmin(nn)=minval(varr)
-      varmax(nn)=maxval(varr)
-      varm(:,myid)=(/varmin(nn),varmax(nn)/)
-
-      call p_null_req
-      itag=nn
-      if(myid==mo(mb)) then
-         mps=mo(mb)
-         mpe=mps+nbpc(mb,1)*nbpc(mb,2)*nbpc(mb,3)-1
-         do mp=mps+1,mpe
-            call p_irecv(varm(:,mp), mp, itag, 2)
-         end do
-         call p_waitall
-         varmin(nn)=minval(varm(0,mps:mpe))
-         varmax(nn)=maxval(varm(1,mps:mpe))
-      else
-         call p_send(varm(:,myid), mo(mb), itag, 2)
-      end if
-
-   end subroutine vminmax
-
 !=====
 
 end module subroutines3d
