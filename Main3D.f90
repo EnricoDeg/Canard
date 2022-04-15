@@ -56,6 +56,7 @@ program main3d
 !===== ALLOCATION OF MAIN ARRAYS
 
    call allocate_memory
+   call allocate_numerics(lim)
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
@@ -63,7 +64,7 @@ program main3d
 
 !===== PENTADIAGONAL MATRICES FOR DIFFERENCING & FILETERING
 
-   call init_penta
+   call init_penta(lxi, let, lze, nbc)
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 

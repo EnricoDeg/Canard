@@ -11,63 +11,88 @@ module mo_numerics
    implicit none
 
    private :: fcbcm, fcint, sbcco
-   real(kind=nr) :: alphf, betf
+
+   integer(kind=ni), private, parameter :: lmd=11,lmf=11,lmp=max(lmd,lmf)
+   real(kind=nr),    private :: alphf, betf
+   real(kind=nr),    private, dimension(0:lmp,0:1,0:1) :: pbci,pbco
+   real(kind=nr),    private, dimension(0:1,0:1) :: pbcot
+   real(kind=nr),    private :: fa,fb,fc
+   real(kind=nr),    private, dimension(-2:2,0:2,0:1) :: albef
+   real(kind=nr),    private, dimension(0:lmp) :: sap
+   real(kind=nr),    private, dimension(0:4,0:2) :: fbc
+   integer(kind=ni), private, dimension(3,0:1,0:1) :: ndf
+
+   real(kind=nr),    private, dimension(:,:), allocatable :: xu,yu
+   real(kind=nr),    private, dimension(:,:), allocatable :: xl,yl
+   
 
    contains
+
+   SUBROUTINE allocate_numerics(limk)
+      integer(kind=ni),intent(in) :: limk
+
+      allocate(xu(0:limk,3),yu(0:limk,3),xl(0:limk,2),yl(0:limk,2))
+
+   END SUBROUTINE allocate_numerics
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
    SUBROUTINE init_extracoeff_bounds
+      integer(kind=ni) :: ntk, jjk, iik
 
       call fcbcm(fltk,fltrbc)
       call fcint(fltk,half,alphf,betf,fa,fb,fc)
-      albef(:,0,1)=(/zero,zero,one,alphf,betf/)
-      albef(:,1,1)=(/zero,alphf,one,alphf,betf/)
-      albef(:,2,1)=(/betf,alphf,one,alphf,betf/)
+      albef(:,0,1) = (/ zero,zero, one,alphf,betf /)
+      albef(:,1,1) = (/ zero,alphf,one,alphf,betf /)
+      albef(:,2,1) = (/ betf,alphf,one,alphf,betf /)
 
-      pbco(:,:,:)=zero
-      pbci(:,:,:)=zero
+      pbco(:,:,:) = zero
+      pbci(:,:,:) = zero
       call sbcco
-      do nt=0,1
-         do j=0,1
-            ii=lmd+nt*(lmf-lmd)
-            pbcot(j,nt)=sum(pbco(0:ii,j,nt))
+      do ntk = 0,1
+         do jjk = 0,1
+            iik = lmd + ntk * ( lmf - lmd )
+            pbcot(jjk,ntk) = sum( pbco(0:iik,jjk,ntk) )
          end do
       end do
 
    END SUBROUTINE init_extracoeff_bounds
 
-   SUBROUTINE init_penta
+   SUBROUTINE init_penta(lxik, letk, lzek, nbck)
+      integer(kind=ni), intent(in) :: lxik, letk, lzek
+      integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
+      integer(kind=ni) :: nnk, ipk, istart, iend
+      integer(kind=ni) :: nstart, nend, npk
 
-      do nn=1,3
-         select case(nn)
+      do nnk = 1,3
+         select case(nnk)
          case(1)
-            is=0
-            ie=is+lxi
+            istart = 0
+            iend = istart + lxik
          case(2)
-            is=lxi+1
-            ie=is+let
+            istart = lxik + 1
+            iend = istart + letk
          case(3)
-            is=lxi+let+2
-            ie=is+lze
+            istart = lxik + letk + 2
+            iend = istart + lzek
          end select
-         do ip=0,1
-            np=nbc(nn,ip)
-            select case(np)
+         do ipk = 0,1
+            npk=nbck(nnk,ipk)
+            select case(npk)
             case(10,20,25,30)
-               ndf(nn,ip,0)=0
-               ndf(nn,ip,1)=0
+               ndf(nnk,ipk,0) = 0
+               ndf(nnk,ipk,1) = 0
             case(35,40,45)
-               ndf(nn,ip,0)=1
-               ndf(nn,ip,1)=1
+               ndf(nnk,ipk,0) = 1
+               ndf(nnk,ipk,1) = 1
             end select
          end do
-         ns=ndf(nn,0,0)
-         ne=ndf(nn,1,0)
-         call penta(xu(:,:),xl(:,:),is,ie,ns,ne,0)
-         ns=ndf(nn,0,1)
-         ne=ndf(nn,1,1)
-         call penta(yu(:,:),yl(:,:),is,ie,ns,ne,1)
+         nstart = ndf(nnk,0,0)
+         nend   = ndf(nnk,1,0)
+         call penta(xu(:,:), xl(:,:), istart, iend, nstart, nend, 0)
+         nstart = ndf(nnk,0,1)
+         nend   = ndf(nnk,1,1)
+         call penta(yu(:,:), yl(:,:), istart, iend, nstart, nend, 1)
       end do
   
    END SUBROUTINE init_penta
@@ -81,61 +106,66 @@ module mo_numerics
       real(kind=nr),dimension(0:lim,2),intent(inout) :: xl
       real(kind=nr),dimension(-2:2,0:2,0:1) :: albe
       real(kind=nr) :: alpho,beto
+      integer(kind=ni) :: iik
 
       if(nt==0) then
-         albe(:,0,0)=(/zero,zero,one,alpha01,beta02/)
-         albe(:,1,0)=(/zero,alpha10,one,alpha12,beta13/)
-         albe(:,2,0)=(/beta,alpha,one,alpha,beta/)
-         alpho=alpha; beto=beta
-         albe(:,0,1)=(/zero,zero,one,alpha,beta/)
-         albe(:,1,1)=(/zero,alpha,one,alpha,beta/)
-         albe(:,2,1)=(/beta,alpha,one,alpha,beta/)
+         albe(:,0,0) = (/ zero, zero,    one, alpha01, beta02 /)
+         albe(:,1,0) = (/ zero, alpha10, one, alpha12, beta13 /)
+         albe(:,2,0) = (/ beta, alpha,   one, alpha,   beta /)
+         alpho = alpha
+         beto  = beta
+         albe(:,0,1) = (/ zero, zero,  one, alpha, beta /)
+         albe(:,1,1) = (/ zero, alpha, one, alpha, beta /)
+         albe(:,2,1) = (/ beta, alpha, one, alpha, beta /)
       else
-         albe=albef; alpho=alphf; beto=betf
+         albe  = albef
+         alpho = alphf
+         beto  = betf
       end if
 
-      do i=is,ie
-         xl(i,:)=one; xu(i,:)=one
+      do iik = is,ie
+         xl(iik,:) = one
+         xu(iik,:) = one
       end do
-      i=is
-      xu(i,1)=one
-      xu(i,2)=albe(1,0,ns)
-      xu(i,3)=albe(2,0,ns)
-      i=is+1
-      xl(i,2)=albe(-1,1,ns)*xu(i-1,1)
-      xu(i,1)=one/(one-xu(i-1,2)*xl(i,2))
-      xu(i,2)=albe(1,1,ns)-xu(i-1,3)*xl(i,2)
-      xu(i,3)=albe(2,1,ns)
-      i=is+2
-      xl(i,1)=albe(-2,2,ns)*xu(i-2,1)
-      xl(i,2)=(albe(-1,2,ns)-xu(i-2,2)*xl(i,1))*xu(i-1,1)
-      xu(i,1)=one/(one-xu(i-2,3)*xl(i,1)-xu(i-1,2)*xl(i,2))
-      xu(i,2)=albe(1,2,ns)-xu(i-1,3)*xl(i,2)
-      xu(i,3)=albe(2,2,ns)
-      do i=is+3,ie-3
-         xl(i,1)=beto*xu(i-2,1)
-         xl(i,2)=(alpho-xu(i-2,2)*xl(i,1))*xu(i-1,1)
-         xu(i,1)=one/(one-xu(i-2,3)*xl(i,1)-xu(i-1,2)*xl(i,2))
-         xu(i,2)=alpho-xu(i-1,3)*xl(i,2)
-         xu(i,3)=beto
+      iik = is
+      xu(iik,1) = one
+      xu(iik,2) = albe(1,0,ns)
+      xu(iik,3) = albe(2,0,ns)
+      iik = is + 1
+      xl(iik,2) = albe(-1,1,ns) * xu(iik-1,1)
+      xu(iik,1) = one / ( one - xu(iik-1,2) * xl(iik,2) )
+      xu(iik,2) = albe(1,1,ns) - xu(iik-1,3) * xl(iik,2)
+      xu(iik,3) = albe(2,1,ns)
+      iik = is + 2
+      xl(iik,1) = albe(-2,2,ns) * xu(iik-2,1)
+      xl(iik,2) = ( albe(-1,2,ns) - xu(iik-2,2) * xl(iik,1) ) * xu(iik-1,1)
+      xu(iik,1) = one / ( one - xu(iik-2,3) * xl(iik,1) - xu(iik-1,2) * xl(iik,2))
+      xu(iik,2) = albe(1,2,ns) - xu(iik-1,3) * xl(iik,2)
+      xu(iik,3) = albe(2,2,ns)
+      do iik = is+3,ie-3
+         xl(iik,1) = beto * xu(iik-2,1)
+         xl(iik,2) = ( alpho - xu(iik-2,2) * xl(iik,1) ) * xu(iik-1,1)
+         xu(iik,1) = one / ( one - xu(iik-2,3) * xl(iik,1) - xu(iik-1,2) * xl(iik,2) )
+         xu(iik,2) = alpho - xu(iik-1,3) * xl(iik,2)
+         xu(iik,3) = beto
       end do
-      i=ie-2
-      xl(i,1)=albe(2,2,ne)*xu(i-2,1)
-      xl(i,2)=(albe(1,2,ne)-xu(i-2,2)*xl(i,1))*xu(i-1,1)
-      xu(i,1)=one/(one-xu(i-2,3)*xl(i,1)-xu(i-1,2)*xl(i,2))
-      xu(i,2)=albe(-1,2,ne)-xu(i-1,3)*xl(i,2)
-      xu(i,3)=albe(-2,2,ne)
-      i=ie-1
-      xl(i,1)=albe(2,1,ne)*xu(i-2,1)
-      xl(i,2)=(albe(1,1,ne)-xu(i-2,2)*xl(i,1))*xu(i-1,1)
-      xu(i,1)=one/(one-xu(i-2,3)*xl(i,1)-xu(i-1,2)*xl(i,2))
-      xu(i,2)=albe(-1,1,ne)-xu(i-1,3)*xl(i,2)
-      i=ie
-      xl(i,1)=albe(2,0,ne)*xu(i-2,1)
-      xl(i,2)=(albe(1,0,ne)-xu(i-2,2)*xl(i,1))*xu(i-1,1)
-      xu(i,1)=one/(one-xu(i-2,3)*xl(i,1)-xu(i-1,2)*xl(i,2))
-      do i=is,ie
-         xu(i,2:3)=xu(i,2:3)*xu(i,1)
+      iik = ie - 2
+      xl(iik,1) = albe(2,2,ne) * xu(iik-2,1)
+      xl(iik,2) = ( albe(1,2,ne) - xu(iik-2,2) * xl(iik,1) ) * xu(iik-1,1)
+      xu(iik,1) = one / ( one - xu(iik-2,3) * xl(iik,1) - xu(iik-1,2) * xl(iik,2) )
+      xu(iik,2) = albe(-1,2,ne) - xu(iik-1,3) * xl(iik,2)
+      xu(iik,3) = albe(-2,2,ne)
+      iik = ie - 1
+      xl(iik,1) = albe(2,1,ne) * xu(iik-2,1)
+      xl(iik,2) = ( albe(1,1,ne) - xu(iik-2,2) * xl(iik,1) ) * xu(iik-1,1)
+      xu(iik,1) = one / ( one - xu(iik-2,3) * xl(iik,1) - xu(iik-1,2) * xl(iik,2) )
+      xu(iik,2) = albe(-1,1,ne) - xu(iik-1,3) * xl(iik,2)
+      iik = ie
+      xl(iik,1) = albe(2,0,ne) * xu(iik-2,1)
+      xl(iik,2) = ( albe(1,0,ne) - xu(iik-2,2) * xl(iik,1) ) * xu(iik-1,1)
+      xu(iik,1) = one / ( one - xu(iik-2,3) * xl(iik,1) - xu(iik-1,2) * xl(iik,2) )
+      do iik = is,ie
+         xu(iik,2:3) = xu(iik,2:3) * xu(iik,1)
       end do
 
    end subroutine penta
@@ -147,21 +177,36 @@ module mo_numerics
       real(kind=nr),intent(in) :: fltk,fltrbc
       real(kind=nr) :: alphz,betz,za,zb,zc
 
-      ao=log(fltrbc)
+      ao = log(fltrbc)
       call fcint(fltk,half,alphz,betz,za,zb,zc)
-      fctr=one/(one+alphz*fltrbc+betz*fltrbc**two)
+      fctr = one / &
+            (one + alphz * fltrbc + betz * fltrbc**two)
 
-      albef(:,0,0)=(/zero,zero,one,alphz*fctr,betz*fctr/)
-      res=(fltrbc-1)*(za+zc+(fltrbc+1)*(zb+fltrbc*zc))/ao
-      fbc(:,0)=(/za-5*res/3,zb+10*res/21,zc-5*res/42,5*res/252,-res/630/)*fctr
+      albef(:,0,0) = (/ zero,zero,one,alphz*fctr,betz*fctr /)
+      res = (fltrbc-1) * &
+            (za + zc + (fltrbc+1) * (zb+fltrbc*zc)) /ao
+      fbc(:,0) = (/ za - 5 * res / 3,   &
+                    zb + 10 * res / 21, &
+                    zc - 5 * res / 42,  &
+                    5 * res / 252,      &
+                    -res / 630          /) * fctr
 
-      albef(:,1,0)=(/zero,alphz+betz*fltrbc,one,alphz,betz/)
-      res=(fltrbc-1)*(zb+zc*(fltrbc+1))/ao
-      fbc(:,1)=(/za+zb+zc+1627*res/1260,za+10*res/21,zb-5*res/42,zc+5*res/252,-res/630/)
+      albef(:,1,0) = (/ zero,alphz+betz*fltrbc,one,alphz,betz /)
+      res = (fltrbc-1) * &
+            (zb + zc * (fltrbc+1)) / ao
+      fbc(:,1) = (/ za + zb + zc + 1627 * res / 1260, &
+                    za + 10 * res / 21,               &
+                    zb - 5 * res / 42,                &
+                    zc + 5 * res / 252,               &
+                    -res / 630                        /)
 
-      albef(:,2,0)=(/betz,alphz,one,alphz,betz/)
-      res=zc*(fltrbc-1)/ao
-      fbc(:,2)=(/zb+zc+1627*res/1260,za-5*res/3,za-5*res/42,zb+5*res/252,zc-res/630/)
+      albef(:,2,0) = (/ betz,alphz,one,alphz,betz /)
+      res = zc * (fltrbc-1) / ao
+      fbc(:,2) = (/ zb + zc + 1627 * res / 1260, &
+                    za - 5 * res / 3,            &
+                    za - 5 * res / 42,           &
+                    zb + 5 * res / 252,          &
+                    zc - res / 630               /)
 
    end subroutine fcbcm
 
@@ -172,12 +217,20 @@ module mo_numerics
       real(kind=nr),intent(in) :: fltk,fltr
       real(kind=nr),intent(inout) :: alphz,betz,za,zb,zc
       real(kind=nr),dimension(3) :: cosf
+      real(kind=nr) :: fctrk
 
-      cosf(1)=cos(fltk); cosf(2)=cos(2*fltk); cosf(3)=cos(3*fltk)
-      fctr=1/(30+5*(7-16*fltr)*cosf(1)+2*(1+8*fltr)*cosf(2)-3*cosf(3))
-      alphz=fctr*(20*(2*fltr-1)-30*cosf(1)+12*(2*fltr-1)*cosf(2)-2*cosf(3))
-      betz=half*fctr*(2*(13-8*fltr)+(33-48*fltr)*cosf(1)+6*cosf(2)-cosf(3))
-      za=60*(1-fltr)*cos(half*fltk)**4*fctr; zb=-2*za/5; zc=za/15
+      cosf(1) = cos(fltk  )
+      cosf(2) = cos(2*fltk)
+      cosf(3) = cos(3*fltk)
+      fctrk = 1 / ( 30 + 5 * (7-16*fltr) * cosf(1) + &
+                   2 * (1+8*fltr) * cosf(2) - 3 * cosf(3))
+      alphz = fctrk * (20 * (2*fltr-1) - 30 * cosf(1) + &
+                      12 * (2 * fltr - 1) * cosf(2) - 2 * cosf(3))
+      betz = half * fctrk * (2 * (13 - 8 * fltr) + &
+             (33 - 48 * fltr) * cosf(1) + 6 * cosf(2) - cosf(3))
+      za = 60 * (1-fltr) * cos(half*fltk)**4 * fctrk
+      zb = -2 * za / 5
+      zc = za / 15
 
    end subroutine fcint
 
@@ -186,80 +239,101 @@ module mo_numerics
    subroutine sbcco
 
       real(kind=nr),dimension(:,:),allocatable :: ax,bx,rx,sx
+      integer(kind=ni) :: ntk, llk, iik, istart, iend
 
-      do nt=0,1
-         lp=2*nt-1
-         if(nt==0) then
-            ll=lmd
-            is=1
-            ie=2*(ll+1)
-            allocate(ax(ie,ie),bx(ie,ie),rx(ie,ie),sx(ie,ie))
-            ax(:,:)=0
-            bx(:,:)=0
-            ax(is,is:is+2)=(/one,alpha01,beta02/)
-            bx(is,is:is+4)=(/-(a01+a02+a03+a04),a01,a02,a03,a04/)
-            ax(is+1,is:is+3)=(/alpha10,one,alpha12,beta13/)
-            bx(is+1,is:is+4)=(/a10,-(a10+a12+a13+a14),a12,a13,a14/)
-            do i=is+2,ie-2
-               ax(i,i-2:i+2)=(/beta,alpha,one,alpha,beta/)
-               bx(i,i-2:i+2)=(/-ab,-aa,zero,aa,ab/)
+      do ntk = 0,1
+
+         lp = 2 * ntk - 1
+
+         if ( ntk == 0 ) then
+            llk = lmd
+            istart = 1
+            iend = 2 * ( llk + 1 )
+            allocate( ax(iend,iend), bx(iend,iend), &
+                      rx(iend,iend), sx(iend,iend) )
+            ax(:,:) = 0
+            bx(:,:) = 0
+            ax(istart,istart:istart+2) = (/ one, alpha01, beta02 /)
+            bx(istart,istart:istart+4) = (/ -( a01 + a02 + a03 + a04 ), &
+                                               a01,                     &
+                                               a02,                     &
+                                               a03,                     &
+                                               a04                      /)
+            ax(istart+1,istart:istart+3) = (/ alpha10, one, alpha12, beta13 /)
+            bx(istart+1,istart:istart+4) = (/ a10,                      &
+                                           -( a10 + a12 + a13 + a14 ),  &
+                                              a12,                      &
+                                              a13,                      &
+                                              a14                       /)
+            do iik = istart+2,iend-2
+               ax(iik,iik-2:iik+2) = (/ beta, alpha, one, alpha, beta /)
+               bx(iik,iik-2:iik+2) = (/ -ab, -aa, zero, aa, ab /)
             end do
-            ax(ie-1,ie:ie-3:-1)=ax(is+1,is:is+3)
-            bx(ie-1,ie:ie-4:-1)=-bx(is+1,is:is+4)
-            ax(ie,ie:ie-2:-1)=ax(is,is:is+2)
-            bx(ie,ie:ie-4:-1)=-bx(is,is:is+4)
-         end if
-         if(nt==1) then
-            ll=lmf
-            is=1
-            ie=2*(ll+1)
-            allocate(ax(ie,ie),bx(ie,ie),rx(ie,ie),sx(ie,ie))
-            ax(:,:)=0
-            bx(:,:)=0
-            ax(is,is:is+2)=albef(0:2,0,0)
-            bx(is,is+(/1,2,3,4,5/))=fbc(:,0)
-            bx(is,is)=-sum(fbc(:,0))
-            ax(is+1,is:is+3)=albef(-1:2,1,0)
-            bx(is+1,is+(/0,2,3,4,5/))=fbc(:,1)
-            bx(is+1,is+1)=-sum(fbc(:,1))
-            ax(is+2,is:is+4)=albef(-2:2,2,0)
-            bx(is+2,is+(/0,1,3,4,5/))=fbc(:,2)
-            bx(is+2,is+2)=-sum(fbc(:,2))
-            do i=is+3,ie-3
-               ax(i,i-2:i+2)=(/betf,alphf,one,alphf,betf/)
-               bx(i,i-3:i+3)=(/fc,fb,fa,-2*(fa+fb+fc),fa,fb,fc/)
-            end do
-            ax(ie-2,ie:ie-4:-1)=ax(is+2,is:is+4)
-            bx(ie-2,ie:ie-5:-1)=bx(is+2,is:is+5)
-            ax(ie-1,ie:ie-3:-1)=ax(is+1,is:is+3)
-            bx(ie-1,ie:ie-5:-1)=bx(is+1,is:is+5)
-            ax(ie,ie:ie-2:-1)=ax(is,is:is+2)
-            bx(ie,ie:ie-5:-1)=bx(is,is:is+5)
+            ax(iend-1,iend:iend-3:-1) =  ax(istart+1,istart:istart+3)
+            bx(iend-1,iend:iend-4:-1) = -bx(istart+1,istart:istart+4)
+            ax(iend,iend:iend-2:-1)   =  ax(istart,istart:istart+2)
+            bx(iend,iend:iend-4:-1)   = -bx(istart,istart:istart+4)
          end if
 
-         call mtrxi(ax(:,:),sx(:,:),is,ie)
+         if ( ntk == 1 ) then
+            llk = lmf
+            istart = 1
+            iend   = 2 * ( llk + 1 )
+            allocate( ax(iend,iend), bx(iend,iend), &
+                      rx(iend,iend), sx(iend,iend) )
+            ax(:,:)                   = 0
+            bx(:,:)                   = 0
+            ax(istart,istart:istart+2)        = albef(0:2,0,0)
+            bx(istart,istart+(/1,2,3,4,5/))   = fbc(:,0)
+            bx(istart,istart)                 = -sum( fbc(:,0) )
+            ax(istart+1,istart:istart+3)      = albef(-1:2,1,0)
+            bx(istart+1,istart+(/0,2,3,4,5/)) = fbc(:,1)
+            bx(istart+1,istart+1)             = -sum( fbc(:,1) )
+            ax(istart+2,istart:istart+4)      = albef(-2:2,2,0)
+            bx(istart+2,istart+(/0,1,3,4,5/)) = fbc(:,2)
+            bx(istart+2,istart+2)             = -sum( fbc(:,2) )
+            do iik = istart+3,iend-3
+               ax(iik,iik-2:iik+2)          = (/ betf, alphf, one, alphf, betf /)
+               bx(iik,iik-3:iik+3)          = (/ fc, fb, fa,            &
+                                           -2 * ( fa + fb + fc ), &
+                                           fa, fb, fc             /)
+            end do
+            ax(iend-2,iend:iend-4:-1) = ax(istart+2,istart:istart+4)
+            bx(iend-2,iend:iend-5:-1) = bx(istart+2,istart:istart+5)
+            ax(iend-1,iend:iend-3:-1) = ax(istart+1,istart:istart+3)
+            bx(iend-1,iend:iend-5:-1) = bx(istart+1,istart:istart+5)
+            ax(iend,iend:iend-2:-1)   = ax(istart,istart:istart+2)
+            bx(iend,iend:iend-5:-1)   = bx(istart,istart:istart+5)
+         end if
 
-         rx(:,:)=ax(:,:)
-         i=ie/2-1
-         rx(i,i+2)=0
-         rx(i+1,i+2)=0
-         rx(i+1,i+3)=0
-         i=ie/2+2
-         rx(i,i-2)=0
-         rx(i-1,i-2)=0
-         rx(i-1,i-3)=0
-         ax(:,:)=matmul(rx(:,:),matmul(sx(:,:),bx(:,:)))
-         i=ie/2+1
-         pbco(ll:0:-1,0,nt)=ax(i,is:is+ll)
-         pbci(0:ll,0,nt)=ax(i,is+ll+1:ie)
-         i=ie/2+2
-         pbco(ll:0:-1,1,nt)=ax(i,is:is+ll)
-         pbci(0:ll,1,nt)=ax(i,is+ll+1:ie)
-         deallocate(ax,bx,rx,sx)
+         call mtrxi( ax(:,:), sx(:,:), istart, iend )
+
+         rx(:,:) = ax(:,:)
+
+         iik = iend / 2 - 1
+         rx(iik,iik+2)   = 0
+         rx(iik+1,iik+2) = 0
+         rx(iik+1,iik+3) = 0
+         
+         iik = iend / 2 + 2
+         rx(iik,iik-2)   = 0
+         rx(iik-1,iik-2) = 0
+         rx(iik-1,iik-3) = 0
+         
+         ax(:,:) = matmul( rx(:,:), matmul( sx(:,:), bx(:,:) ) )
+         
+         iik = iend / 2 + 1
+         pbco(llk:0:-1,0,ntk) = ax(iik,istart:istart+llk)
+         pbci(0:llk,0,ntk)    = ax(iik,istart+llk+1:iend)
+         
+         iik = iend / 2 + 2
+         pbco(llk:0:-1,1,ntk) = ax(iik,istart:istart+llk)
+         pbci(0:llk,1,ntk)    = ax(iik,istart+llk+1:iend)
+         
+         deallocate( ax, bx, rx, sx )
+           
       end do
    end subroutine sbcco
-
-
 
 !===== SUBROUTINE FOR MPI IMPLEMENTATION
 

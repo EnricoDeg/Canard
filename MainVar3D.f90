@@ -24,8 +24,6 @@ module mainvar3d
 
    real(kind=nr),dimension(:,:),allocatable :: rr,ss
 
-   real(kind=nr),dimension(:,:),allocatable :: xu,yu
-   real(kind=nr),dimension(:,:),allocatable :: xl,yl
    real(kind=nr),dimension(:),allocatable :: sa,sb
 
    real(kind=nr),dimension(:),allocatable :: asz,bsz
@@ -50,7 +48,6 @@ module mainvar3d
 
 !===== CONSTANT-SIZED MAIN VARIABLES
 
-   integer(kind=ni),dimension(3,0:1,0:1) :: ndf
    integer(kind=ni),dimension(3,3) :: ijk
    integer(kind=ni),dimension(3,0:1) :: nbc,mcd,nsz
    integer(kind=ni),dimension(0:11) :: njl
@@ -64,17 +61,11 @@ module mainvar3d
    integer(kind=ni) :: itag, lmpi
    integer(kind=int64) :: nlmx,llmb,llmo,lis,lie,ljs,lje
 
-   real(kind=nr),dimension(0:lmp,0:1,0:1) :: pbci,pbco
-   real(kind=nr),dimension(-2:2,0:2,0:1) :: albef
    real(kind=nr),dimension(mbci,mbci) :: cbca,cbcs
    real(kind=nr),dimension(5,5) :: xt
-   real(kind=nr),dimension(0:4,0:2) :: fbc
-   real(kind=nr),dimension(0:1,0:1) :: pbcot
-   real(kind=nr),dimension(0:lmp) :: sap
    real(kind=nr),dimension(mbci) :: rbci,sbci
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: ve,dm,rv,uoo,umf,dudtmf
-   real(kind=nr) :: fa,fb,fc
    real(kind=nr) :: ra0,ra1,ra2,ra3,res,fctr,dfdt
    real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3,wtemp,cfl,tmax,timf,fltk,fltrbc,dto
    real(kind=nr) :: aoo,amachoo,srefoo,srefp1dre
@@ -114,7 +105,7 @@ module mainvar3d
       allocate(send11(0:ii,0:2,0:1),send12(0:jj,0:2,0:1),send13(0:kk,0:2,0:1))
       allocate(recv11(0:ii,0:2,0:1),recv12(0:jj,0:2,0:1),recv13(0:kk,0:2,0:1))
       allocate(cm1(0:ii,3,0:1),cm2(0:jj,3,0:1),cm3(0:kk,3,0:1))
-      allocate(xu(0:lim,3),yu(0:lim,3),xl(0:lim,2),yl(0:lim,2),li(0:lim),sa(0:lim),sb(0:lim))
+      allocate(li(0:lim),sa(0:lim),sb(0:lim))
 
    END SUBROUTINE allocate_memory
 
