@@ -22,10 +22,12 @@ module mo_utils
       integer(kind=ni),dimension(is:ie) :: ipvt
       real(kind=nr),dimension(is:ie,is:ie) :: rx
       real(kind=nr),dimension(is:ie) :: temp
-      integer(kind=ni) :: iik, jjk, mk, ra0k, ra1k
+
+      integer(kind=ni) :: iik, jjk, mk
+      real(kind=nr)    :: ra0k, ra1k
 
       rx(:,:) = ax(:,:)
-      ipvt(:) = (/(iik, iik=is, ie)/)
+      ipvt(:) = (/(iik, iik = is,ie)/)
       do iik = is,ie
          imax(:) = maxloc( abs( rx(iik:ie,iik) ) )
          mk = iik - 1 + imax(1)
