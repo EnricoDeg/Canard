@@ -22,27 +22,28 @@ module mo_utils
       integer(kind=ni),dimension(is:ie) :: ipvt
       real(kind=nr),dimension(is:ie,is:ie) :: rx
       real(kind=nr),dimension(is:ie) :: temp
+      integer(kind=ni) :: iik, jjk, mk, ra0k, ra1k
 
-      rx(:,:)=ax(:,:)
-      ipvt(:)=(/(i,i=is,ie)/)
-      do i=is,ie
-         imax(:)=maxloc(abs(rx(i:ie,i)))
-         m=i-1+imax(1)
-         if(m/=i) then
-            ipvt((/m,i/))=ipvt((/i,m/))
-            rx((/m,i/),:)=rx((/i,m/),:)
+      rx(:,:) = ax(:,:)
+      ipvt(:) = (/(iik, iik=is, ie)/)
+      do iik = is,ie
+         imax(:) = maxloc( abs( rx(iik:ie,iik) ) )
+         mk = iik - 1 + imax(1)
+         if(mk /= iik) then
+            ipvt((/mk,iik/)) = ipvt((/iik,mk/))
+            rx((/mk,iik/),:) = rx((/iik,mk/),:)
          end if
-         ra0=one/rx(i,i)
-         temp(:)=rx(:,i)
-         do j=is,ie
-            ra1=ra0*rx(i,j)
-            rx(:,j)=rx(:,j)-ra1*temp(:)
-            rx(i,j)=ra1
+         ra0k = one / rx(iik,iik)
+         temp(:) = rx(:,iik)
+         do jjk = is,ie
+            ra1k = ra0k * rx(iik,jjk)
+            rx(:,jjk) = rx(:,jjk) - ra1k * temp(:)
+            rx(iik,jjk) = ra1k
          end do
-         rx(:,i)=-ra0*temp(:)
-         rx(i,i)=ra0
+         rx(:,iik) = -ra0k * temp(:)
+         rx(iik,iik) = ra0k
       end do
-      sx(:,ipvt(:))=rx(:,:)
+      sx(:,ipvt(:)) = rx(:,:)
 
    end subroutine mtrxi
 
