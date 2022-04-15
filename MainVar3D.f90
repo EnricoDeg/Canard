@@ -67,7 +67,7 @@ module mainvar3d
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: ve,dm,rv,uoo,umf,dudtmf
    real(kind=nr) :: ra0,ra1,ra2,ra3,res,fctr,dfdt
-   real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3,wtemp,cfl,tmax,timf,fltk,fltrbc,dto
+   real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3,wtemp,cfl,tmax,timf,dto
    real(kind=nr) :: aoo,amachoo,srefoo,srefp1dre
    real(kind=nr) :: dt,dts,dte,dtk,dtko,dtsum,dtwi,timo,tsam,wts,wte,wtime
    real(kind=nr) :: vn,vs,hv2,ao,bo,co,ho,aoi,rhoi,progmf,sqrtrema,sqrtremai

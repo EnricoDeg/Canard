@@ -24,6 +24,8 @@ module mo_numerics
 
    real(kind=nr),    private, dimension(:,:), allocatable :: xu,yu
    real(kind=nr),    private, dimension(:,:), allocatable :: xl,yl
+   character(16),    private :: ccinput
+   real(kind=nr),    private :: fltk,fltrbc
    
 
    contains
@@ -34,6 +36,16 @@ module mo_numerics
       allocate(xu(0:limk,3),yu(0:limk,3),xl(0:limk,2),yl(0:limk,2))
 
    END SUBROUTINE allocate_numerics
+
+   SUBROUTINE read_input_numerics
+
+      open(9,file='input.numerics',status='old')
+      read(9,*) ccinput,fltk
+      read(9,*) ccinput,fltrbc
+      close(9)
+      fltk=pi*fltk
+
+   END SUBROUTINE read_input_numerics
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 

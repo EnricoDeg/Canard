@@ -33,7 +33,6 @@ MODULE mo_io
       read(9,*) cinput,wtemp
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,timf,tsam
-      read(9,*) cinput,fltk,fltrbc
       read(9,*) cinput,dto
       close(9)
 

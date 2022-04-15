@@ -26,9 +26,9 @@ program main3d
 !===== INPUT PARAMETERS
 
    call read_inputo
+   call read_input_numerics
     
    cinput=cinput
-   fltk=pi*fltk
    amachoo=sqrt(amach1*amach1+amach2*amach2+amach3*amach3)
    if(amachoo>sml) then
       reoo=reoo/amachoo
