@@ -5,8 +5,8 @@
 MODULE mo_gcbc
    use mainvar3d
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall
-   use subroutineso
-   use subroutines3d
+   use mo_utils
+   use mo_numerics
    IMPLICIT NONE
    PUBLIC
    CONTAINS

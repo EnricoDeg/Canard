@@ -5,7 +5,7 @@
 module gridgen
 
    use mo_mpi, ONLY : myid
-   use subroutineso
+   use mainvar3d
    implicit none
 
    integer(kind=ni),parameter :: lnaca=90

@@ -11,8 +11,7 @@ program main3d
    use mo_grid
    use mo_sponge
    use mo_gcbc
-   use subroutineso
-   use subroutines3d
+   use mo_numerics
    implicit none
 
 !===== PREPARATION FOR PARALLEL COMPUTING

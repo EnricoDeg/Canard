@@ -5,7 +5,7 @@
 MODULE mo_grid
    use mo_mpi, ONLY : myid, p_barrier
    use mainvar3d
-   use subroutines3d
+   use mo_numerics
    use problemcase
    
    IMPLICIT NONE

@@ -2,7 +2,7 @@
 !***** 3D AEROFOIL-TURBULENCE INTERACTION
 !*****
 module problemcase
-   use subroutineso
+   use mo_utils
    use gridgen
    implicit none
 
