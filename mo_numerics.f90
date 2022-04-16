@@ -268,8 +268,6 @@ module mo_numerics
 
       do ntk = 0,1
 
-         lp = 2 * ntk - 1
-
          if ( ntk == 0 ) then
             llk = lmd
             istart = 1
