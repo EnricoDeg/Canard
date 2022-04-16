@@ -188,37 +188,50 @@ module mo_numerics
  
       real(kind=nr),intent(in) :: fltk,fltrbc
       real(kind=nr) :: alphz,betz,za,zb,zc
+      real(kind=nr) :: aok, fctrk, resk
 
-      ao = log(fltrbc)
-      call fcint(fltk,half,alphz,betz,za,zb,zc)
-      fctr = one / &
-            (one + alphz * fltrbc + betz * fltrbc**two)
+      aok = log(fltrbc)
+      call fcint(fltk, half, alphz, betz, za, zb, zc)
+      fctrk = one / &
+            ( one + alphz * fltrbc + betz * fltrbc**two)
 
-      albef(:,0,0) = (/ zero,zero,one,alphz*fctr,betz*fctr /)
-      res = (fltrbc-1) * &
-            (za + zc + (fltrbc+1) * (zb+fltrbc*zc)) /ao
-      fbc(:,0) = (/ za - 5 * res / 3,   &
-                    zb + 10 * res / 21, &
-                    zc - 5 * res / 42,  &
-                    5 * res / 252,      &
-                    -res / 630          /) * fctr
+      albef(:,0,0) = (/ zero,          &
+                        zero,          &
+                        one,           &
+                        alphz * fctrk, &
+                        betz * fctrk   /)
+      resk = (fltrbc-1) * &
+            (za + zc + (fltrbc+1) * (zb+fltrbc*zc)) / aok
+      fbc(:,0) = (/ za - 5 * resk / 3,   &
+                    zb + 10 * resk / 21, &
+                    zc - 5 * resk / 42,  &
+                    5 * resk / 252,      &
+                    -resk / 630          /) * fctrk
 
-      albef(:,1,0) = (/ zero,alphz+betz*fltrbc,one,alphz,betz /)
-      res = (fltrbc-1) * &
-            (zb + zc * (fltrbc+1)) / ao
-      fbc(:,1) = (/ za + zb + zc + 1627 * res / 1260, &
-                    za + 10 * res / 21,               &
-                    zb - 5 * res / 42,                &
-                    zc + 5 * res / 252,               &
-                    -res / 630                        /)
+      albef(:,1,0) = (/ zero,                  &
+                        alphz + betz * fltrbc, &
+                        one,                   &
+                        alphz,                 &
+                        betz                   /)
+      resk = (fltrbc-1) * &
+            (zb + zc * (fltrbc+1)) / aok
+      fbc(:,1) = (/ za + zb + zc + 1627 * resk / 1260, &
+                    za + 10 * resk / 21,               &
+                    zb - 5 * resk / 42,                &
+                    zc + 5 * resk / 252,               &
+                    -resk / 630                        /)
 
-      albef(:,2,0) = (/ betz,alphz,one,alphz,betz /)
-      res = zc * (fltrbc-1) / ao
-      fbc(:,2) = (/ zb + zc + 1627 * res / 1260, &
-                    za - 5 * res / 3,            &
-                    za - 5 * res / 42,           &
-                    zb + 5 * res / 252,          &
-                    zc - res / 630               /)
+      albef(:,2,0) = (/ betz,  &
+                        alphz, &
+                        one,   &
+                        alphz, &
+                        betz   /)
+      resk = zc * (fltrbc-1) / aok
+      fbc(:,2) = (/ zb + zc + 1627 * resk / 1260, &
+                    za - 5 * resk / 3,            &
+                    za - 5 * resk / 42,           &
+                    zb + 5 * resk / 252,          &
+                    zc - resk / 630               /)
 
    end subroutine fcbcm
 
