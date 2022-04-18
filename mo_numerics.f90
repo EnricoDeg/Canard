@@ -41,6 +41,10 @@ module mo_numerics
    public :: allocate_numerics, read_input_numerics, init_extracoeff_bounds
    public :: init_penta, mpigo, deriv, filte
 
+   INTERFACE filte
+      MODULE PROCEDURE filte_2d
+   END INTERFACE filte
+
    contains
 
    SUBROUTINE allocate_numerics(limk, nbsizek)
@@ -610,8 +614,8 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(rfield, lxik, letk, lzek, ijks, nn, nz)
-      real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
+   subroutine filte_2d(rfield, lxik, letk, lzek, ijks, nn, nz)
+      real(kind=nr),    intent(inout), dimension(:,:) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz
@@ -703,7 +707,7 @@ module mo_numerics
          end do
       end do
 
-   end subroutine filte
+   end subroutine filte_2d
 
 !=====
 
