@@ -10,7 +10,7 @@ module mo_numerics
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
-   use mainvar3d,     ONLY : rr, drva1, drva2, drva3, drva, lim
+   use mainvar3d,     ONLY : rr, drva1, drva2, drva3, drva, lim, lmx
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private
@@ -610,7 +610,8 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(lxik, letk, lzek, ijks, nn, nz)
+   subroutine filte(rfield, lxik, letk, lzek, ijks, nn, nz)
+      real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz
@@ -644,7 +645,7 @@ module mo_numerics
             do iii = istart,iend
                lll     = indx3(iii-istart, jjj, kkk, nn)
                li(iii) = lll
-               sa(iii) = rr(lll,nz)
+               sa(iii) = rfield(lll,nz)
             end do
 
             select case(nstart)
@@ -696,7 +697,7 @@ module mo_numerics
 
             do iii = istart,iend
                lll         = li(iii)
-               rr(lll,nz) = rr(lll,nz) + sb(iii)
+               rfield(lll,nz) = rfield(lll,nz) + sb(iii)
             end do
 
          end do
