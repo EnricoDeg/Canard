@@ -3,37 +3,43 @@
 !*****
 
 module mo_numerics
-
-   use mo_mpi, ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
-                      p_send, myid
-   use mainvar3d
-   use mo_utils
+   use mo_parameters, ONLY : pi, half, zero, one, alpha01, alpha10,   &
+                             alpha, beta, beta02, beta13, alpha12,    &
+                             a01, a02, a03, a04, a10, a12, a13, a14, &
+                             ab, aa, two, n45go
+   use mo_kind,       ONLY : nr, ni
+   use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
+                             p_send, myid
+   use mainvar3d,     ONLY : rr, drva1, drva2, drva3, drva, lim
+   use mo_utils,      ONLY : indx3, mtrxi
    implicit none
+   private
 
-   private :: fcbcm, fcint, sbcco
+   integer(kind=ni), parameter :: lmd=11,lmf=11,lmp=max(lmd,lmf)
+   real(kind=nr)               :: alphf, betf
+   real(kind=nr), dimension(0:lmp,0:1,0:1) :: pbci,pbco
+   real(kind=nr), dimension(0:1,0:1) :: pbcot
+   real(kind=nr) :: fa,fb,fc
+   real(kind=nr), dimension(-2:2,0:2,0:1) :: albef
+   real(kind=nr), dimension(0:lmp) :: sap
+   real(kind=nr), dimension(0:4,0:2) :: fbc
+   integer(kind=ni), dimension(3,0:1,0:1) :: ndf
 
-   integer(kind=ni), private, parameter :: lmd=11,lmf=11,lmp=max(lmd,lmf)
-   real(kind=nr),    private :: alphf, betf
-   real(kind=nr),    private, dimension(0:lmp,0:1,0:1) :: pbci,pbco
-   real(kind=nr),    private, dimension(0:1,0:1) :: pbcot
-   real(kind=nr),    private :: fa,fb,fc
-   real(kind=nr),    private, dimension(-2:2,0:2,0:1) :: albef
-   real(kind=nr),    private, dimension(0:lmp) :: sap
-   real(kind=nr),    private, dimension(0:4,0:2) :: fbc
-   integer(kind=ni), private, dimension(3,0:1,0:1) :: ndf
+   real(kind=nr), dimension(:,:), allocatable :: xu,yu
+   real(kind=nr), dimension(:,:), allocatable :: xl,yl
+   character(16) :: ccinput
+   real(kind=nr) :: fltk,fltrbc
 
-   real(kind=nr),    private, dimension(:,:), allocatable :: xu,yu
-   real(kind=nr),    private, dimension(:,:), allocatable :: xl,yl
-   character(16),    private :: ccinput
-   real(kind=nr),    private :: fltk,fltrbc
+   real(kind=nr), dimension(:,:,:), allocatable, target :: send01,send02,send03
+   real(kind=nr), dimension(:,:,:), allocatable, target :: send11,send12,send13
+   real(kind=nr), dimension(:,:,:), allocatable, target :: recv01,recv02,recv03
+   real(kind=nr), dimension(:,:,:), allocatable, target :: recv11,recv12,recv13
+   real(kind=nr), dimension(:,:,:), pointer :: send,recv
+   integer(kind=ni), dimension(:),     allocatable :: li
+   real(kind=nr), dimension(:),     allocatable :: sa,sb
 
-   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: send01,send02,send03
-   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: send11,send12,send13
-   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: recv01,recv02,recv03
-   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: recv11,recv12,recv13
-   real(kind=nr),    private, dimension(:,:,:), pointer :: send,recv
-   integer(kind=ni), private, dimension(:),     allocatable :: li
-   real(kind=nr),    private, dimension(:),     allocatable :: sa,sb
+   public :: allocate_numerics, read_input_numerics, init_extracoeff_bounds
+   public :: init_penta, mpigo, deriv, filte
 
    contains
 

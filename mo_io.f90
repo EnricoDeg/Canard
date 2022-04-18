@@ -4,7 +4,8 @@
 
 MODULE mo_io
    use mainvar3d
-   use mo_mpi, ONLY : mpro, myid, p_barrier, p_recv, p_send
+   use mo_mpi, ONLY : mpro, myid, p_barrier, p_recv, p_send, &
+                      p_null_req, p_irecv, p_waitall
    use problemcase
    use mo_numerics
    IMPLICIT NONE
