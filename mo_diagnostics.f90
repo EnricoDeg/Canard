@@ -14,7 +14,7 @@ MODULE mo_diagnostics
 
       rr(:,1)=ss(:,1)*qa(:,2)
       m=1
-      call mpigo(0,nrone,n45no,m)
+      call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
       call deriv(lxi, let, lze, ijk, 3, 1, m)
       call deriv(lxi, let, lze, ijk, 2, 1, m)
       call deriv(lxi, let, lze, ijk, 1, 1, m)
@@ -23,7 +23,7 @@ MODULE mo_diagnostics
 
       rr(:,1)=ss(:,1)*qa(:,3)
       m=2
-      call mpigo(0,nrone,n45no,m)
+      call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
       call deriv(lxi, let, lze, ijk, 3, 1, m)
       call deriv(lxi, let, lze, ijk, 2, 1, m)
       call deriv(lxi, let, lze, ijk, 1, 1, m)
@@ -32,7 +32,7 @@ MODULE mo_diagnostics
 
       rr(:,1)=ss(:,1)*qa(:,4)
       m=3
-      call mpigo(0,nrone,n45no,m)
+      call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
       call deriv(lxi, let, lze, ijk, 3, 1, m)
       call deriv(lxi, let, lze, ijk, 2, 1, m)
       call deriv(lxi, let, lze, ijk, 1, 1, m)

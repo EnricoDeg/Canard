@@ -42,9 +42,9 @@ module mo_numerics
       integer(kind=ni),intent(in), dimension(3) :: nbsizek
       integer(kind=ni) :: iik, jjk, kkk
 
-      iik=nbsize(1)-1
-      jjk=nbsize(2)-1
-      kkk=nbsize(3)-1
+      iik=nbsizek(1)-1
+      jjk=nbsizek(2)-1
+      kkk=nbsizek(3)-1
 
       allocate(xu(0:limk,3),yu(0:limk,3),xl(0:limk,2),yl(0:limk,2))
       allocate(li(0:limk),  sa(0:limk),  sb(0:limk))
@@ -378,121 +378,133 @@ module mo_numerics
 
 !===== SUBROUTINE FOR MPI IMPLEMENTATION
 
-   subroutine mpigo(nt,nrt,n45,itag)
-
-      integer(kind=ni),intent(in) :: nt,nrt,n45,itag
+   subroutine mpigo(ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+      integer(kind=ni), intent(in), dimension(3,3)   :: ijks
+      integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
+      integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
+      integer(kind=ni), intent(in), dimension(3)     :: nbsizek
+      integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
+      integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
+      integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
+      real(kind=nr)    :: ra0k, resk
 
       select case(nt)
       case(0)
-         mp=lmd
+         mpk = lmd
       case(1)
-         mp=lmf
+         mpk = lmf
       end select
 
       call p_null_req
-      do nn=1,3
-         nz=(1-nrt)*(nn-1)+1
-         if(nt==0) then
-            select case(nn)
+      do nnk = 1,3
+         nzk = ( 1 - nrt ) * ( nnk - 1 ) + 1
+
+         if ( nt == 0 ) then
+            select case(nnk)
             case(1)
-               send=>send01
-               recv=>recv01
+               send => send01
+               recv => recv01
             case(2)
-               send=>send02
-               recv=>recv02
+               send => send02
+               recv => recv02
             case(3)
-               send=>send03
-               recv=>recv03
+               send => send03
+               recv => recv03
             end select
          else
-            select case(nn)
+            select case(nnk)
             case(1)
-               send=>send11
-               recv=>recv11
+               send => send11
+               recv => recv11
             case(2)
-               send=>send12
-               recv=>recv12
+               send => send12
+               recv => recv12
             case(3)
-               send=>send13
-               recv=>recv13
+               send => send13
+               recv => recv13
             end select
          end if
-         do ip=0,1
-            iq=1-ip
-            is=ip*ijk(1,nn)
-            ie=1-2*ip
-            select case(nbc(nn,ip))
+         
+         do ipk = 0,1
+            iqk    = 1 - ipk
+            istart = ipk * ijks(1,nnk)
+            iend   = 1 - 2 * ipk
+
+            select case(nbck(nnk,ipk))
             case(35)
-               ra0=zero
-               ii=1
+               ra0k = zero
+               iik  = 1
             case(40)
-               ra0=zero
-               ii=0
+               ra0k = zero
+               iik  = 0
             case(45)
-               ra0=n45
-               ii=1
+               ra0k = n45
+               iik  = 1
             end select
-            if(ndf(nn,ip,nt)==1) then
-               do k=0,ijk(3,nn)
-                  kp=k*(ijk(2,nn)+1)
-                  do j=0,ijk(2,nn)
-                     jk=kp+j
-                     l=indx3(is,j,k,nn)
-                     res=ra0*rr(l,nz)
-                     do i=0,mp
-                        l=indx3(is+ie*(i+ii),j,k,nn)
-                        sap(i)=rr(l,nz)
+
+            if ( ndf(nnk,ipk,nt) == 1 ) then
+               do kkk = 0,ijks(3,nnk)
+                  kpp = kkk * ( ijks(2,nnk) + 1 )
+                  do jjj = 0,ijks(2,nnk)
+                     jkk  = kpp + jjj
+                     lll  = indx3(istart, jjj, kkk, nnk)
+                     resk = ra0k * rr(lll,nzk)
+                     do iii = 0,mpk
+                        lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk)
+                        sap(iii) = rr(lll,nzk)
                      end do
-                     send(jk,0,ip)=sum(pbco(0:mp,0,nt)*sap(0:mp))-res*pbcot(0,nt)
-                     send(jk,1,ip)=sum(pbco(0:mp,1,nt)*sap(0:mp))-res*pbcot(1,nt)
-                     send(jk,nt+1,ip)=send(jk,nt+1,ip)+nt*(sap(0)-res-send(jk,nt+1,ip))
+                     send(jkk,0,ipk)    = sum( pbco(0:mpk,0,nt) * sap(0:mpk) ) - resk * pbcot(0,nt)
+                     send(jkk,1,ipk)    = sum( pbco(0:mpk,1,nt) * sap(0:mpk) ) - resk * pbcot(1,nt)
+                     send(jkk,nt+1,ipk) = send(jkk,nt+1,ipk) + nt * ( sap(0) - resk - send(jkk,nt+1,ipk) )
                   end do
                end do
-               if(nt==0) then
-                  call p_isend(send(:,:,ip), mcd(nn,ip), itag+iq, 2*nbsize(nn))
-                  call p_irecv(recv(:,:,ip), mcd(nn,ip), itag+ip, 2*nbsize(nn))
+               if ( nt == 0 ) then
+                  call p_isend(send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk))
+                  call p_irecv(recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
                else
-                  call p_isend(send(:,:,ip), mcd(nn,ip), itag+iq, 3*nbsize(nn))
-                  call p_irecv(recv(:,:,ip), mcd(nn,ip), itag+ip, 3*nbsize(nn))
+                  call p_isend(send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk))
+                  call p_irecv(recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
                end if
             end if
          end do
       end do
       call p_waitall
 
-      if(n45==n45go) then
-         do nn=1,3
-            nz=(1-nrt)*(nn-1)+1
-            if(nt==0) then
-               select case(nn)
+      if ( n45 == n45go ) then
+         do nnk = 1,3
+            nzk = ( 1 - nrt ) * ( nnk - 1 ) + 1
+
+            if ( nt == 0 ) then
+               select case(nnk)
                case(1)
-                  recv=>recv01
+                  recv => recv01
                case(2)
-                  recv=>recv02
+                  recv => recv02
                case(3)
-                  recv=>recv03
+                  recv => recv03
                end select
             else
-               select case(nn)
+               select case(nnk)
                case(1)
-                  recv=>recv11
+                  recv => recv11
                case(2)
-                  recv=>recv12
+                  recv => recv12
                case(3)
-                  recv=>recv13
+                  recv => recv13
                end select
             end if
-            do ip=0,1
-               is=ip*ijk(1,nn)
-               if(nbc(nn,ip)==45) then
-                  do k=0,ijk(3,nn)
-                     kp=k*(ijk(2,nn)+1)
-                     do j=0,ijk(2,nn)
-                        jk=kp+j
-                        l=indx3(is,j,k,nn)
-                        recv(jk,0,ip)=recv(jk,0,ip)+rr(l,nz)*pbcot(0,nt)
-                        recv(jk,1,ip)=recv(jk,1,ip)+rr(l,nz)*pbcot(1,nt)
-                        recv(jk,nt+1,ip)=recv(jk,nt+1,ip)+nt*rr(l,nz)
+            
+            do ipk = 0,1
+               istart = ipk * ijks(1,nnk)
+               if ( nbck(nnk,ipk) == 45 ) then
+                  do kkk = 0,ijks(3,nnk)
+                     kpp = kkk * ( ijks(2,nnk) + 1 )
+                     do jjj = 0,ijks(2,nnk)
+                        jkk = kpp + jjj
+                        lll = indx3(istart, jjj, kkk, nnk)
+                        recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rr(lll,nzk) * pbcot(0,nt)
+                        recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rr(lll,nzk) * pbcot(1,nt)
+                        recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rr(lll,nzk)
                      end do
                   end do
                end if

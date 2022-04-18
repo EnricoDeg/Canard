@@ -49,7 +49,7 @@ MODULE mo_grid
 
       rr(:,1)=ss(:,1)
       m=1
-      call mpigo(0,nrone,n45go,m)
+      call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
       call deriv(lxi, let, lze, ijk, 3, 1, m)
       call deriv(lxi, let, lze, ijk, 2, 1, m)
       call deriv(lxi, let, lze, ijk, 1, 1, m)
@@ -59,7 +59,7 @@ MODULE mo_grid
 
       rr(:,1)=ss(:,2)
       m=2
-      call mpigo(0,nrone,n45go,m)
+      call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
       call deriv(lxi, let, lze, ijk, 3, 1, m)
       call deriv(lxi, let, lze, ijk, 2, 1, m)
       call deriv(lxi, let, lze, ijk, 1, 1, m)
@@ -69,7 +69,7 @@ MODULE mo_grid
 
       rr(:,1)=ss(:,3)
       m=3
-      call mpigo(0,nrone,n45go,m)
+      call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
       call deriv(lxi, let, lze, ijk, 3, 1, m)
       call deriv(lxi, let, lze, ijk, 2, 1, m)
       call deriv(lxi, let, lze, ijk, 1, 1, m)
@@ -89,27 +89,27 @@ MODULE mo_grid
 
       do m=1,3
          rr(:,1)=xim(:,m)
-         call mpigo(1,nrone,n45no,9*(m-1)+1)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+1)
          call filte(lxi, let, lze, ijk, nnf(1),1)
-         call mpigo(1,nrone,n45no,9*(m-1)+2)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+2)
          call filte(lxi, let, lze, ijk, nnf(2),1)
-         call mpigo(1,nrone,n45no,9*(m-1)+3)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+3)
          call filte(lxi, let, lze, ijk, nnf(3),1)
          xim(:,m)=rr(:,1)
          rr(:,1)=etm(:,m)
-         call mpigo(1,nrone,n45no,9*(m-1)+4)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+4)
          call filte(lxi, let, lze, ijk, nnf(1),1)
-         call mpigo(1,nrone,n45no,9*(m-1)+5)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+5)
          call filte(lxi, let, lze, ijk, nnf(2),1)
-         call mpigo(1,nrone,n45no,9*(m-1)+6)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+6)
          call filte(lxi, let, lze, ijk, nnf(3),1)
          etm(:,m)=rr(:,1)
          rr(:,1)=zem(:,m)
-         call mpigo(1,nrone,n45no,9*(m-1)+7)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+7)
          call filte(lxi, let, lze, ijk, nnf(1),1)
-         call mpigo(1,nrone,n45no,9*(m-1)+8)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+8)
          call filte(lxi, let, lze, ijk, nnf(2),1)
-         call mpigo(1,nrone,n45no,9*(m-1)+9)
+         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,9*(m-1)+9)
          call filte(lxi, let, lze, ijk, nnf(3),1)
          zem(:,m)=rr(:,1)
       end do
