@@ -504,76 +504,87 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FINITE DIFFERENTIATING
 
-   subroutine deriv(nn,nz,m)
+   subroutine deriv(lxik, letk, lzek, ijks, nn, nz, m)
+      integer(kind=ni), intent(in)                  :: lxik, letk, lzek
+      integer(kind=ni), intent(in), dimension(3,3)  :: ijks
+      integer(kind=ni), intent(in)                  :: nn, nz, m
+      integer(kind=ni) :: ntk, nstart, nend, istart, iend
+      integer(kind=ni) :: kkk, jjj, iii, kpp, jkk, lll
 
-      integer(kind=ni),intent(in) :: nn,nz,m
-
-      nt=0
-      ns=ndf(nn,0,0)
-      ne=ndf(nn,1,0)
+      ntk    = 0
+      nstart = ndf(nn,0,0)
+      nend   = ndf(nn,1,0)
 
       select case(nn)
       case(1)
-         is=0
-         ie=is+lxi
-         recv=>recv01
-         drva=>drva1
+         istart =  0
+         iend   =  istart + lxik
+         recv   => recv01
+         drva   => drva1
       case(2)
-         is=lxi+1
-         ie=is+let
-         recv=>recv02
-         drva=>drva2
+         istart =  lxik + 1
+         iend   =  istart + letk
+         recv   => recv02
+         drva   => drva2
       case(3)
-         is=lxi+let+2
-         ie=is+lze
-         recv=>recv03
-         drva=>drva3
+         istart =  lxik + letk + 2
+         iend   =  istart + lzek
+         recv   => recv03
+         drva   => drva3
       end select
 
-      do k=0,ijk(3,nn)
-         kp=k*(ijk(2,nn)+1)
-         do j=0,ijk(2,nn)
-            jk=kp+j
-            do i=is,ie
-               l=indx3(i-is,j,k,nn)
-               li(i)=l
-               sa(i)=rr(l,nz)
+      do kkk = 0,ijks(3,nn)
+         kpp = kkk * ( ijks(2,nn) + 1 )
+         do jjj=  0,ijks(2,nn)
+            jkk = kpp + jjj
+            do iii = istart,iend
+               lll = indx3(iii-istart, jjj, kkk, nn)
+               li(iii) = lll
+               sa(iii) = rr(lll,nz)
             end do
-            select case(ns)
+
+            select case(nstart)
             case(0)
-               sb(is)=sum((/a01,a02,a03,a04/)*(sa(is+(/1,2,3,4/))-sa(is)))
-               sb(is+1)=sum((/a10,a12,a13,a14/)*(sa(is+(/0,2,3,4/))-sa(is+1)))
+               sb(istart)   = sum( (/a01,a02,a03,a04/) * ( sa(istart+(/1,2,3,4/)) - sa(istart)   ) )
+               sb(istart+1) = sum( (/a10,a12,a13,a14/) * ( sa(istart+(/0,2,3,4/)) - sa(istart+1) ) )
             case(1)
-               sb(is)=sum(pbci(0:lmd,0,nt)*sa(is:is+lmd))+recv(jk,0,0)
-               sb(is+1)=sum(pbci(0:lmd,1,nt)*sa(is:is+lmd))+recv(jk,1,0)
+               sb(istart)   = sum( pbci(0:lmd,0,ntk) * sa(istart:istart+lmd) ) + recv(jkk,0,0)
+               sb(istart+1) = sum( pbci(0:lmd,1,ntk) * sa(istart:istart+lmd) ) + recv(jkk,1,0)
             end select
-            do i=is+2,ie-2
-               sb(i)=aa*(sa(i+1)-sa(i-1))+ab*(sa(i+2)-sa(i-2))
+
+            do iii = istart+2,iend-2
+               sb(iii) = aa * ( sa(iii+1) - sa(iii-1) ) + ab * ( sa(iii+2) - sa(iii-2) )
             end do
-            select case(ne)
+
+            select case(nend)
             case(0)
-               sb(ie)=sum((/a01,a02,a03,a04/)*(sa(ie)-sa(ie-(/1,2,3,4/))))
-               sb(ie-1)=sum((/a10,a12,a13,a14/)*(sa(ie-1)-sa(ie-(/0,2,3,4/))))
+               sb(iend)   = sum( (/a01,a02,a03,a04/) * ( sa(iend)   - sa(iend-(/1,2,3,4/)) ) )
+               sb(iend-1) = sum( (/a10,a12,a13,a14/) * ( sa(iend-1) - sa(iend-(/0,2,3,4/)) ) )
             case(1)
-               sb(ie)=-sum(pbci(0:lmd,0,nt)*sa(ie:ie-lmd:-1))-recv(jk,0,1)
-               sb(ie-1)=-sum(pbci(0:lmd,1,nt)*sa(ie:ie-lmd:-1))-recv(jk,1,1)
+               sb(iend)   = -sum( pbci(0:lmd,0,ntk) * sa(iend:iend-lmd:-1) ) - recv(jkk,0,1)
+               sb(iend-1) = -sum( pbci(0:lmd,1,ntk) * sa(iend:iend-lmd:-1) ) - recv(jkk,1,1)
             end select
-            sa(is)=sb(is)
-            sa(is+1)=sb(is+1)-xl(is+1,2)*sa(is)
-            do i=is+2,ie
-               sa(i)=sb(i)-xl(i,1)*sa(i-2)-xl(i,2)*sa(i-1)
+
+            sa(istart)   = sb(istart)
+            sa(istart+1) = sb(istart+1) - xl(istart+1,2) * sa(istart)
+            do iii = istart+2,iend
+               sa(iii) = sb(iii) - xl(iii,1) * sa(iii-2) - xl(iii,2) * sa(iii-1)
             end do
-            sb(ie)=xu(ie,1)*sa(ie)
-            sb(ie-1)=xu(ie-1,1)*sa(ie-1)-xu(ie-1,2)*sb(ie)
-            do i=ie-2,is,-1
-               sb(i)=xu(i,1)*sa(i)-xu(i,2)*sb(i+1)-xu(i,3)*sb(i+2)
+
+            sb(iend)   = xu(iend,1)   * sa(iend)
+            sb(iend-1) = xu(iend-1,1) * sa(iend-1) - xu(iend-1,2) * sb(iend)
+            do iii = iend-2,istart,-1
+               sb(iii) = xu(iii,1) * sa(iii) - xu(iii,2) * sb(iii+1) - xu(iii,3) * sb(iii+2)
             end do
-            do i=is,ie
-               l=li(i)
-               rr(l,nn)=sb(i)
+
+            do iii = istart,iend
+               lll = li(iii)
+               rr(lll,nn) = sb(iii)
             end do
-            drva(jk,m,0)=sb(is)
-            drva(jk,m,1)=sb(ie)
+
+            drva(jkk,m,0) = sb(istart)
+            drva(jkk,m,1) = sb(iend)
+
          end do
       end do
 
