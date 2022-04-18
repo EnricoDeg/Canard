@@ -11,7 +11,7 @@ module mainvar3d
 !===== ALLOCATABLE MAIN ARRAYS
 
    integer(kind=ni),dimension(:,:),allocatable :: nbpc,lio
-   integer(kind=ni),dimension(:),allocatable :: li,lcsz
+   integer(kind=ni),dimension(:),allocatable :: lcsz
    integer(kind=ni),dimension(:),allocatable :: lxim,letm,lzem,lpos
    integer(kind=ni),dimension(:),allocatable :: lximb,letmb,lzemb,mo,nrr,npex
 
@@ -24,19 +24,13 @@ module mainvar3d
 
    real(kind=nr),dimension(:,:),allocatable :: rr,ss
 
-   real(kind=nr),dimension(:),allocatable :: sa,sb
-
    real(kind=nr),dimension(:),allocatable :: asz,bsz
    real(kind=nr),dimension(:),allocatable :: times
 
-   real(kind=nr),dimension(:,:,:),pointer :: drva,drvb,send,recv,cm
+   real(kind=nr),dimension(:,:,:),pointer :: drva,drvb,cm
 
    real(kind=nr),dimension(:,:,:),allocatable,target :: drva1,drva2,drva3
    real(kind=nr),dimension(:,:,:),allocatable,target :: drvb1,drvb2,drvb3
-   real(kind=nr),dimension(:,:,:),allocatable,target :: send01,send02,send03
-   real(kind=nr),dimension(:,:,:),allocatable,target :: send11,send12,send13
-   real(kind=nr),dimension(:,:,:),allocatable,target :: recv01,recv02,recv03
-   real(kind=nr),dimension(:,:,:),allocatable,target :: recv11,recv12,recv13
    real(kind=nr),dimension(:,:,:),allocatable,target :: cm1,cm2,cm3
 
    real(kind=ieee32),dimension(:,:),allocatable :: varm
@@ -90,22 +84,17 @@ module mainvar3d
       allocate(p(0:lmx),yaco(0:lmx),varr(0:lmx),nrr(0:lmx),npex(0:lmx))
 
       if(nviscous==1) then
-         allocate(txx(0:lmx),tyy(0:lmx),tzz(0:lmx))
-         allocate(txy(0:lmx),tyz(0:lmx),tzx(0:lmx))
-         allocate(hxx(0:lmx),hyy(0:lmx),hzz(0:lmx))
+         allocate(txx(0:lmx), tyy(0:lmx), tzz(0:lmx))
+         allocate(txy(0:lmx), tyz(0:lmx), tzx(0:lmx))
+         allocate(hxx(0:lmx), hyy(0:lmx), hzz(0:lmx))
       end if
 
       ii=nbsize(1)-1
       jj=nbsize(2)-1
       kk=nbsize(3)-1
-      allocate(drva1(0:ii,5,0:1),drva2(0:jj,5,0:1),drva3(0:kk,5,0:1))
-      allocate(drvb1(0:ii,5,0:1),drvb2(0:jj,5,0:1),drvb3(0:kk,5,0:1))
-      allocate(send01(0:ii,0:1,0:1),send02(0:jj,0:1,0:1),send03(0:kk,0:1,0:1))
-      allocate(recv01(0:ii,0:1,0:1),recv02(0:jj,0:1,0:1),recv03(0:kk,0:1,0:1))
-      allocate(send11(0:ii,0:2,0:1),send12(0:jj,0:2,0:1),send13(0:kk,0:2,0:1))
-      allocate(recv11(0:ii,0:2,0:1),recv12(0:jj,0:2,0:1),recv13(0:kk,0:2,0:1))
-      allocate(cm1(0:ii,3,0:1),cm2(0:jj,3,0:1),cm3(0:kk,3,0:1))
-      allocate(li(0:lim),sa(0:lim),sb(0:lim))
+      allocate(drva1(0:ii,5,0:1), drva2(0:jj,5,0:1), drva3(0:kk,5,0:1))
+      allocate(drvb1(0:ii,5,0:1), drvb2(0:jj,5,0:1), drvb3(0:kk,5,0:1))
+      allocate(cm1(0:ii,3,0:1)  , cm2(0:jj,3,0:1)  , cm3(0:kk,3,0:1))
 
    END SUBROUTINE allocate_memory
 

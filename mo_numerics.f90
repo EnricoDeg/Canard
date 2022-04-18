@@ -26,14 +26,32 @@ module mo_numerics
    real(kind=nr),    private, dimension(:,:), allocatable :: xl,yl
    character(16),    private :: ccinput
    real(kind=nr),    private :: fltk,fltrbc
-   
+
+   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: send01,send02,send03
+   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: send11,send12,send13
+   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: recv01,recv02,recv03
+   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: recv11,recv12,recv13
+   real(kind=nr),    private, dimension(:,:,:), pointer :: send,recv
+   integer(kind=ni), private, dimension(:),     allocatable :: li
+   real(kind=nr),    private, dimension(:),     allocatable :: sa,sb
 
    contains
 
-   SUBROUTINE allocate_numerics(limk)
+   SUBROUTINE allocate_numerics(limk, nbsizek)
       integer(kind=ni),intent(in) :: limk
+      integer(kind=ni),intent(in), dimension(3) :: nbsizek
+      integer(kind=ni) :: iik, jjk, kkk
+
+      iik=nbsize(1)-1
+      jjk=nbsize(2)-1
+      kkk=nbsize(3)-1
 
       allocate(xu(0:limk,3),yu(0:limk,3),xl(0:limk,2),yl(0:limk,2))
+      allocate(li(0:limk),  sa(0:limk),  sb(0:limk))
+      allocate(send01(0:iik,0:1,0:1),send02(0:jjk,0:1,0:1),send03(0:kkk,0:1,0:1))
+      allocate(recv01(0:iik,0:1,0:1),recv02(0:jjk,0:1,0:1),recv03(0:kkk,0:1,0:1))
+      allocate(send11(0:iik,0:2,0:1),send12(0:jjk,0:2,0:1),send13(0:kkk,0:2,0:1))
+      allocate(recv11(0:iik,0:2,0:1),recv12(0:jjk,0:2,0:1),recv13(0:kkk,0:2,0:1))
 
    END SUBROUTINE allocate_numerics
 
@@ -54,9 +72,9 @@ module mo_numerics
 
       call fcbcm(fltk,fltrbc)
       call fcint(fltk,half,alphf,betf,fa,fb,fc)
-      albef(:,0,1) = (/ zero,zero, one,alphf,betf /)
-      albef(:,1,1) = (/ zero,alphf,one,alphf,betf /)
-      albef(:,2,1) = (/ betf,alphf,one,alphf,betf /)
+      albef(:,0,1) = (/ zero, zero,  one, alphf, betf /)
+      albef(:,1,1) = (/ zero, alphf, one, alphf, betf /)
+      albef(:,2,1) = (/ betf, alphf, one, alphf, betf /)
 
       pbco(:,:,:) = zero
       pbci(:,:,:) = zero
@@ -563,78 +581,96 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(nn,nz)
+   subroutine filte(rfield, lxik, letk, lzek, ijks, nn, nz)
+      real(kind=nr),    intent(inout), dimension(:) :: rfield
+      integer(kind=ni), intent(in)                  :: lxik, letk, lzek
+      integer(kind=ni), intent(in), dimension(3,3)  :: ijks
+      integer(kind=ni), intent(in)                  :: nn, nz
+      integer(kind=ni) :: nstart, nend, istart, iend, ntk
+      integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
+      real(kind=nr)    :: resk, ra2k
 
-      integer(kind=ni),intent(in) :: nn,nz
-
-      nt=1
-      ns=ndf(nn,0,1)
-      ne=ndf(nn,1,1)
+      ntk    = 1
+      nstart = ndf(nn,0,1)
+      nend   = ndf(nn,1,1)
 
       select case(nn)
       case(1)
-         is=0
-         ie=is+lxi
-         recv=>recv11
+         istart =  0
+         iend   =  istart + lxik
+         recv   => recv11
       case(2)
-         is=lxi+1
-         ie=is+let
-         recv=>recv12
+         istart =  lxik + 1
+         iend   =  istart + letk
+         recv   => recv12
       case(3)
-         is=lxi+let+2
-         ie=is+lze
-         recv=>recv13
+         istart =  lxik + letk + 2
+         iend   =  istart + lzek
+         recv   => recv13
       end select
 
-      do k=0,ijk(3,nn)
-         kp=k*(ijk(2,nn)+1)
-         do j=0,ijk(2,nn)
-            jk=kp+j
-            do i=is,ie
-               l=indx3(i-is,j,k,nn)
-               li(i)=l
-               sa(i)=rr(l,nz)
+      do kkk = 0,ijks(3,nn)
+         kpp = kkk * ( ijks(2,nn) + 1 )
+         do jjj = 0,ijks(2,nn)
+            jkk = kpp + jjj
+            do iii = istart,iend
+               lll     = indx3(iii-istart, jjj, kkk, nn)
+               li(iii) = lll
+               sa(iii) = rfield(lll)
             end do
-            select case(ns)
+
+            select case(nstart)
             case(0)
-               sb(is)=sum(fbc(:,0)*(sa(is+(/1,2,3,4,5/))-sa(is)))
-               sb(is+1)=sum(fbc(:,1)*(sa(is+(/0,2,3,4,5/))-sa(is+1)))
-               sb(is+2)=sum(fbc(:,2)*(sa(is+(/0,1,3,4,5/))-sa(is+2)))
+               sb(istart)   = sum( fbc(:,0) * ( sa(istart+(/1,2,3,4,5/)) - sa(istart)   ) )
+               sb(istart+1) = sum( fbc(:,1) * ( sa(istart+(/0,2,3,4,5/)) - sa(istart+1) ) )
+               sb(istart+2) = sum( fbc(:,2) * ( sa(istart+(/0,1,3,4,5/)) - sa(istart+2) ) )
             case(1)
-               ra2=sa(is+2)+sa(is+2)
-               sb(is)=sum(pbci(0:lmf,0,nt)*sa(is:is+lmf))+recv(jk,0,0)
-               sb(is+1)=sum(pbci(0:lmf,1,nt)*sa(is:is+lmf))+recv(jk,1,0)
-               sb(is+2)=fa*(sa(is+1)+sa(is+3)-ra2)+fb*(sa(is)+sa(is+4)-ra2)+fc*(recv(jk,2,0)+sa(is+5)-ra2)
+               ra2k         = sa(istart+2) + sa(istart+2)
+               sb(istart)   = sum( pbci(0:lmf,0,ntk) * sa(istart:istart+lmf) ) + recv(jkk,0,0)
+               sb(istart+1) = sum( pbci(0:lmf,1,ntk) * sa(istart:istart+lmf) ) + recv(jkk,1,0)
+               sb(istart+2) = fa * ( sa(istart+1)  + sa(istart+3) - ra2k ) + &
+                              fb * ( sa(istart)    + sa(istart+4) - ra2k ) + &
+                              fc * ( recv(jkk,2,0) + sa(istart+5) - ra2k )
             end select
-            do i=is+3,ie-3
-               res=sa(i)+sa(i)
-               sb(i)=fa*(sa(i-1)+sa(i+1)-res)+fb*(sa(i-2)+sa(i+2)-res)+fc*(sa(i-3)+sa(i+3)-res)
+
+            do iii = istart+3,iend-3
+               resk   = sa(iii) + sa(iii)
+               sb(iii) = fa * ( sa(iii-1) + sa(iii+1) - resk ) + &
+                         fb * ( sa(iii-2) + sa(iii+2) - resk ) + &
+                         fc * ( sa(iii-3) + sa(iii+3) - resk )
             end do
-            select case(ne)
+
+            select case(nend)
             case(0)
-               sb(ie)=sum(fbc(:,0)*(sa(ie-(/1,2,3,4,5/))-sa(ie)))
-               sb(ie-1)=sum(fbc(:,1)*(sa(ie-(/0,2,3,4,5/))-sa(ie-1)))
-               sb(ie-2)=sum(fbc(:,2)*(sa(ie-(/0,1,3,4,5/))-sa(ie-2)))
+               sb(iend)   = sum( fbc(:,0) * ( sa(iend-(/1,2,3,4,5/)) - sa(iend)   ) )
+               sb(iend-1) = sum( fbc(:,1) * ( sa(iend-(/0,2,3,4,5/)) - sa(iend-1) ) )
+               sb(iend-2) = sum( fbc(:,2) * ( sa(iend-(/0,1,3,4,5/)) - sa(iend-2) ) )
             case(1)
-               ra2=sa(ie-2)+sa(ie-2)
-               sb(ie)=sum(pbci(0:lmf,0,nt)*sa(ie:ie-lmf:-1))+recv(jk,0,1)
-               sb(ie-1)=sum(pbci(0:lmf,1,nt)*sa(ie:ie-lmf:-1))+recv(jk,1,1)
-               sb(ie-2)=fa*(sa(ie-3)+sa(ie-1)-ra2)+fb*(sa(ie-4)+sa(ie)-ra2)+fc*(sa(ie-5)+recv(jk,2,1)-ra2)
+               ra2k       = sa(iend-2) + sa(iend-2)
+               sb(iend)   = sum( pbci(0:lmf,0,ntk) * sa(iend:iend-lmf:-1) ) + recv(jkk,0,1)
+               sb(iend-1) = sum( pbci(0:lmf,1,ntk) * sa(iend:iend-lmf:-1) ) + recv(jkk,1,1)
+               sb(iend-2) = fa * ( sa(iend-3) + sa(iend-1)    - ra2k ) + &
+                            fb * ( sa(iend-4) + sa(iend)      - ra2k ) + &
+                            fc * ( sa(iend-5) + recv(jkk,2,1) - ra2k )
             end select
-            sa(is)=sb(is)
-            sa(is+1)=sb(is+1)-yl(is+1,2)*sa(is)
-            do i=is+2,ie
-               sa(i)=sb(i)-yl(i,1)*sa(i-2)-yl(i,2)*sa(i-1)
+
+            sa(istart)   = sb(istart)
+            sa(istart+1) = sb(istart+1) - yl(istart+1,2) * sa(istart)
+            do iii = istart+2,iend
+               sa(iii) = sb(iii) - yl(iii,1) * sa(iii-2) - yl(iii,2) * sa(iii-1)
             end do
-            sb(ie)=yu(ie,1)*sa(ie)
-            sb(ie-1)=yu(ie-1,1)*sa(ie-1)-yu(ie-1,2)*sb(ie)
-            do i=ie-2,is,-1
-               sb(i)=yu(i,1)*sa(i)-yu(i,2)*sb(i+1)-yu(i,3)*sb(i+2)
+            
+            sb(iend)   = yu(iend,1)   * sa(iend)
+            sb(iend-1) = yu(iend-1,1) * sa(iend-1) - yu(iend-1,2) * sb(iend)
+            do iii = iend-2,istart,-1
+               sb(iii) = yu(iii,1) * sa(iii) - yu(iii,2) * sb(iii+1) - yu(iii,3) * sb(iii+2)
             end do
-            do i=is,ie
-               l=li(i)
-               rr(l,nz)=rr(l,nz)+sb(i)
+
+            do iii = istart,iend
+               lll         = li(iii)
+               rfield(lll) = rfield(lll) + sb(iii)
             end do
+
          end do
       end do
 

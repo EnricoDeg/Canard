@@ -56,7 +56,7 @@ program main3d
 !===== ALLOCATION OF MAIN ARRAYS
 
    call allocate_memory
-   call allocate_numerics(lim)
+   call allocate_numerics(lim, nbsize)
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
@@ -139,11 +139,11 @@ program main3d
       do m=1,5
          rr(:,1)=qa(:,m)
          call mpigo(1,nrone,n45no,3*(m-1)+1)
-         call filte(nnf(1),1)
+         call filte(rr(:,1), lxi, let, lze, ijk, nnf(1), 1)
          call mpigo(1,nrone,n45no,3*(m-1)+2)
-         call filte(nnf(2),1)
+         call filte(rr(:,1), lxi, let, lze, ijk, nnf(2),1)
          call mpigo(1,nrone,n45no,3*(m-1)+3)
-         call filte(nnf(3),1)
+         call filte(rr(:,1), lxi, let, lze, ijk, nnf(3),1)
          qa(:,m)=rr(:,1)
       end do
       qo(:,:)=qa(:,:)
