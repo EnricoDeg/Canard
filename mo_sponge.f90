@@ -9,6 +9,7 @@ MODULE mo_sponge
    PUBLIC
 
    real(kind=nr), private, dimension(:), allocatable :: asz, bsz
+   integer(kind=ni), private, dimension(:), allocatable :: lcsz
 
    CONTAINS
 

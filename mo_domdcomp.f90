@@ -10,22 +10,26 @@ MODULE mo_domdcomp
    IMPLICIT NONE
    PUBLIC
 
-   integer(kind=ni),parameter                    :: ljpl=100
+   integer(kind=ni), private, parameter                    :: ljpl=100
 
-   integer(kind=ni),dimension(3,0:1)             :: mmcd
-   integer(kind=ni),dimension(3)                 :: ijkp
-   integer(kind=ni),dimension(0:3,3,0:1)         :: ijp
-   integer(kind=ni),dimension(0:3,3,0:1)         :: ijl
-   integer(kind=ni),dimension(0:11,ljpl)         :: jlcd
-   integer(kind=ni),dimension(0:7,ljpl)          :: jpcd
+   integer(kind=ni), private, dimension(3,0:1)             :: mmcd
+   integer(kind=ni), private, dimension(3)                 :: ijkp
+   integer(kind=ni), private, dimension(0:3,3,0:1)         :: ijp
+   integer(kind=ni), private, dimension(0:3,3,0:1)         :: ijl
+   integer(kind=ni), private, dimension(0:11,ljpl)         :: jlcd
+   integer(kind=ni), private, dimension(0:7,ljpl)          :: jpcd
+   integer(kind=ni), private, dimension(0:7)               :: njp
+   integer(kind=ni), private, dimension(0:11)              :: njl
 
-   integer(kind=ni),dimension(:,:,:),allocatable :: nbbc,mbcd
-   integer(kind=ni),dimension(:,:),allocatable   :: jjp
-   integer(kind=ni),dimension(:,:),allocatable   :: jjl
-   integer(kind=ni),dimension(:),allocatable     :: imjp
-   integer(kind=ni),dimension(:),allocatable     :: jptag
-   integer(kind=ni),dimension(:),allocatable     :: imjl
-   integer(kind=ni),dimension(:),allocatable     :: jltag
+
+   integer(kind=ni), private, dimension(:,:,:), allocatable :: nbbc, mbcd
+   integer(kind=ni), private, dimension(:,:), allocatable   :: jjp
+   integer(kind=ni), private, dimension(:,:), allocatable   :: jjl
+   integer(kind=ni), private, dimension(:), allocatable     :: imjp
+   integer(kind=ni), private, dimension(:), allocatable     :: jptag
+   integer(kind=ni), private, dimension(:), allocatable     :: imjl
+   integer(kind=ni), private, dimension(:), allocatable     :: jltag
+
 
    CONTAINS
 

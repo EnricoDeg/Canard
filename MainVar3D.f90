@@ -11,7 +11,6 @@ module mainvar3d
 !===== ALLOCATABLE MAIN ARRAYS
 
    integer(kind=ni),dimension(:,:),allocatable :: nbpc,lio
-   integer(kind=ni),dimension(:),allocatable :: lcsz
    integer(kind=ni),dimension(:),allocatable :: lxim,letm,lzem,lpos
    integer(kind=ni),dimension(:),allocatable :: lximb,letmb,lzemb,mo
 
@@ -38,9 +37,6 @@ module mainvar3d
 
    integer(kind=ni),dimension(3,3) :: ijk
    integer(kind=ni),dimension(3,0:1) :: nbc,mcd,nsz
-   integer(kind=ni),dimension(0:11) :: njl
-   integer(kind=ni),dimension(0:7) :: njp
-   integer(kind=ni),dimension(0:4) :: no
    integer(kind=ni),dimension(3) :: ms,me,nbsize,nnf
    integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,lsz,nrecs,nrecd
    integer(kind=ni) :: i,ii,is,ie,ip,iq,j,jj,js,je,jp,jq,jk,k,kk,ks,ke,kp,l,lh,ll,lp,lq,ltomb

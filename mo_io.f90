@@ -19,6 +19,7 @@ MODULE mo_io
    character(13),       private, dimension(:),   allocatable :: ctecplt, cthead
    character(4),        private, dimension(:),   allocatable :: cfilet
    character(1),        private, dimension(0:4) :: cno
+   integer(kind=ni),    private, dimension(0:4) :: no
    character(19),       private :: crestart
 
 
