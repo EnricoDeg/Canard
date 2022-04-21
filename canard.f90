@@ -2,7 +2,7 @@
 !***** COMPRESSIBLE AERODYNAMICS & AEROACOUSTICS RESEARCH CODE (CANARD)
 !*****
 
-program main3d
+program canard
 
    use mo_mpi, ONLY : mpro, npro, myid, p_start, p_stop, &
                       p_barrier, p_sum, p_max
@@ -12,6 +12,7 @@ program main3d
    use mo_sponge
    use mo_gcbc
    use mo_numerics
+   use mo_physics
    implicit none
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -526,6 +527,6 @@ program main3d
 
    call p_stop
 
- end program main3d
+ end program canard
 
 !*****

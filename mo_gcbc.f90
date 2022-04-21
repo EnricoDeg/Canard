@@ -3,7 +3,7 @@
 !*****
 
 MODULE mo_gcbc
-   use mainvar3d
+   use mo_vars
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall
    use mo_utils
    use mo_numerics
@@ -368,6 +368,45 @@ MODULE mo_gcbc
       end do
 
    END SUBROUTINE wall_condition_update
+
+!===== EXTRA CONDITION
+
+   subroutine extracon
+      real(kind=nr),dimension(3) :: vee
+
+      if(nk==nkrk.and.(timo+quarter-tmax)**two<(half*dt)**two) then
+         nn=2
+         ip=0
+         i=ip*ijk(1,nn)
+         if(nbc(nn,ip)==25) then
+            open(2,file=cdata,access='direct',form='unformatted',recl=nrecs*(lmx+1),status='old')
+            read(2,rec=1) varr(:); ss(:,1)=varr(:)
+            close(2)
+            open(2,file='misc/wall'//cnnode//'.dat',status='replace')
+            write(2,*) 'variables=x,v1,v2,v3'
+            write(2,*) 'zone'
+            fctr=one/(ijk(2,nn)+1)
+            do k=0,ijk(3,nn)
+               kp=k*(ijk(2,nn)+1)
+               rv(:)=zero
+               do j=0,ijk(2,nn)
+                  jk=kp+j
+                  l=indx3(i,j,k,nn)
+                  ra0=two*acos(cm2(jk,1,ip))
+                  ra1=abs(half*sin(ra0)*(tyy(l)-txx(l))+cos(ra0)*txy(l))
+                  ra2=gam*p(l)/qa(l,1); ra3=sqrt(ra1*qa(l,1))*(ra2+srefoo)/(srefp1dre*ra2**1.5_nr)
+                  vee(1)=sqrt((etm(l,2)*zem(l,3)-zem(l,2)*etm(l,3))**two+(etm(l,3)*zem(l,1)-zem(l,3)*etm(l,1))**two)
+                  vee(2)=cm2(jk,1,ip)*(zem(l,2)*xim(l,3)-xim(l,2)*zem(l,3))+cm2(jk,2,ip)*(zem(l,3)*xim(l,1)-xim(l,3)*zem(l,1))
+                  vee(3)=xim(l,1)*etm(l,2)-etm(l,1)*xim(l,2)
+                  rv(:)=rv(:)+ra3*abs(vee(:)*yaco(l))
+               end do
+               write(2,'(2e16.8)') ss(l,1),fctr*rv(:)
+            end do
+            close(2)
+         end if
+      end if
+
+   end subroutine extracon
 
 !===== SUBROUTINE FOR TRANSFORMATION FROM Q TO R IN GCBC/GCIC
 

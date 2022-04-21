@@ -5,7 +5,7 @@
 MODULE mo_mpi
 
   use mpi
-  use mainvar3d
+  use mo_vars
   IMPLICIT NONE
   PRIVATE
 

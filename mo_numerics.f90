@@ -10,7 +10,7 @@ module mo_numerics
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
-   use mainvar3d,     ONLY : drva1, drva2, drva3, drva, lim, lmx
+   use mo_vars,       ONLY : drva1, drva2, drva3, drva, lim, lmx
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private

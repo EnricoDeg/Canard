@@ -3,8 +3,8 @@
 !*****
 
 MODULE mo_sponge
-   use mainvar3d
-   use problemcase
+   use mo_vars
+   use mo_gridgen
    IMPLICIT NONE
    PUBLIC
 

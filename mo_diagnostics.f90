@@ -1,6 +1,6 @@
 MODULE mo_diagnostics
 
-   use mainvar3d
+   use mo_vars
    use mo_numerics
    public
 

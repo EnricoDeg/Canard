@@ -2,7 +2,7 @@
 !***** MAIN VARIABLES & DATA FOR 3D NAVIER-STOKES/EULER SOLVER
 !*****
 
-module mainvar3d
+module mo_vars
    use mo_kind
    use mo_parameters
    implicit none
@@ -54,9 +54,11 @@ module mainvar3d
    real(kind=nr) :: dt,dts,dte,dtk,dtko,dtsum,dtwi,timo,tsam,wts,wte,wtime
    real(kind=nr) :: hv2,ao,bo,co,ho,aoi,rhoi,progmf,sqrtrema,sqrtremai
 
-!   character(3) :: cndata
+   real(kind=nr) :: szco
+   integer(kind=ni) :: nbody
+
+
    character(5) :: cnnode
-!   character(13) :: coutput
    character(16) :: cinput
    character(16) :: cgrid
    character(18) :: cdata
@@ -84,6 +86,6 @@ module mainvar3d
 
    END SUBROUTINE allocate_memory
 
-end module mainvar3d
+end module mo_vars
 
 !*****

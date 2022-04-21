@@ -1,11 +1,11 @@
 !*****
-!***** 3D FLAT-PLATE GRID GENERATION
+!***** GRID GENERATION MODULE
 !*****
 
-module gridgen
+module mo_gridgen
 
    use mo_mpi, ONLY : myid
-   use mainvar3d
+   use mo_vars
    implicit none
 
    integer(kind=ni),parameter :: lnaca=90
@@ -29,7 +29,19 @@ module gridgen
    real(kind=nr) :: xa,xb,xc,xd,xe,xo,ya,yb,yc,yd,yo,sho,pp,qq
    real(kind=nr) :: am,tmp,tmpa,tmpb,gf
 
+   integer(kind=ni) :: nthick,ngridv
+   real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
+
+
    CONTAINS
+
+!===== GRID GENERATION
+
+   subroutine makegrid
+
+      call gridaerofoil(ngridv,nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
+
+   end subroutine makegrid
 
 !===== GRID GENERATION
 
@@ -636,6 +648,6 @@ module gridgen
 
 !=====
    
- end module gridgen
+ end module mo_gridgen
 
 !*****

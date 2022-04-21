@@ -3,11 +3,12 @@
 !*****
 
 MODULE mo_io
-   use mainvar3d
+   use mo_vars
    use mo_mpi, ONLY : mpro, myid, p_barrier, p_recv, p_send, &
                       p_null_req, p_irecv, p_waitall
-   use problemcase
+   use mo_utils
    use mo_numerics
+   use mo_gridgen
    IMPLICIT NONE
    PUBLIC
 

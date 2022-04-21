@@ -4,7 +4,7 @@
 
 module mo_utils
 
-   use mainvar3d
+   use mo_vars
    implicit none
    public
 

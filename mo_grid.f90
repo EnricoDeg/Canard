@@ -4,9 +4,10 @@
 
 MODULE mo_grid
    use mo_mpi, ONLY : myid, p_barrier
-   use mainvar3d
+   use mo_vars
    use mo_numerics
-   use problemcase
+   use mo_utils
+   use mo_gridgen
    
    IMPLICIT NONE
    PUBLIC
