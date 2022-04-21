@@ -20,7 +20,6 @@ module mainvar3d
 
    real(kind=nr),dimension(:,:),allocatable :: xim,etm,zem
    real(kind=nr),dimension(:),allocatable :: p,yaco
-   real(kind=nr),dimension(:),allocatable :: sbcc
 
    real(kind=nr),dimension(:,:),allocatable :: rr,ss
 
@@ -55,9 +54,7 @@ module mainvar3d
    integer(kind=ni) :: itag, lmpi
    integer(kind=int64) :: nlmx,llmb,llmo,lis,lie,ljs,lje
 
-   real(kind=nr),dimension(mbci,mbci) :: cbca,cbcs
    real(kind=nr),dimension(5,5) :: xt
-   real(kind=nr),dimension(mbci) :: rbci,sbci
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: ve,dm,rv,uoo,umf,dudtmf
    real(kind=nr) :: ra0,ra1,ra2,ra3,res,fctr,dfdt

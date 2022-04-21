@@ -6,7 +6,6 @@ MODULE mo_parameters
    !===== CONSTANT PARAMETERS
 
    integer(kind=ni),parameter :: nrall=0,nrone=1,n45no=0,n45go=1
-   integer(kind=ni),parameter :: mbci=4
    integer(kind=ni),parameter :: liofs=16,liofl=24
 
    character(len=*),parameter :: fmts='es15.8',fmtl='es23.16',fmtsa=fmts//',a',fmtla=fmtl//',a'

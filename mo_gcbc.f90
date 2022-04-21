@@ -9,6 +9,12 @@ MODULE mo_gcbc
    use mo_numerics
    IMPLICIT NONE
    PUBLIC
+
+   integer(kind=ni), private, parameter                 :: mbci=4
+   real(kind=nr),    private, dimension(mbci,mbci)      :: cbca,cbcs
+   real(kind=nr),    private, dimension(mbci)           :: rbci,sbci
+   real(kind=nr),    private, dimension(:), allocatable :: sbcc
+
    CONTAINS
 
    SUBROUTINE gcbc_init
