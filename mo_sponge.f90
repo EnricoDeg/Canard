@@ -7,6 +7,9 @@ MODULE mo_sponge
    use problemcase
    IMPLICIT NONE
    PUBLIC
+
+   real(kind=nr), private, dimension(:), allocatable :: asz, bsz
+
    CONTAINS
 
    !===== SETTING UP SPONGE ZONE PARAMETERS

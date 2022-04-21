@@ -23,7 +23,6 @@ module mainvar3d
 
    real(kind=nr),dimension(:,:),allocatable :: rr,ss
 
-   real(kind=nr),dimension(:),allocatable :: asz,bsz
    real(kind=nr),dimension(:),allocatable :: times
 
    real(kind=nr),dimension(:,:,:),pointer :: drva,cm
