@@ -30,11 +30,8 @@ module mainvar3d
    real(kind=nr),dimension(:,:,:),allocatable,target :: drva1,drva2,drva3
    real(kind=nr),dimension(:,:,:),allocatable,target :: cm1,cm2,cm3
 
-   real(kind=ieee32),dimension(:,:),allocatable :: varm
-   real(kind=ieee32),dimension(:),allocatable :: varr,vart,vara,varb,vmean,varmin,varmax
+   real(kind=ieee32),dimension(:),allocatable :: varr,vart,vmean
 
-   character(13),dimension(:),allocatable :: ctecplt,cthead
-   character(4),dimension(:),allocatable :: cfilet
    character(4),dimension(:),allocatable :: czonet
 
 !===== CONSTANT-SIZED MAIN VARIABLES
@@ -61,14 +58,12 @@ module mainvar3d
    real(kind=nr) :: dt,dts,dte,dtk,dtko,dtsum,dtwi,timo,tsam,wts,wte,wtime
    real(kind=nr) :: hv2,ao,bo,co,ho,aoi,rhoi,progmf,sqrtrema,sqrtremai
 
-   character(1),dimension(0:4) :: cno
-   character(3) :: cndata
+!   character(3) :: cndata
    character(5) :: cnnode
-   character(13) :: coutput
+!   character(13) :: coutput
    character(16) :: cinput
    character(16) :: cgrid
    character(18) :: cdata
-   character(19) :: crestart
 
    CONTAINS
 

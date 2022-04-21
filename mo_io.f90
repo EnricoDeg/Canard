@@ -11,8 +11,17 @@ MODULE mo_io
    IMPLICIT NONE
    PUBLIC
 
-   integer(kind=ni),   dimension(:),allocatable :: idsgnl,lsgnl
-   integer(kind=int64),dimension(:),allocatable :: lhmb
+   integer(kind=ni),    private, dimension(:),   allocatable :: idsgnl, lsgnl
+   integer(kind=int64), private, dimension(:),   allocatable :: lhmb
+   real(kind=ieee32),   private, dimension(:,:), allocatable :: varm
+   real(kind=ieee32),   private, dimension(:),   allocatable :: varmin, varmax
+   real(kind=ieee32),   private, dimension(:),   allocatable :: vara, varb
+   character(13),       private, dimension(:),   allocatable :: ctecplt, cthead
+   character(4),        private, dimension(:),   allocatable :: cfilet
+   character(1),        private, dimension(0:4) :: cno
+   character(19),       private :: crestart
+
+
    
    CONTAINS
 
