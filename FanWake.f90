@@ -23,6 +23,7 @@ module problemcase
 !===== INITIAL CONDITIONS
 
    subroutine initialo
+      real(kind=nr),dimension(3) :: vee
 
       radv = 1.0
       k1 = 12.5
@@ -32,9 +33,9 @@ module problemcase
          ao = k2/2.0/pi * sqrt(exp(1 - k1**2 * (ss(l,1)**2 + ss(l,2)**2)/radv**2))
          bo=(one-half*gamm1*ao*ao)**hamm1
          qa(l,1)=bo;
-         ve(:) = (/k1*ss(l,2)*ao/radv, -k1*ss(l,1)*ao/radv, zero/)
-         hv2=half*(ve(1)*ve(1)+ve(2)*ve(2)+ve(3)*ve(3))
-         qa(l,2:4)=bo*ve(:);
+         vee(:) = (/k1*ss(l,2)*ao/radv, -k1*ss(l,1)*ao/radv, zero/)
+         hv2=half*(vee(1)*vee(1)+vee(2)*vee(2)+vee(3)*vee(3))
+         qa(l,2:4)=bo*vee(:);
          qa(l,5)=hamhamm1*bo**gam+hv2*bo
       end do
 
@@ -44,6 +45,7 @@ module problemcase
 !===== EXTRA CONDITION
 
    subroutine extracon
+      real(kind=nr),dimension(3) :: vee
 
       if(nk==nkrk.and.(timo+quarter-tmax)**two<(half*dt)**two) then
          nn=2
@@ -66,10 +68,10 @@ module problemcase
                   ra0=two*acos(cm2(jk,1,ip))
                   ra1=abs(half*sin(ra0)*(tyy(l)-txx(l))+cos(ra0)*txy(l))
                   ra2=gam*p(l)/qa(l,1); ra3=sqrt(ra1*qa(l,1))*(ra2+srefoo)/(srefp1dre*ra2**1.5_nr)
-                  ve(1)=sqrt((etm(l,2)*zem(l,3)-zem(l,2)*etm(l,3))**two+(etm(l,3)*zem(l,1)-zem(l,3)*etm(l,1))**two)
-                  ve(2)=cm2(jk,1,ip)*(zem(l,2)*xim(l,3)-xim(l,2)*zem(l,3))+cm2(jk,2,ip)*(zem(l,3)*xim(l,1)-xim(l,3)*zem(l,1))
-                  ve(3)=xim(l,1)*etm(l,2)-etm(l,1)*xim(l,2)
-                  rv(:)=rv(:)+ra3*abs(ve(:)*yaco(l))
+                  vee(1)=sqrt((etm(l,2)*zem(l,3)-zem(l,2)*etm(l,3))**two+(etm(l,3)*zem(l,1)-zem(l,3)*etm(l,1))**two)
+                  vee(2)=cm2(jk,1,ip)*(zem(l,2)*xim(l,3)-xim(l,2)*zem(l,3))+cm2(jk,2,ip)*(zem(l,3)*xim(l,1)-xim(l,3)*zem(l,1))
+                  vee(3)=xim(l,1)*etm(l,2)-etm(l,1)*xim(l,2)
+                  rv(:)=rv(:)+ra3*abs(vee(:)*yaco(l))
                end do
                write(2,'(2e16.8)') ss(l,1),fctr*rv(:)
             end do

@@ -11,13 +11,27 @@ MODULE mo_gcbc
    PUBLIC
 
    integer(kind=ni), private, parameter                 :: mbci=4
+   real(kind=nr),    private :: vn, vs
+   real(kind=nr),    private, dimension(3) :: ve
    real(kind=nr),    private, dimension(mbci,mbci)      :: cbca,cbcs
    real(kind=nr),    private, dimension(mbci)           :: rbci,sbci
    real(kind=nr),    private, dimension(:), allocatable :: sbcc
+   integer(kind=ni), private, dimension(:), allocatable :: nrr,npex
+   real(kind=nr),    private, dimension(:,:,:), pointer :: drvb
+   real(kind=nr),    private, dimension(:,:,:), allocatable, target :: drvb1,drvb2,drvb3
+
+   private :: eleme, xtq2r, xtr2q
 
    CONTAINS
 
    SUBROUTINE gcbc_init
+
+      allocate(nrr(0:lmx),npex(0:lmx))
+
+      ii=nbsize(1)-1
+      jj=nbsize(2)-1
+      kk=nbsize(3)-1
+      allocate(drvb1(0:ii,5,0:1), drvb2(0:jj,5,0:1), drvb3(0:kk,5,0:1))
 
       cbca(:,:)=zero
       cbca(1,1:2)=(/alpha01,beta02/)
