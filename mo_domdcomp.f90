@@ -48,9 +48,9 @@ MODULE mo_domdcomp
 
    end subroutine allocate_domdcomp
 
-   subroutine domdcomp_init(nblocks, nkthick, nkbody, nkviscous)
+   subroutine domdcomp_init(nblocks, nkthick, nkbody)
       integer(kind=ni), intent(in) :: nblocks, nkthick
-      integer(kind=ni), intent(in) :: nkbody, nkviscous
+      integer(kind=ni), intent(in) :: nkbody
       integer(kind=ni) :: ipk, jpk, mmk, nnk, nstart, nend
       integer(kind=ni) :: llk, mpk, lpk, mak, lk
 
@@ -73,7 +73,11 @@ MODULE mo_domdcomp
 
       ! multiblock info
       ipk = 30 * nkthick + 35 * (1 - nkthick)
-      jpk = 35 * (1 - nkbody) + nkbody * (20 + 5 * nkviscous)
+#ifdef VISCOUS
+      jpk = 35 * (1 - nkbody) + nkbody * (20 + 5)
+#else
+      jpk = 35 * (1 - nkbody) + nkbody * (20)
+#endif
       do mmk = 0,nblocks
          select case(mmk)
          case(0,3)

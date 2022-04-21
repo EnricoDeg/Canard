@@ -34,7 +34,6 @@ MODULE mo_io
       read(9,*) cinput,nscrn,nsgnl
       read(9,*) cinput,ndata,ndatafl,ndataav
       read(9,*) cinput,nkrk
-      read(9,*) cinput,nviscous
       read(9,*) cinput,nsmf
       read(9,*) cinput,nrestart
       read(9,*) cinput,nextrabc,nextgcic

@@ -41,7 +41,7 @@ module mainvar3d
    integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,lsz,nrecs,nrecd
    integer(kind=ni) :: i,ii,is,ie,ip,iq,j,jj,js,je,jp,jq,jk,k,kk,ks,ke,kp,l,lh,ll,lp,lq,ltomb
    integer(kind=ni) :: m,ma,mb,mm,mp,mq,mbk,mps,mpe,n,ndt,nn,nk,ns,ne,np,nq,nt,nz,ndati,nsigi,nout,nfile
-   integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nviscous,nkrk,nsmf,nrestart,nextrabc,nextgcic
+   integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nkrk,nsmf,nrestart,nextrabc,nextgcic
    integer(kind=ni) :: itag, lmpi
    integer(kind=int64) :: nlmx,llmb,llmo,lis,lie,ljs,lje
 
@@ -69,11 +69,12 @@ module mainvar3d
       allocate(xim(0:lmx,3),etm(0:lmx,3),zem(0:lmx,3),rr(0:lmx,3),ss(0:lmx,3))
       allocate(p(0:lmx),yaco(0:lmx),varr(0:lmx))
 
-      if(nviscous==1) then
+#ifdef VISCOUS
+
          allocate(txx(0:lmx), tyy(0:lmx), tzz(0:lmx))
          allocate(txy(0:lmx), tyz(0:lmx), tzx(0:lmx))
          allocate(hxx(0:lmx), hyy(0:lmx), hzz(0:lmx))
-      end if
+#endif
 
       ii=nbsize(1)-1
       jj=nbsize(2)-1

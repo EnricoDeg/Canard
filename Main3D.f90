@@ -47,7 +47,7 @@ program main3d
 
 !===== DOMAIN DECOMPOSITION / BOUNDARY INFORMATION / SUBDOMAIN SIZES
 
-   call domdcomp_init(mbk, nthick, nbody, nviscous)
+   call domdcomp_init(mbk, nthick, nbody)
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
@@ -188,11 +188,11 @@ program main3d
                   call p_max(res, fctr)
                   ra0=cfl/fctr
                   ra1=ra0
-                  if(nviscous==1) then
+#ifdef VISCOUS
                      res=maxval(de(:,1)*ss(:,1)*rr(:,1)*ss(:,2)*ss(:,2))
                      call p_max(res, fctr)
                      ra1=half/fctr
-                  end if
+#endif
                   dte=min(ra0,ra1)
                else
                   dte=dto
@@ -210,7 +210,7 @@ program main3d
 
 !----- VISCOUS SHEAR STRESSES & HEAT FLUXES
 
-         if(nviscous==1) then
+#ifdef VISCOUS
             de(:,1)=ss(:,1)
 
             rr(:,1)=de(:,2)
@@ -266,7 +266,7 @@ program main3d
             hxx(:)=rr(:,2)*ss(:,1)+de(:,2)*txx(:)+de(:,3)*txy(:)+de(:,4)*tzx(:)
             hyy(:)=rr(:,2)*ss(:,2)+de(:,2)*txy(:)+de(:,3)*tyy(:)+de(:,4)*tyz(:)
             hzz(:)=rr(:,2)*ss(:,3)+de(:,2)*tzx(:)+de(:,3)*tyz(:)+de(:,4)*tzz(:)
-         end if
+#endif
 
 !----- CALCULATION OF FLUX DERIVATIVES
 
@@ -290,11 +290,11 @@ program main3d
          rr(:,1)=qa(:,2)*ss(:,1)+xim(:,1)*p(:)
          rr(:,2)=qa(:,2)*ss(:,2)+etm(:,1)*p(:)
          rr(:,3)=qa(:,2)*ss(:,3)+zem(:,1)*p(:)
-         if(nviscous==1) then
+#ifdef VISCOUS
             rr(:,1)=rr(:,1)-xim(:,1)*txx(:)-xim(:,2)*txy(:)-xim(:,3)*tzx(:)
             rr(:,2)=rr(:,2)-etm(:,1)*txx(:)-etm(:,2)*txy(:)-etm(:,3)*tzx(:)
             rr(:,3)=rr(:,3)-zem(:,1)*txx(:)-zem(:,2)*txy(:)-zem(:,3)*tzx(:)
-         end if
+#endif
          m=2
          call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
          call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
@@ -305,11 +305,11 @@ program main3d
          rr(:,1)=qa(:,3)*ss(:,1)+xim(:,2)*p(:)
          rr(:,2)=qa(:,3)*ss(:,2)+etm(:,2)*p(:)
          rr(:,3)=qa(:,3)*ss(:,3)+zem(:,2)*p(:)
-         if(nviscous==1) then
+#ifdef VISCOUS
             rr(:,1)=rr(:,1)-xim(:,1)*txy(:)-xim(:,2)*tyy(:)-xim(:,3)*tyz(:)
             rr(:,2)=rr(:,2)-etm(:,1)*txy(:)-etm(:,2)*tyy(:)-etm(:,3)*tyz(:)
             rr(:,3)=rr(:,3)-zem(:,1)*txy(:)-zem(:,2)*tyy(:)-zem(:,3)*tyz(:)
-         end if
+#endif
          m=3
          call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
          call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
@@ -320,11 +320,11 @@ program main3d
          rr(:,1)=qa(:,4)*ss(:,1)+xim(:,3)*p(:)
          rr(:,2)=qa(:,4)*ss(:,2)+etm(:,3)*p(:)
          rr(:,3)=qa(:,4)*ss(:,3)+zem(:,3)*p(:)
-         if(nviscous==1) then
+#ifdef VISCOUS
             rr(:,1)=rr(:,1)-xim(:,1)*tzx(:)-xim(:,2)*tyz(:)-xim(:,3)*tzz(:)
             rr(:,2)=rr(:,2)-etm(:,1)*tzx(:)-etm(:,2)*tyz(:)-etm(:,3)*tzz(:)
             rr(:,3)=rr(:,3)-zem(:,1)*tzx(:)-zem(:,2)*tyz(:)-zem(:,3)*tzz(:)
-         end if
+#endif
          m=4
          call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
          call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
@@ -336,11 +336,11 @@ program main3d
          rr(:,1)=de(:,5)*ss(:,1)-p(:)*(umf(1)*xim(:,1)+umf(2)*xim(:,2)+umf(3)*xim(:,3))
          rr(:,2)=de(:,5)*ss(:,2)-p(:)*(umf(1)*etm(:,1)+umf(2)*etm(:,2)+umf(3)*etm(:,3))
          rr(:,3)=de(:,5)*ss(:,3)-p(:)*(umf(1)*zem(:,1)+umf(2)*zem(:,2)+umf(3)*zem(:,3))
-         if(nviscous==1) then
+#ifdef VISCOUS
             rr(:,1)=rr(:,1)-xim(:,1)*hxx(:)-xim(:,2)*hyy(:)-xim(:,3)*hzz(:)
             rr(:,2)=rr(:,2)-etm(:,1)*hxx(:)-etm(:,2)*hyy(:)-etm(:,3)*hzz(:)
             rr(:,3)=rr(:,3)-zem(:,1)*hxx(:)-zem(:,2)*hyy(:)-zem(:,3)*hzz(:)
-         end if
+#endif
          m=5
          call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
          call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
@@ -470,9 +470,9 @@ program main3d
       end if
    else
       deallocate(qo,qa,qb,de,xim,etm,zem,rr,ss,p,yaco)
-      if(nviscous==1) then
+#ifdef VISCOUS
          deallocate(txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz)
-      end if
+#endif
       if(tmax>=tsam) then
          nlmx=(3+5*(ndata+1))*(lmx+1)-1
          ll=5*(lmx+1)-1
