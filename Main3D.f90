@@ -138,11 +138,11 @@ program main3d
 
       do m=1,5
          rr(:,1)=qa(:,m)
-         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+1)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+1)
          call filte(rr, lxi, let, lze, ijk, nnf(1), 1)
-         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+2)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+2)
          call filte(rr, lxi, let, lze, ijk, nnf(2),1)
-         call mpigo(ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+3)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+3)
          call filte(rr, lxi, let, lze, ijk, nnf(3),1)
          qa(:,m)=rr(:,1)
       end do
@@ -215,40 +215,40 @@ program main3d
 
             rr(:,1)=de(:,2)
             m=2
-            call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(lxi, let, lze, ijk, 3, 1, m)
-            call deriv(lxi, let, lze, ijk, 2, 1, m)
-            call deriv(lxi, let, lze, ijk, 1, 1, m)
+            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
             txx(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
             hzz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
             tzx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
             rr(:,1)=de(:,3)
             m=3
-            call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(lxi, let, lze, ijk, 3, 1, m)
-            call deriv(lxi, let, lze, ijk, 2, 1, m)
-            call deriv(lxi, let, lze, ijk, 1, 1, m)
+            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
             txy(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
             tyy(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
             hxx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
             rr(:,1)=de(:,4)
             m=4
-            call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(lxi, let, lze, ijk, 3, 1, m)
-            call deriv(lxi, let, lze, ijk, 2, 1, m)
-            call deriv(lxi, let, lze, ijk, 1, 1, m)
+            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
             hyy(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
             tyz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
             tzz(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
             rr(:,1)=de(:,5)
             m=5
-            call mpigo(ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(lxi, let, lze, ijk, 3, 1, m)
-            call deriv(lxi, let, lze, ijk, 2, 1, m)
-            call deriv(lxi, let, lze, ijk, 1, 1, m)
+            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
             ss(:,1)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
             ss(:,2)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
             ss(:,3)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
@@ -281,10 +281,10 @@ program main3d
          rr(:,2)=qa(:,1)*ss(:,2)
          rr(:,3)=qa(:,1)*ss(:,3)
          m=1
-         call mpigo(ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(lxi, let, lze, ijk, 1,1,m)
-         call deriv(lxi, let, lze, ijk, 2,2,m)
-         call deriv(lxi, let, lze, ijk, 3,3,m)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+         call deriv(rr, lxi, let, lze, ijk, 1,1,m)
+         call deriv(rr, lxi, let, lze, ijk, 2,2,m)
+         call deriv(rr, lxi, let, lze, ijk, 3,3,m)
          de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
          rr(:,1)=qa(:,2)*ss(:,1)+xim(:,1)*p(:)
@@ -296,10 +296,10 @@ program main3d
             rr(:,3)=rr(:,3)-zem(:,1)*txx(:)-zem(:,2)*txy(:)-zem(:,3)*tzx(:)
          end if
          m=2
-         call mpigo(ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(lxi, let, lze, ijk, 1, 1, m)
-         call deriv(lxi, let, lze, ijk, 2, 2, m)
-         call deriv(lxi, let, lze, ijk, 3, 3, m)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
          de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
          rr(:,1)=qa(:,3)*ss(:,1)+xim(:,2)*p(:)
@@ -311,10 +311,10 @@ program main3d
             rr(:,3)=rr(:,3)-zem(:,1)*txy(:)-zem(:,2)*tyy(:)-zem(:,3)*tyz(:)
          end if
          m=3
-         call mpigo(ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(lxi, let, lze, ijk, 1, 1, m)
-         call deriv(lxi, let, lze, ijk, 2, 2, m)
-         call deriv(lxi, let, lze, ijk, 3, 3, m)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
          de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
          rr(:,1)=qa(:,4)*ss(:,1)+xim(:,3)*p(:)
@@ -326,10 +326,10 @@ program main3d
             rr(:,3)=rr(:,3)-zem(:,1)*tzx(:)-zem(:,2)*tyz(:)-zem(:,3)*tzz(:)
          end if
          m=4
-         call mpigo(ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(lxi, let, lze, ijk, 1, 1, m)
-         call deriv(lxi, let, lze, ijk, 2, 2, m)
-         call deriv(lxi, let, lze, ijk, 3, 3, m)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
          de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
          de(:,5)=qa(:,5)+p(:)
@@ -342,10 +342,10 @@ program main3d
             rr(:,3)=rr(:,3)-zem(:,1)*hxx(:)-zem(:,2)*hyy(:)-zem(:,3)*hzz(:)
          end if
          m=5
-         call mpigo(ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(lxi, let, lze, ijk, 1, 1, m)
-         call deriv(lxi, let, lze, ijk, 2, 2, m)
-         call deriv(lxi, let, lze, ijk, 3, 3, m)
+         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
          de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
 !----- PREPARATION FOR GCBC & GCIC

@@ -10,7 +10,7 @@ module mo_numerics
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
-   use mainvar3d,     ONLY : rr, drva1, drva2, drva3, drva, lim, lmx
+   use mainvar3d,     ONLY : drva1, drva2, drva3, drva, lim, lmx
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private
@@ -40,10 +40,6 @@ module mo_numerics
 
    public :: allocate_numerics, read_input_numerics, init_extracoeff_bounds
    public :: init_penta, mpigo, deriv, filte
-
-   INTERFACE filte
-      MODULE PROCEDURE filte_2d
-   END INTERFACE filte
 
    contains
 
@@ -388,7 +384,8 @@ module mo_numerics
 
 !===== SUBROUTINE FOR MPI IMPLEMENTATION
 
-   subroutine mpigo(ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+   subroutine mpigo(rfield, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+      real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in), dimension(3,3)   :: ijks
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
@@ -458,10 +455,10 @@ module mo_numerics
                   do jjj = 0,ijks(2,nnk)
                      jkk  = kpp + jjj
                      lll  = indx3(istart, jjj, kkk, nnk)
-                     resk = ra0k * rr(lll,nzk)
+                     resk = ra0k * rfield(lll,nzk)
                      do iii = 0,mpk
                         lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk)
-                        sap(iii) = rr(lll,nzk)
+                        sap(iii) = rfield(lll,nzk)
                      end do
                      send(jkk,0,ipk)    = sum( pbco(0:mpk,0,nt) * sap(0:mpk) ) - resk * pbcot(0,nt)
                      send(jkk,1,ipk)    = sum( pbco(0:mpk,1,nt) * sap(0:mpk) ) - resk * pbcot(1,nt)
@@ -512,9 +509,9 @@ module mo_numerics
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
                         lll = indx3(istart, jjj, kkk, nnk)
-                        recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rr(lll,nzk) * pbcot(0,nt)
-                        recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rr(lll,nzk) * pbcot(1,nt)
-                        recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rr(lll,nzk)
+                        recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rfield(lll,nzk) * pbcot(0,nt)
+                        recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rfield(lll,nzk) * pbcot(1,nt)
+                        recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rfield(lll,nzk)
                      end do
                   end do
                end if
@@ -526,7 +523,8 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FINITE DIFFERENTIATING
 
-   subroutine deriv(lxik, letk, lzek, ijks, nn, nz, m)
+   subroutine deriv(rfield, lxik, letk, lzek, ijks, nn, nz, m)
+      real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz, m
@@ -562,7 +560,7 @@ module mo_numerics
             do iii = istart,iend
                lll = indx3(iii-istart, jjj, kkk, nn)
                li(iii) = lll
-               sa(iii) = rr(lll,nz)
+               sa(iii) = rfield(lll,nz)
             end do
 
             select case(nstart)
@@ -601,7 +599,7 @@ module mo_numerics
 
             do iii = istart,iend
                lll = li(iii)
-               rr(lll,nn) = sb(iii)
+               rfield(lll,nn) = sb(iii)
             end do
 
             drva(jkk,m,0) = sb(istart)
@@ -614,8 +612,8 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte_2d(rfield, lxik, letk, lzek, ijks, nn, nz)
-      real(kind=nr),    intent(inout), dimension(:,:) :: rfield
+   subroutine filte(rfield, lxik, letk, lzek, ijks, nn, nz)
+      real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz
@@ -707,7 +705,7 @@ module mo_numerics
          end do
       end do
 
-   end subroutine filte_2d
+   end subroutine filte
 
 !=====
 
