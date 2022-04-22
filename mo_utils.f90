@@ -49,33 +49,6 @@ module mo_utils
 
    end subroutine mtrxi
 
-!===== SUBROUTINE FOR MOVING FRAME VELOCITIES
-
-   subroutine movef(dtko,dtk)
-
-      real(kind=nr),intent(in) :: dtko,dtk
-
-      if(nsmf==0) then
-         ra0=pi/timf
-         ra1=ra0*min(timo,timf)
-         ra2=ra0*min(timo+dtko,timf)
-
-         fctr=one-cos(ra1)
-         dfdt=ra0*sin(ra2)
-         progmf=half*(fctr+dtk*dfdt)
-         umf(:)=progmf*uoo(:)
-
-         fctr=sin(ra1)
-         dfdt=ra0*cos(ra2)
-         progmf=half*ra0*(fctr+dtk*dfdt)
-         dudtmf(:)=progmf*uoo(:)
-      else
-         umf(:)=uoo(:)
-         dudtmf(:)=zero
-      end if
-
-   end subroutine movef
-
 !===== FUNCTION FOR MAIN INDEX TRANSFORMATION IN 3D
 
    function indx3(i,j,k,nn) result(lm)

@@ -30,15 +30,8 @@ program canard
    call read_input_numerics
     
    cinput=cinput
-   amachoo=sqrt(amach1*amach1+amach2*amach2+amach3*amach3)
-   if(amachoo>sml) then
-      reoo=reoo/amachoo
-   end if
-   srefoo=111/tempoo
-   srefp1dre=(srefoo+one)/reoo
-   sqrtrema=sqrt(reoo*amachoo)
-   sqrtremai=one/max(sqrtrema,sml)
-   uoo(:)=(/amach1,amach2,amach3/)
+   
+   call init_physics
 
    call allocate_io_memory
 

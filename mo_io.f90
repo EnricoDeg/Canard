@@ -39,8 +39,6 @@ MODULE mo_io
       read(9,*) cinput,nrestart
       read(9,*) cinput,nextrabc,nextgcic
       read(9,*) cinput,nnf(:)
-      read(9,*) cinput,reoo,tempoo
-      read(9,*) cinput,amach1,amach2,amach3
       read(9,*) cinput,wtemp
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,timf,tsam

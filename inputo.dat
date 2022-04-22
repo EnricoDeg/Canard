@@ -7,8 +7,6 @@ nsmf            1
 nrestart        1
 nextrabc-gcic   0,0
 nnf1-2-3        2,3,1
-reoo-tempoo     500000.0e0,300.0e0
-amach1-2-3      0.3e0,0.0e0,0.0e0
 wtemp           1.0e0
 cfl             1.4e0
 tmax-timf-tsam  0.15e0,0.0e0,0.01e0
