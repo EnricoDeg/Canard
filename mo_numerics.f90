@@ -613,7 +613,7 @@ module mo_numerics
 !===== SUBROUTINE FOR COMPACT FILTERING
 
    subroutine filte(rfield, lxik, letk, lzek, ijks, nn, nz)
-      real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
+      real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz
@@ -647,7 +647,7 @@ module mo_numerics
             do iii = istart,iend
                lll     = indx3(iii-istart, jjj, kkk, nn)
                li(iii) = lll
-               sa(iii) = rfield(lll,nz)
+               sa(iii) = rfield(lll)
             end do
 
             select case(nstart)
@@ -699,7 +699,7 @@ module mo_numerics
 
             do iii = istart,iend
                lll         = li(iii)
-               rfield(lll,nz) = rfield(lll,nz) + sb(iii)
+               rfield(lll) = rfield(lll) + sb(iii)
             end do
 
          end do
