@@ -30,7 +30,7 @@ program canard
    call read_input_numerics
     
    cinput=cinput
-   
+
    call init_physics
 
    call allocate_io_memory
@@ -133,11 +133,11 @@ program canard
       do m=1,5
          rr(:,1)=qa(:,m)
          call mpigo(rr, ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+1)
-         call filte(rr(:,1), lxi, let, lze, ijk, nnf(1), 1)
+         call filte(rr(:,1), lxi, let, lze, ijk, nnf(1))
          call mpigo(rr, ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+2)
-         call filte(rr(:,1), lxi, let, lze, ijk, nnf(2),1)
+         call filte(rr(:,1), lxi, let, lze, ijk, nnf(2))
          call mpigo(rr, ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+3)
-         call filte(rr(:,1), lxi, let, lze, ijk, nnf(3),1)
+         call filte(rr(:,1), lxi, let, lze, ijk, nnf(3))
          qa(:,m)=rr(:,1)
       end do
       qo(:,:)=qa(:,:)

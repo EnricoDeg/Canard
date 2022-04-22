@@ -612,11 +612,11 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(rfield, lxik, letk, lzek, ijks, nn, nz)
+   subroutine filte(rfield, lxik, letk, lzek, ijks, nn)
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
-      integer(kind=ni), intent(in)                  :: nn, nz
+      integer(kind=ni), intent(in)                  :: nn
       integer(kind=ni) :: nstart, nend, istart, iend, ntk
       integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
       real(kind=nr)    :: resk, ra2k
