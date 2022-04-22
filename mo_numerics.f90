@@ -41,6 +41,11 @@ module mo_numerics
    public :: allocate_numerics, read_input_numerics, init_extracoeff_bounds
    public :: init_penta, mpigo, deriv, filte
 
+   INTERFACE mpigo
+      MODULE PROCEDURE mpigo_1d
+      MODULE PROCEDURE mpigo_2d
+   END INTERFACE mpigo
+
    contains
 
    SUBROUTINE allocate_numerics(limk, nbsizek)
@@ -382,9 +387,146 @@ module mo_numerics
       end do
    end subroutine sbcco
 
-!===== SUBROUTINE FOR MPI IMPLEMENTATION
+!===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo(rfield, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+   subroutine mpigo_1d(rfield, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+      real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
+      integer(kind=ni), intent(in), dimension(3,3)   :: ijks
+      integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
+      integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
+      integer(kind=ni), intent(in), dimension(3)     :: nbsizek
+      integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
+      integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
+      integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
+      real(kind=nr)    :: ra0k, resk
+
+      select case(nt)
+      case(0)
+         mpk = lmd
+      case(1)
+         mpk = lmf
+      end select
+
+      call p_null_req
+      do nnk = 1,3
+         nzk = ( 1 - nrt ) * ( nnk - 1 ) + 1
+
+         if ( nt == 0 ) then
+            select case(nnk)
+            case(1)
+               send => send01
+               recv => recv01
+            case(2)
+               send => send02
+               recv => recv02
+            case(3)
+               send => send03
+               recv => recv03
+            end select
+         else
+            select case(nnk)
+            case(1)
+               send => send11
+               recv => recv11
+            case(2)
+               send => send12
+               recv => recv12
+            case(3)
+               send => send13
+               recv => recv13
+            end select
+         end if
+         
+         do ipk = 0,1
+            iqk    = 1 - ipk
+            istart = ipk * ijks(1,nnk)
+            iend   = 1 - 2 * ipk
+
+            select case(nbck(nnk,ipk))
+            case(35)
+               ra0k = zero
+               iik  = 1
+            case(40)
+               ra0k = zero
+               iik  = 0
+            case(45)
+               ra0k = n45
+               iik  = 1
+            end select
+
+            if ( ndf(nnk,ipk,nt) == 1 ) then
+               do kkk = 0,ijks(3,nnk)
+                  kpp = kkk * ( ijks(2,nnk) + 1 )
+                  do jjj = 0,ijks(2,nnk)
+                     jkk  = kpp + jjj
+                     lll  = indx3(istart, jjj, kkk, nnk)
+                     resk = ra0k * rfield(lll)
+                     do iii = 0,mpk
+                        lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk)
+                        sap(iii) = rfield(lll)
+                     end do
+                     send(jkk,0,ipk)    = sum( pbco(0:mpk,0,nt) * sap(0:mpk) ) - resk * pbcot(0,nt)
+                     send(jkk,1,ipk)    = sum( pbco(0:mpk,1,nt) * sap(0:mpk) ) - resk * pbcot(1,nt)
+                     send(jkk,nt+1,ipk) = send(jkk,nt+1,ipk) + nt * ( sap(0) - resk - send(jkk,nt+1,ipk) )
+                  end do
+               end do
+               if ( nt == 0 ) then
+                  call p_isend(send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk))
+                  call p_irecv(recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
+               else
+                  call p_isend(send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk))
+                  call p_irecv(recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
+               end if
+            end if
+         end do
+      end do
+      call p_waitall
+
+      if ( n45 == n45go ) then
+         do nnk = 1,3
+            nzk = ( 1 - nrt ) * ( nnk - 1 ) + 1
+
+            if ( nt == 0 ) then
+               select case(nnk)
+               case(1)
+                  recv => recv01
+               case(2)
+                  recv => recv02
+               case(3)
+                  recv => recv03
+               end select
+            else
+               select case(nnk)
+               case(1)
+                  recv => recv11
+               case(2)
+                  recv => recv12
+               case(3)
+                  recv => recv13
+               end select
+            end if
+            
+            do ipk = 0,1
+               istart = ipk * ijks(1,nnk)
+               if ( nbck(nnk,ipk) == 45 ) then
+                  do kkk = 0,ijks(3,nnk)
+                     kpp = kkk * ( ijks(2,nnk) + 1 )
+                     do jjj = 0,ijks(2,nnk)
+                        jkk = kpp + jjj
+                        lll = indx3(istart, jjj, kkk, nnk)
+                        recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rfield(lll) * pbcot(0,nt)
+                        recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rfield(lll) * pbcot(1,nt)
+                        recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rfield(lll)
+                     end do
+                  end do
+               end if
+            end do
+         end do
+      end if
+
+   end subroutine mpigo_1d
+
+   subroutine mpigo_2d(rfield, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in), dimension(3,3)   :: ijks
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
@@ -519,7 +661,7 @@ module mo_numerics
          end do
       end if
 
-   end subroutine mpigo
+   end subroutine mpigo_2d
 
 !===== SUBROUTINE FOR COMPACT FINITE DIFFERENTIATING
 
