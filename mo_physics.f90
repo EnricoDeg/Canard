@@ -6,11 +6,11 @@ MODULE mo_physics
    use mo_vars
    implicit none
 
-   contains
-
    real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3
    real(kind=nr) :: amachoo
    real(kind=nr), dimension(3) :: uoo
+
+   contains
 
    subroutine init_physics
 
