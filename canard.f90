@@ -131,11 +131,11 @@ program canard
 !----- FILTERING & RE-INITIALISING
 
       do m=1,5
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,3*(m-1)+1)
+         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,n45no,3*(m-1)+1)
          call filte(qa(:,m), lxi, let, lze, ijk, nnf(1))
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,3*(m-1)+2)
+         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,n45no,3*(m-1)+2)
          call filte(qa(:,m), lxi, let, lze, ijk, nnf(2))
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,3*(m-1)+3)
+         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,n45no,3*(m-1)+3)
          call filte(qa(:,m), lxi, let, lze, ijk, nnf(3))
       end do
       qo(:,:)=qa(:,:)
@@ -207,10 +207,10 @@ program canard
 
             rr(:,1)=de(:,2)
             m=2
-            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+            call mpigo(rr(:,1), ijk, nbc, mcd, nbsize,0,n45no,m)
+            call deriv(rr(:,1), rr(:,3), lxi, let, lze, ijk, 3, m)
+            call deriv(rr(:,1), rr(:,2), lxi, let, lze, ijk, 2, m)
+            call deriv(rr(:,1), rr(:,1), lxi, let, lze, ijk, 1, m)
             txx(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
             hzz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
             tzx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)

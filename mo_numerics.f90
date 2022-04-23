@@ -46,6 +46,11 @@ module mo_numerics
       MODULE PROCEDURE mpigo_2d
    END INTERFACE mpigo
 
+   INTERFACE deriv
+      MODULE PROCEDURE deriv_nooverwrite
+      MODULE PROCEDURE deriv_overwrite
+   END INTERFACE deriv
+
    contains
 
    SUBROUTINE allocate_numerics(limk, nbsizek)
@@ -389,14 +394,14 @@ module mo_numerics
 
 !===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo_1d(rfield, ijks, nbck, mcdk, nbsizek, nt, itag)
+   subroutine mpigo_1d(rfield, ijks, nbck, mcdk, nbsizek, nt, n45, itag)
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in), dimension(3,3)   :: ijks
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
-      integer(kind=ni), intent(in)                   :: nt,itag
-      integer(kind=ni) :: mpk, nnk, ipk, iqk, istart, iend
+      integer(kind=ni), intent(in)                   :: nt,n45,itag
+      integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
 
@@ -449,7 +454,7 @@ module mo_numerics
                ra0k = zero
                iik  = 0
             case(45)
-               ra0k = zero
+               ra0k = n45
                iik  = 1
             end select
 
@@ -480,6 +485,47 @@ module mo_numerics
          end do
       end do
       call p_waitall
+
+      if ( n45 == n45go ) then
+         do nnk = 1,3
+
+            if ( nt == 0 ) then
+               select case(nnk)
+               case(1)
+                  recv => recv01
+               case(2)
+                  recv => recv02
+               case(3)
+                  recv => recv03
+               end select
+            else
+               select case(nnk)
+               case(1)
+                  recv => recv11
+               case(2)
+                  recv => recv12
+               case(3)
+                  recv => recv13
+               end select
+            end if
+            
+            do ipk = 0,1
+               istart = ipk * ijks(1,nnk)
+               if ( nbck(nnk,ipk) == 45 ) then
+                  do kkk = 0,ijks(3,nnk)
+                     kpp = kkk * ( ijks(2,nnk) + 1 )
+                     do jjj = 0,ijks(2,nnk)
+                        jkk = kpp + jjj
+                        lll = indx3(istart, jjj, kkk, nnk)
+                        recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rfield(lll) * pbcot(0,nt)
+                        recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rfield(lll) * pbcot(1,nt)
+                        recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rfield(lll)
+                     end do
+                  end do
+               end if
+            end do
+         end do
+      end if
 
    end subroutine mpigo_1d
 
@@ -622,7 +668,95 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FINITE DIFFERENTIATING
 
-   subroutine deriv(rfield, lxik, letk, lzek, ijks, nn, nz, m)
+   subroutine deriv_nooverwrite(rfieldin, rfieldout, lxik, letk, lzek, ijks, nn, m)
+      real(kind=nr),    intent(in),  dimension(0:lmx) :: rfieldin
+      real(kind=nr),    intent(out), dimension(0:lmx) :: rfieldout
+      integer(kind=ni), intent(in)                  :: lxik, letk, lzek
+      integer(kind=ni), intent(in), dimension(3,3)  :: ijks
+      integer(kind=ni), intent(in)                  :: nn, m
+      integer(kind=ni) :: ntk, nstart, nend, istart, iend
+      integer(kind=ni) :: kkk, jjj, iii, kpp, jkk, lll
+
+      ntk    = 0
+      nstart = ndf(nn,0,0)
+      nend   = ndf(nn,1,0)
+
+      select case(nn)
+      case(1)
+         istart =  0
+         iend   =  istart + lxik
+         recv   => recv01
+         drva   => drva1
+      case(2)
+         istart =  lxik + 1
+         iend   =  istart + letk
+         recv   => recv02
+         drva   => drva2
+      case(3)
+         istart =  lxik + letk + 2
+         iend   =  istart + lzek
+         recv   => recv03
+         drva   => drva3
+      end select
+
+      do kkk = 0,ijks(3,nn)
+         kpp = kkk * ( ijks(2,nn) + 1 )
+         do jjj=  0,ijks(2,nn)
+            jkk = kpp + jjj
+            do iii = istart,iend
+               lll = indx3(iii-istart, jjj, kkk, nn)
+               li(iii) = lll
+               sa(iii) = rfieldin(lll)
+            end do
+
+            select case(nstart)
+            case(0)
+               sb(istart)   = sum( (/a01,a02,a03,a04/) * ( sa(istart+(/1,2,3,4/)) - sa(istart)   ) )
+               sb(istart+1) = sum( (/a10,a12,a13,a14/) * ( sa(istart+(/0,2,3,4/)) - sa(istart+1) ) )
+            case(1)
+               sb(istart)   = sum( pbci(0:lmd,0,ntk) * sa(istart:istart+lmd) ) + recv(jkk,0,0)
+               sb(istart+1) = sum( pbci(0:lmd,1,ntk) * sa(istart:istart+lmd) ) + recv(jkk,1,0)
+            end select
+
+            do iii = istart+2,iend-2
+               sb(iii) = aa * ( sa(iii+1) - sa(iii-1) ) + ab * ( sa(iii+2) - sa(iii-2) )
+            end do
+
+            select case(nend)
+            case(0)
+               sb(iend)   = sum( (/a01,a02,a03,a04/) * ( sa(iend)   - sa(iend-(/1,2,3,4/)) ) )
+               sb(iend-1) = sum( (/a10,a12,a13,a14/) * ( sa(iend-1) - sa(iend-(/0,2,3,4/)) ) )
+            case(1)
+               sb(iend)   = -sum( pbci(0:lmd,0,ntk) * sa(iend:iend-lmd:-1) ) - recv(jkk,0,1)
+               sb(iend-1) = -sum( pbci(0:lmd,1,ntk) * sa(iend:iend-lmd:-1) ) - recv(jkk,1,1)
+            end select
+
+            sa(istart)   = sb(istart)
+            sa(istart+1) = sb(istart+1) - xl(istart+1,2) * sa(istart)
+            do iii = istart+2,iend
+               sa(iii) = sb(iii) - xl(iii,1) * sa(iii-2) - xl(iii,2) * sa(iii-1)
+            end do
+
+            sb(iend)   = xu(iend,1)   * sa(iend)
+            sb(iend-1) = xu(iend-1,1) * sa(iend-1) - xu(iend-1,2) * sb(iend)
+            do iii = iend-2,istart,-1
+               sb(iii) = xu(iii,1) * sa(iii) - xu(iii,2) * sb(iii+1) - xu(iii,3) * sb(iii+2)
+            end do
+
+            do iii = istart,iend
+               lll = li(iii)
+               rfieldout(lll) = sb(iii)
+            end do
+
+            drva(jkk,m,0) = sb(istart)
+            drva(jkk,m,1) = sb(iend)
+
+         end do
+      end do
+
+   end subroutine deriv_nooverwrite
+
+   subroutine deriv_overwrite(rfield, lxik, letk, lzek, ijks, nn, nz, m)
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
@@ -707,7 +841,7 @@ module mo_numerics
          end do
       end do
 
-   end subroutine deriv
+   end subroutine deriv_overwrite
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 

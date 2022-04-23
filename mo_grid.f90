@@ -89,25 +89,25 @@ MODULE mo_grid
       zem(:,3)=qo(:,1)*qa(:,2)-qa(:,1)*qo(:,2)
 
       do m=1,3
-         call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+1)
+         call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+1)
          call filte(xim(:,m), lxi, let, lze, ijk, nnf(1))
-         call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+2)
+         call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+2)
          call filte(xim(:,m), lxi, let, lze, ijk, nnf(2))
-         call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+3)
+         call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+3)
          call filte(xim(:,m), lxi, let, lze, ijk, nnf(3))
 
-         call mpigo(etm(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+4)
+         call mpigo(etm(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+4)
          call filte(etm(:,m), lxi, let, lze, ijk, nnf(1))
-         call mpigo(etm(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+5)
+         call mpigo(etm(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+5)
          call filte(etm(:,m), lxi, let, lze, ijk, nnf(2))
-         call mpigo(etm(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+6)
+         call mpigo(etm(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+6)
          call filte(etm(:,m), lxi, let, lze, ijk, nnf(3))
 
-         call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+7)
+         call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+7)
          call filte(zem(:,m), lxi, let, lze, ijk, nnf(1))
-         call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+8)
+         call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+8)
          call filte(zem(:,m), lxi, let, lze, ijk, nnf(2))
-         call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,9*(m-1)+9)
+         call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+9)
          call filte(zem(:,m), lxi, let, lze, ijk, nnf(3))
       end do
       yaco(:)=three/(qo(:,1)*xim(:,1)+qo(:,2)*etm(:,1)+qo(:,3)*zem(:,1)&
