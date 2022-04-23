@@ -131,11 +131,11 @@ program canard
 !----- FILTERING & RE-INITIALISING
 
       do m=1,5
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+1)
+         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,3*(m-1)+1)
          call filte(qa(:,m), lxi, let, lze, ijk, nnf(1))
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+2)
+         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,3*(m-1)+2)
          call filte(qa(:,m), lxi, let, lze, ijk, nnf(2))
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,nrone,n45no,3*(m-1)+3)
+         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,3*(m-1)+3)
          call filte(qa(:,m), lxi, let, lze, ijk, nnf(3))
       end do
       qo(:,:)=qa(:,:)

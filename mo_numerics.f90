@@ -389,14 +389,14 @@ module mo_numerics
 
 !===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo_1d(rfield, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+   subroutine mpigo_1d(rfield, ijks, nbck, mcdk, nbsizek, nt, itag)
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in), dimension(3,3)   :: ijks
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
-      integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
-      integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
+      integer(kind=ni), intent(in)                   :: nt,itag
+      integer(kind=ni) :: mpk, nnk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
 
@@ -409,7 +409,6 @@ module mo_numerics
 
       call p_null_req
       do nnk = 1,3
-         nzk = ( 1 - nrt ) * ( nnk - 1 ) + 1
 
          if ( nt == 0 ) then
             select case(nnk)
@@ -450,7 +449,7 @@ module mo_numerics
                ra0k = zero
                iik  = 0
             case(45)
-               ra0k = n45
+               ra0k = zero
                iik  = 1
             end select
 
@@ -481,48 +480,6 @@ module mo_numerics
          end do
       end do
       call p_waitall
-
-      if ( n45 == n45go ) then
-         do nnk = 1,3
-            nzk = ( 1 - nrt ) * ( nnk - 1 ) + 1
-
-            if ( nt == 0 ) then
-               select case(nnk)
-               case(1)
-                  recv => recv01
-               case(2)
-                  recv => recv02
-               case(3)
-                  recv => recv03
-               end select
-            else
-               select case(nnk)
-               case(1)
-                  recv => recv11
-               case(2)
-                  recv => recv12
-               case(3)
-                  recv => recv13
-               end select
-            end if
-            
-            do ipk = 0,1
-               istart = ipk * ijks(1,nnk)
-               if ( nbck(nnk,ipk) == 45 ) then
-                  do kkk = 0,ijks(3,nnk)
-                     kpp = kkk * ( ijks(2,nnk) + 1 )
-                     do jjj = 0,ijks(2,nnk)
-                        jkk = kpp + jjj
-                        lll = indx3(istart, jjj, kkk, nnk)
-                        recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rfield(lll) * pbcot(0,nt)
-                        recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rfield(lll) * pbcot(1,nt)
-                        recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rfield(lll)
-                     end do
-                  end do
-               end if
-            end do
-         end do
-      end if
 
    end subroutine mpigo_1d
 
