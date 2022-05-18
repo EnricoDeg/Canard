@@ -48,45 +48,48 @@ MODULE mo_grid
 
    SUBROUTINE calc_grid_metrics
 
-      rr(:,1)=ss(:,1)
+      real(kind=nr),dimension(:,:),allocatable :: dek, qok, qak, rrk
+      allocate(dek(0:lmx,5), qok(0:lmx,5), qak(0:lmx,5), rrk(0:lmx,3))
+
+      rrk(:,1)=ss(:,1)
       m=1
-      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
-      call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-      call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-      qo(:,1)=rr(:,1)
-      qo(:,2)=rr(:,2)
-      qo(:,3)=rr(:,3)
+      call mpigo(rrk, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
+      call deriv(rrk, lxi, let, lze, ijk, 3, 1, m)
+      call deriv(rrk, lxi, let, lze, ijk, 2, 1, m)
+      call deriv(rrk, lxi, let, lze, ijk, 1, 1, m)
+      qok(:,1)=rrk(:,1)
+      qok(:,2)=rrk(:,2)
+      qok(:,3)=rrk(:,3)
 
-      rr(:,1)=ss(:,2)
+      rrk(:,1)=ss(:,2)
       m=2
-      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
-      call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-      call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-      qa(:,1)=rr(:,1)
-      qa(:,2)=rr(:,2)
-      qa(:,3)=rr(:,3)
+      call mpigo(rrk, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
+      call deriv(rrk, lxi, let, lze, ijk, 3, 1, m)
+      call deriv(rrk, lxi, let, lze, ijk, 2, 1, m)
+      call deriv(rrk, lxi, let, lze, ijk, 1, 1, m)
+      qak(:,1)=rrk(:,1)
+      qak(:,2)=rrk(:,2)
+      qak(:,3)=rrk(:,3)
 
-      rr(:,1)=ss(:,3)
+      rrk(:,1)=ss(:,3)
       m=3
-      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
-      call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-      call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-      de(:,1)=rr(:,1)
-      de(:,2)=rr(:,2)
-      de(:,3)=rr(:,3)
+      call mpigo(rrk, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
+      call deriv(rrk, lxi, let, lze, ijk, 3, 1, m)
+      call deriv(rrk, lxi, let, lze, ijk, 2, 1, m)
+      call deriv(rrk, lxi, let, lze, ijk, 1, 1, m)
+      dek(:,1)=rrk(:,1)
+      dek(:,2)=rrk(:,2)
+      dek(:,3)=rrk(:,3)
 
-      xim(:,1)=qa(:,2)*de(:,3)-de(:,2)*qa(:,3)
-      xim(:,2)=de(:,2)*qo(:,3)-qo(:,2)*de(:,3)
-      xim(:,3)=qo(:,2)*qa(:,3)-qa(:,2)*qo(:,3)
-      etm(:,1)=qa(:,3)*de(:,1)-de(:,3)*qa(:,1)
-      etm(:,2)=de(:,3)*qo(:,1)-qo(:,3)*de(:,1)
-      etm(:,3)=qo(:,3)*qa(:,1)-qa(:,3)*qo(:,1)
-      zem(:,1)=qa(:,1)*de(:,2)-de(:,1)*qa(:,2)
-      zem(:,2)=de(:,1)*qo(:,2)-qo(:,1)*de(:,2)
-      zem(:,3)=qo(:,1)*qa(:,2)-qa(:,1)*qo(:,2)
+      xim(:,1)=qak(:,2)*dek(:,3)-dek(:,2)*qak(:,3)
+      xim(:,2)=dek(:,2)*qok(:,3)-qok(:,2)*dek(:,3)
+      xim(:,3)=qok(:,2)*qak(:,3)-qak(:,2)*qok(:,3)
+      etm(:,1)=qak(:,3)*dek(:,1)-dek(:,3)*qak(:,1)
+      etm(:,2)=dek(:,3)*qok(:,1)-qok(:,3)*dek(:,1)
+      etm(:,3)=qok(:,3)*qak(:,1)-qak(:,3)*qok(:,1)
+      zem(:,1)=qak(:,1)*dek(:,2)-dek(:,1)*qak(:,2)
+      zem(:,2)=dek(:,1)*qok(:,2)-qok(:,1)*dek(:,2)
+      zem(:,3)=qok(:,1)*qak(:,2)-qak(:,1)*qok(:,2)
 
       do m=1,3
          call mpigo(xim(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+1)
@@ -110,9 +113,9 @@ MODULE mo_grid
          call mpigo(zem(:,m), ijk, nbc, mcd, nbsize,1,n45no,9*(m-1)+9)
          call filte(zem(:,m), lxi, let, lze, ijk, nnf(3))
       end do
-      yaco(:)=three/(qo(:,1)*xim(:,1)+qo(:,2)*etm(:,1)+qo(:,3)*zem(:,1)&
-                    +qa(:,1)*xim(:,2)+qa(:,2)*etm(:,2)+qa(:,3)*zem(:,2)&
-                    +de(:,1)*xim(:,3)+de(:,2)*etm(:,3)+de(:,3)*zem(:,3))
+      yaco(:)=three/(qok(:,1)*xim(:,1)+qok(:,2)*etm(:,1)+qok(:,3)*zem(:,1)&
+                    +qak(:,1)*xim(:,2)+qak(:,2)*etm(:,2)+qak(:,3)*zem(:,2)&
+                    +dek(:,1)*xim(:,3)+dek(:,2)*etm(:,3)+dek(:,3)*zem(:,3))
 
       do nn=1,3
          do ip=0,1
@@ -140,6 +143,7 @@ MODULE mo_grid
             end do
          end do
       end do
+      deallocate(dek, qok, qak, rrk)
 
    END SUBROUTINE calc_grid_metrics
 
