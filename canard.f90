@@ -83,7 +83,7 @@ program canard
    close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
    open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(lmx+1),status='new')
    do nn=1,3
-      varr(:)=ss(:,nn)
+      varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
       write(0,rec=nn) varr(:)
       call vminmax(nn)
    end do
@@ -91,7 +91,7 @@ program canard
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   call spongeup
+   call spongeup ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
 
@@ -102,9 +102,9 @@ program canard
       dts=zero
       dte=zero
       timo=zero
-      call initialo
+      call initialo ! use ss which contains grid data
    else
-      call read_restart_file
+      call read_restart_file ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -203,7 +203,6 @@ program canard
          call calc_viscous_shear_stress
 
          call calc_fluxes
-         
 !----- PREPARATION FOR GCBC & GCIC
 
          call gcbc_setup
