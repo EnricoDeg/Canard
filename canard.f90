@@ -62,8 +62,8 @@ program canard
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 
-   call calc_grid
-   call calc_grid_metrics
+   call calc_grid(ss)
+   call calc_grid_metrics(ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC
 

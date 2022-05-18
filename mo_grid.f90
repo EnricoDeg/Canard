@@ -3,17 +3,24 @@
 !*****
 
 MODULE mo_grid
-   use mo_mpi, ONLY : myid, p_barrier
-   use mo_vars
-   use mo_numerics
-   use mo_utils
-   use mo_gridgen
+   use mo_mpi,        ONLY : myid, p_barrier
+   use mo_kind,       ONLY : nr, ni
+   use mo_parameters, ONLY : n45go, n45no, nrone, one, three
+   use mo_vars,       ONLY : lio, ss, lmx, xim, etm, zem, yaco, rv,  &
+                           & cm1, cm2, cm3, lxi, let, lze, mcd, nbc, &
+                           & nbsize, cgrid, leto, lxio, mb, ijk,     &
+                           & nrecd, nnf, lpos, mo
+   use mo_numerics,   ONLY : mpigo, deriv, filte
+   use mo_utils,      ONLY : indx3
+   use mo_gridgen,    ONLY : makegrid
    
    IMPLICIT NONE
    PUBLIC
    CONTAINS
 
-   SUBROUTINE calc_grid
+   SUBROUTINE calc_grid(ssk)
+      real(kind=nr), intent(out) :: ssk(0:lmx,3)
+      integer(kind=ni) :: i, j, k, l, jk, kp, lq, jp, lp
 
       allocate(lio(0:let,0:lze))
       do k=0,lze
@@ -33,7 +40,7 @@ MODULE mo_grid
             lq=lp+lio(j,k)
             do i=0,lxi
                l=indx3(i,j,k,1)
-               read(9,rec=lq+i+1) ss(l,:)
+               read(9,rec=lq+i+1) ssk(l,:)
             end do
          end do
       end do
@@ -46,12 +53,15 @@ MODULE mo_grid
 
    END SUBROUTINE calc_grid
 
-   SUBROUTINE calc_grid_metrics
+   SUBROUTINE calc_grid_metrics(ssk)
+      real(kind=nr), intent(in) :: ssk(0:lmx,3)
+      integer(kind=ni) :: m, nn, ip, i, j, k, l, jk, kp
+      real(kind=nr)    :: fctr
+      real(kind=nr), dimension(:,:), allocatable :: dek, qok, qak, rrk
 
-      real(kind=nr),dimension(:,:),allocatable :: dek, qok, qak, rrk
       allocate(dek(0:lmx,5), qok(0:lmx,5), qak(0:lmx,5), rrk(0:lmx,3))
 
-      rrk(:,1)=ss(:,1)
+      rrk(:,1)=ssk(:,1)
       m=1
       call mpigo(rrk, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
       call deriv(rrk, lxi, let, lze, ijk, 3, 1, m)
@@ -61,7 +71,7 @@ MODULE mo_grid
       qok(:,2)=rrk(:,2)
       qok(:,3)=rrk(:,3)
 
-      rrk(:,1)=ss(:,2)
+      rrk(:,1)=ssk(:,2)
       m=2
       call mpigo(rrk, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
       call deriv(rrk, lxi, let, lze, ijk, 3, 1, m)
@@ -71,7 +81,7 @@ MODULE mo_grid
       qak(:,2)=rrk(:,2)
       qak(:,3)=rrk(:,3)
 
-      rrk(:,1)=ss(:,3)
+      rrk(:,1)=ssk(:,3)
       m=3
       call mpigo(rrk, ijk, nbc, mcd, nbsize,0,nrone,n45go,m)
       call deriv(rrk, lxi, let, lze, ijk, 3, 1, m)
