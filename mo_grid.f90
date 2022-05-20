@@ -6,7 +6,7 @@ MODULE mo_grid
    use mo_mpi,        ONLY : myid, p_barrier
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : n45go, n45no, nrone, one, three
-   use mo_vars,       ONLY : lio, ss, lmx, xim, etm, zem, yaco, rv,  &
+   use mo_vars,       ONLY : lio, lmx, xim, etm, zem, yaco, rv,  &
                            & cm1, cm2, cm3, lxi, let, lze, mcd, nbc, &
                            & nbsize, cgrid, leto, lxio, mb, ijk,     &
                            & nrecd, nnf, lpos, mo
