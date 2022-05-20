@@ -3,11 +3,16 @@
 !*****
 
 MODULE mo_domdcomp
-   use mo_vars
+   use mo_kind, ONLY : ni, nr
+   use mo_parameters, ONLY : one
+   use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
+                     & mo, nbsize, rr, qa, nbpc, itag, mcd, nbc,   &
+                     & lxio, leto, lzeo, lxi, let, lze, mb, ltomb, &
+                     & lmx, lim, mbk
    use mo_mpi, ONLY : myid
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
                       p_recv, p_send, p_bcast, mpro
-   use mo_utils
+   use mo_utils, ONLY : indx3
    IMPLICIT NONE
    PUBLIC
 
@@ -53,7 +58,7 @@ MODULE mo_domdcomp
       integer(kind=ni), intent(in) :: nblocks, nkthick
       integer(kind=ni), intent(in) :: nkbody
       integer(kind=ni) :: ipk, jpk, mmk, nnk, nstart, nend
-      integer(kind=ni) :: llk, mpk, lpk, mak, lk
+      integer(kind=ni) :: llk, mpk, lpk, mak, lk, mm, mp
 
       mo(0) = 0
       do mmk = 1,nblocks
@@ -231,6 +236,9 @@ MODULE mo_domdcomp
    END SUBROUTINE domdcomp_init
 
    SUBROUTINE search_point
+      integer(kind=ni) :: is, ie, kk, jj, mm, mp, kp, nn
+      integer(kind=ni) :: ll, l, jp, ip, ii, i, j, k
+      integer(kind=ni) :: ks, ke, lp
 
       lp=8*mbk+7
       imjp(:)=0
@@ -307,6 +315,10 @@ MODULE mo_domdcomp
    END SUBROUTINE search_point
 
    SUBROUTINE search_line
+      integer(kind=ni) :: ns, ne, is, ie, np, nq
+      integer(kind=ni) :: kk, jj, mm, mp, nn, ll
+      integer(kind=ni) :: l, jp, ip, ii, i, j, k
+      integer(kind=ni) :: ks, ke, lp
 
       lp=12*mbk+11
       imjl(:)=0
@@ -386,6 +398,8 @@ MODULE mo_domdcomp
    END SUBROUTINE search_line
 
    SUBROUTINE average_point
+      integer(kind=ni) :: kp, l, jp, ip, ii, i, j, lp, lq
+      real(kind=nr)    :: fctr
 
       call p_null_req
       lp=-5
@@ -431,6 +445,9 @@ MODULE mo_domdcomp
 
 
    SUBROUTINE average_line
+      integer(kind=ni) :: nn, ll, l, jp, ip, ii, i, j, k
+      integer(kind=ni) :: js, je, ks, ke, lp, lq
+      real(kind=nr)    :: fctr
 
       call p_null_req
       lp=0
