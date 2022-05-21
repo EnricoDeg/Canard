@@ -5,17 +5,16 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : lp, dha, cha, lpos, wtemp, tsam, tmax,         &
+   use mo_vars,       ONLY : dha, cha, lpos, wtemp, tsam, tmax,             &
                            & nkrk, nextrabc, nextgcic, ndata, ndatafl,      &
                            & ndataav, mbk, dto, cinput, cfl, szco, nbody,   &
-                           & ndata, ll, times, nscrn, n, mp, mm, mb, kp,    &
-                           & k, jp, j, i, cnnode, cgrid, cdata, timo,       &
+                           & ndata, times, nscrn, n, mb,                    &
+                           & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, nbpc, lzem, mo, letm, lxim, lximb, &
                            & letmb, lzemb, czonet, lio, timf, nts, nsmf,    &
-                           & nrestart, nsgnl, lze, lxi, let, lq, l, dts,    &
-                           & dte, dt, mps, mpe, m, lxio, leto, lzeo, nrecs, &
-                           & ltomb, lmpi, llmo, llmb, ljs, lje, lis, lie,   &
-                           & nn, mq, lmx, lh, mq, varr, itag, qa, nnf, vart
+                           & nrestart, nsgnl, lze, lxi, let, dts,           &
+                           & dte, dt, lxio, leto, lzeo, nrecs,              &
+                           & ltomb, lmx, mq, varr, qa, nnf, vart
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
@@ -89,6 +88,8 @@ MODULE mo_io
    END SUBROUTINE read_inputp
 
    SUBROUTINE allocate_io_memory
+      integer(kind=ni) :: ll
+      
       ll=3+5*(ndata+1)
       allocate(times(0:ndata),cfilet(-1:ndata),     &
                ctecplt(-1:ndata),varm(0:1,0:mpro),  &
@@ -97,6 +98,7 @@ MODULE mo_io
    END SUBROUTINE allocate_io_memory
 
    SUBROUTINE output_init
+      integer(kind=ni) :: mm, mp, kp, jp, i, j, k
 
       cfilet(-1)='grid'
       do n=0,ndata
@@ -156,6 +158,7 @@ MODULE mo_io
    END SUBROUTINE output_init
 
    SUBROUTINE read_restart_file
+      integer(kind=ni) :: lp, i, j, k, lq, l
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
       read(9,rec=1) cha(:)
@@ -181,6 +184,7 @@ MODULE mo_io
    END SUBROUTINE read_restart_file
 
    SUBROUTINE write_restart_file
+      integer(kind=ni) :: lp, i, j, k, lq, l
 
       if(myid==mo(mb)) then
          open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='replace')
@@ -207,6 +211,8 @@ MODULE mo_io
    END SUBROUTINE write_restart_file
 
    SUBROUTINE write_output_file
+      integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
+      integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
 
       lje=-1
       do n=-1,ndata
@@ -294,6 +300,7 @@ MODULE mo_io
 
       integer(kind=ni),intent(in) :: nf,n,mb
       integer(kind=ni),intent(inout) :: lh
+      integer(kind=ni) :: mm, m, nn
 
       lh=0
       if(mb==0) then
@@ -404,6 +411,7 @@ MODULE mo_io
    subroutine vminmax(nn)
 
       integer(kind=ni),intent(in) :: nn
+      integer(kind=ni) :: mp, mps, mpe, itag
 
       varmin(nn)=minval(varr)
       varmax(nn)=maxval(varr)
