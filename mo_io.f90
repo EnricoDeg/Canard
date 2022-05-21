@@ -3,12 +3,26 @@
 !*****
 
 MODULE mo_io
-   use mo_vars
-   use mo_mpi, ONLY : mpro, myid, p_barrier, p_recv, p_send, &
-                      p_null_req, p_irecv, p_waitall
-   use mo_utils
-   use mo_numerics
-   use mo_gridgen
+   use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
+   use mo_parameters, ONLY : zero
+   use mo_vars,       ONLY : lp, dha, cha, lpos, wtemp, tsam, tmax,         &
+                           & nkrk, nextrabc, nextgcic, ndata, ndatafl,      &
+                           & ndataav, mbk, dto, cinput, cfl, szco, nbody,   &
+                           & ndata, ll, times, nscrn, n, mp, mm, mb, kp,    &
+                           & k, jp, j, i, cnnode, cgrid, cdata, timo,       &
+                           & nrecd, ndt, nbpc, lzem, mo, letm, lxim, lximb, &
+                           & letmb, lzemb, czonet, lio, timf, nts, nsmf,    &
+                           & nrestart, nsgnl, lze, lxi, let, lq, l, dts,    &
+                           & dte, dt, mps, mpe, m, lxio, leto, lzeo, nrecs, &
+                           & ltomb, lmpi, llmo, llmb, ljs, lje, lis, lie,   &
+                           & nn, mq, lmx, lh, mq, varr, itag, qa, nnf, vart
+   use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
+                             p_null_req, p_irecv, p_waitall
+   use mo_utils,      ONLY : indx3
+   use mo_gridgen,    ONLY : domh, doml0, doml1, let0, lxi0, lxi1,          &
+                           & lxi2, lze0, ngridv, nthick, skew, smg,         &
+                           & smgvr, span, spx, szth0, szth1, wlea,          &
+                           & wlew
    IMPLICIT NONE
    PUBLIC
 
