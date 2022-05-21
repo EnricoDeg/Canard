@@ -3,9 +3,14 @@
 !*****
 
 module mo_gridgen
-
-   use mo_mpi, ONLY : myid
-   use mo_vars
+   use mo_kind,       ONLY : ni, nr
+   use mo_parameters, ONLY : zero, twopi, two, three, onethird, halfpi,     &
+                           & free, half, one, four, five, sml, pi, hamhamm1
+   use mo_vars,       ONLY : mb, xt, m, n, res, ra0, ra1, ra2, ra3, nrecd,  &
+                           & np, lxio, leto, ll, lh, k, js, jp, je, jj, mo, &
+                           & czonet, l, j, is, ie, ip, ii, i, fctr, cgrid,  &
+                           & cha, dha
+   use mo_mpi,        ONLY : myid
    implicit none
 
    integer(kind=ni),parameter :: lnaca=90
