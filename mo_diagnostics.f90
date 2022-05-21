@@ -1,6 +1,6 @@
 MODULE mo_diagnostics
    use mo_parameters, ONLY : one, nrone, n45no
-   use mo_vars,       ONLY : rr, ss, m, xim, etm, zem, de, qa, ijk, nbsize, &
+   use mo_vars,       ONLY : rr, ss, xim, etm, zem, de, qa, ijk, nbsize, &
                            & yaco, nbc, mcd
    use mo_numerics,   ONLY : mpigo, deriv
    public
@@ -10,6 +10,7 @@ MODULE mo_diagnostics
    !===== SUBROUTINE FOR CALCULATING VORTICITY
 
    subroutine vorti
+      integer(kind=ni) :: m
 
       ss(:,1)=one/qa(:,1); de(:,1:3)=zero
 
