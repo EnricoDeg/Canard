@@ -3,8 +3,12 @@
 !*****
 
 MODULE mo_sponge
-   use mo_vars
-   use mo_gridgen
+   use mo_kind,       ONLY : ni, nr
+   use mo_parameters, ONLY : two, zero, pi, sml, one, half, hamhamm1
+   use mo_vars,       ONLY : szco, ra0, ra1, ra2, ra3, lsz, lmx, ll, l, de, &
+                           & yaco, ss, qa
+   use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh, tmpa,  &
+                           & tmpb
    IMPLICIT NONE
    PUBLIC
 
