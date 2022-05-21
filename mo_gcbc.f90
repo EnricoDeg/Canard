@@ -3,10 +3,22 @@
 !*****
 
 MODULE mo_gcbc
-   use mo_vars
-   use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall
-   use mo_utils
-   use mo_numerics
+   use mo_kind,       ONLY : ni, nr
+   use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
+                           & beta, alpha12, alpha10, alpha, alpha01, two, &
+                           & quarter, hamhamm1, gam, gamm1, hamm1
+   use mo_vars,       ONLY : kk, ii, jj, nn, np, dha, cha, xt, rv, dm,    &
+                           & umf, ijk, nbsize, p, qa, res, lq, ll, l,     &
+                           & k, j, i, iq, ip, fctr, ra1, ra0, rr, yaco,   &
+                           & mcd, nbc, ss, xim, zem, lmx, kp, jk, drva1,  &
+                           & drva2, drva3, cm1, cm2, cm3, cm, drva, etm,  &
+                           & txy, nextgcic, itag, nkrk, dtwi, dt, ao,     &
+                           & wtemp, txx, tmax, timo,       &
+                           & srefp1dre, tyy, srefoo, ra3, ra2, nrecs, nk, &
+                           & cnnode, cdata, ho, hv2, co, bo, aoi,  &
+                           & ii, jj, kk, de, dudtmf, varr, rhoi
+   use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
+   use mo_utils,      ONLY : indx3, mtrxi
    IMPLICIT NONE
    PUBLIC
 
