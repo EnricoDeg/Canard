@@ -3,8 +3,7 @@
 !*****
 
 module mo_vars
-   use mo_kind
-   use mo_parameters
+   use mo_kind, ONLY : ni, nr, ieee32, int64
    implicit none
    PUBLIC
 
