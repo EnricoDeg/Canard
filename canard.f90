@@ -3,16 +3,35 @@
 !*****
 
 program canard
-
-   use mo_mpi, ONLY : mpro, npro, myid, p_start, p_stop, &
-                      p_barrier, p_sum, p_max
-   use mo_io
-   use mo_domdcomp
-   use mo_grid
-   use mo_sponge
-   use mo_gcbc
-   use mo_numerics
-   use mo_physics
+   use mo_kind,       ONLY : ieee64, ieee32, nr
+   use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
+   use mo_vars,       ONLY : times, m, tmax, timo, res, ss, ra0, ra1, nts,         &
+                           & nsigi, tsam, nscrn, nrestart, nrecs, nrecd, nout,     &
+                           & nn, nkrk, nlmx, nk, ndt, ndati, ndatafl, ndataav,     &
+                           & ndata, nbsize, nbody, nbc, n, mbk, lxi, let, lze,     &
+                           & lmx, ll, lis, lie, l, lim, fctr, dto, dts, dtko,      &
+                           & dtk, dte, dtsum, dt, cinput, cfl, cdata, varr,        &
+                           & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
+                           & hyy, hzz, qo, qa, qb, de, mcd, ijk, xim, etm, zem,    &
+                           & rr, umf, nnf, p, yaco, srefoo, srefp1dre, &
+                           & lxim, letm, lzem, lpos
+   use mo_vars,       ONLY : allocate_memory
+   use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
+                           & p_max
+   use mo_io,         ONLY : read_inputo, allocate_io_memory, read_inputp,         &
+                           & output_init, vminmax, read_restart_file,              &
+                           & write_restart_file, write_output_file
+   use mo_domdcomp,   ONLY : allocate_domdcomp, domdcomp_init, search_point,       &
+                           & search_line, average_line, average_point
+   use mo_grid,       ONLY : calc_grid, calc_grid_metrics
+   use mo_gridgen,    ONLY : nthick
+   use mo_sponge,     ONLY : spongeup, spongego
+   use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
+                           & extracon, wall_condition_update, average_surface
+   use mo_numerics,   ONLY : allocate_numerics, init_extracoeff_bounds,            &
+                           & init_penta, mpigo, filte, read_input_numerics
+   use mo_physics,    ONLY : init_physics, initialo, movef,                        &
+                           & calc_viscous_shear_stress, calc_fluxes
    implicit none
 
 !===== PREPARATION FOR PARALLEL COMPUTING
