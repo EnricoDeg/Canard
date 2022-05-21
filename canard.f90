@@ -3,17 +3,17 @@
 !*****
 
 program canard
-   use mo_kind,       ONLY : ieee64, ieee32, nr
+   use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : times, m, tmax, timo, res, ss, ra0, ra1, nts,         &
-                           & nsigi, tsam, nscrn, nrestart, nrecs, nrecd, nout,     &
-                           & nn, nkrk, nlmx, nk, ndt, ndati, ndatafl, ndataav,     &
+   use mo_vars,       ONLY : times, tmax, timo, ss, nts,                           &
+                           & tsam, nscrn, nrestart, nrecs, nrecd,                  &
+                           & nkrk, nk, ndt, ndati, ndatafl, ndataav,               &
                            & ndata, nbsize, nbody, nbc, n, mbk, lxi, let, lze,     &
-                           & lmx, ll, lis, lie, l, lim, fctr, dto, dts, dtko,      &
-                           & dtk, dte, dtsum, dt, cinput, cfl, cdata, varr,        &
+                           & lmx, l, lim, dto, dts,                                &
+                           & dte, dtsum, dt, cinput, cfl, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de, mcd, ijk, xim, etm, zem,    &
-                           & rr, umf, nnf, p, yaco, srefoo, srefp1dre, &
+                           & rr, umf, nnf, p, yaco, srefoo, srefp1dre,             &
                            & lxim, letm, lzem, lpos
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
@@ -33,6 +33,10 @@ program canard
    use mo_physics,    ONLY : init_physics, initialo, movef,                        &
                            & calc_viscous_shear_stress, calc_fluxes
    implicit none
+
+   integer(kind=ni) :: m, nn, ll, nsigi, nout, lis, lie
+   real(kind=nr)    :: res, ra0, ra1, fctr, dtko, dtk
+   integer(kind=int64) :: nlmx
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
