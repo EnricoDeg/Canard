@@ -5,7 +5,8 @@
 MODULE mo_mpi
 
   use mpi
-  use mo_vars
+  use mo_kind, ONLY : ni, nr, nli, nsp
+  use mo_vars, ONLY : ll
   IMPLICIT NONE
   PRIVATE
 
