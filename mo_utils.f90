@@ -3,8 +3,9 @@
 !*****
 
 module mo_utils
-
-   use mo_vars
+   use mo_kind,       ONLY : ni, nr
+   use mo_parameters, ONLY : one
+   use mo_vars,       ONLY : lxi, let
    implicit none
    public
 
