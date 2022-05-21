@@ -1,5 +1,5 @@
 MODULE mo_parameters
-   use mo_kind
+   use mo_kind, ONLY : ni, nr
    implicit none
    PUBLIC
 
