@@ -3,8 +3,16 @@
 !*****
 
 MODULE mo_physics
-   use mo_vars
-   use mo_numerics
+   use mo_kind,       ONLY : nr
+   use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
+                           & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
+   use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
+                           & txy, tyy, hxx, hyy, tzz, xim, etm, zem, tyz,         &
+                           & yaco, p, ijk, lxi, let, lze, m, mcd, nbc, nbsize,    &
+                           & dfdt, fctr, nsmf, progmf, ra0, ra1, ra2, timf, timo, &
+                           & ao, bo, hv2, l, lmx, cinput, sqrtrema, sqrtremai,    &
+                           & srefoo, srefp1dre
+   use mo_numerics,   ONLY : mpigo, deriv
    implicit none
 
    real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3
