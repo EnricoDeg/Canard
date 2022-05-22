@@ -6,7 +6,7 @@ MODULE mo_grid
    use mo_mpi,        ONLY : myid, p_barrier
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : n45go, n45no, nrone, one, three
-   use mo_vars,       ONLY : lio, lmx, xim, etm, zem, yaco, rv,  &
+   use mo_vars,       ONLY : lio, lmx, xim, etm, zem, yaco,  &
                            & cm1, cm2, cm3, lxi, let, lze, mcd, nbc, &
                            & nbsize, cgrid, leto, lxio, mb, ijk,     &
                            & nrecd, nnf, lpos, mo
@@ -58,6 +58,7 @@ MODULE mo_grid
       integer(kind=ni) :: m, nn, ip, i, j, k, l, jk, kp
       real(kind=nr)    :: fctr
       real(kind=nr), dimension(:,:), allocatable :: dek, qok, qak, rrk
+      real(kind=nr), dimension(3) :: rv
 
       allocate(dek(0:lmx,5), qok(0:lmx,5), qak(0:lmx,5), rrk(0:lmx,3))
 
