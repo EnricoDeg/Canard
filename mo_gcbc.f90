@@ -7,16 +7,16 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : kk, ii, jj, nn, np, dha, cha, xt, rv, dm,    &
-                           & umf, ijk, nbsize, p, qa, res, lq, ll, l,     &
-                           & k, j, i, iq, ip, fctr, ra1, ra0, rr, yaco,   &
-                           & mcd, nbc, ss, xim, zem, lmx, kp, jk, drva1,  &
+   use mo_vars,       ONLY : dha, cha, xt,    &
+                           & umf, ijk, nbsize, p, qa,     &
+                           & rr, yaco,   &
+                           & mcd, nbc, ss, xim, zem, lmx, drva1,  &
                            & drva2, drva3, cm1, cm2, cm3, cm, drva, etm,  &
-                           & txy, nextgcic, itag, nkrk, dtwi, dt, ao,     &
+                           & txy, nextgcic, nkrk, dtwi, dt, ao,     &
                            & wtemp, txx, tmax, timo,       &
-                           & srefp1dre, tyy, srefoo, ra3, ra2, nrecs, nk, &
-                           & cnnode, cdata, ho, hv2, co, bo, aoi,  &
-                           & ii, jj, kk, de, dudtmf, varr, rhoi
+                           & srefp1dre, tyy, srefoo, nrecs, nk, &
+                           & cnnode, cdata, hv2, aoi,  &
+                           & de, dudtmf, varr
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
    use mo_utils,      ONLY : indx3, mtrxi
    IMPLICIT NONE
@@ -31,12 +31,16 @@ MODULE mo_gcbc
    integer(kind=ni), private, dimension(:), allocatable :: nrr,npex
    real(kind=nr),    private, dimension(:,:,:), pointer :: drvb
    real(kind=nr),    private, dimension(:,:,:), allocatable, target :: drvb1,drvb2,drvb3
+   real(kind=nr),    private, dimension(3) :: dm
 
    private :: eleme, xtq2r, xtr2q
 
    CONTAINS
 
    SUBROUTINE gcbc_init
+      integer(kind=ni) :: ii, jj, kk, nn, np, lq, ll, l, ip, iq
+      integer(kind=ni) :: i, j, k
+      real(kind=nr)    :: res, fctr
 
       allocate(nrr(0:lmx),npex(0:lmx))
 
@@ -115,6 +119,8 @@ MODULE mo_gcbc
    END SUBROUTINE gcbc_init
 
    SUBROUTINE gcbc_setup
+      integer(kind=ni) :: nn, np, l, ip, i, j, k, jk, kp
+      real(kind=nr)    :: ra0, ra1
 
       do nn=1,3
          select case(nn)
@@ -152,6 +158,7 @@ MODULE mo_gcbc
    END SUBROUTINE gcbc_setup
 
    SUBROUTINE gcbc_comm
+      integer(kind=ni) :: nn, np, ip, iq, itag
 
       call p_null_req
       itag=30
@@ -181,6 +188,9 @@ MODULE mo_gcbc
    END SUBROUTINE gcbc_comm
 
    SUBROUTINE gcbc_update
+      integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k
+      integer(kind=ni) :: jk, kp
+      real(kind=nr)    :: ra0
 
       ll=-1
       do nn=1,3
@@ -285,6 +295,8 @@ MODULE mo_gcbc
    END SUBROUTINE gcbc_update
 
    SUBROUTINE average_surface
+      integer(kind=ni) :: nn, np, l, ip, iq, i, j, k, jk, kp
+      integer(kind=ni) :: itag
 
       call p_null_req
       itag=30
@@ -352,6 +364,8 @@ MODULE mo_gcbc
    END SUBROUTINE average_surface
 
    SUBROUTINE wall_condition_update
+      integer(kind=ni) :: nn, np, l, ip, i, j, k
+      real(kind=nr)    :: fctr, ra0
 
       do nn=1,3
          do ip=0,1
@@ -385,6 +399,9 @@ MODULE mo_gcbc
 
    subroutine extracon
       real(kind=nr),dimension(3) :: vee
+      integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
+      real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3
+      real(kind=nr),dimension(3) :: rv
 
       if(nk==nkrk.and.(timo+quarter-tmax)**two<(half*dt)**two) then
          nn=2
@@ -425,39 +442,45 @@ MODULE mo_gcbc
    subroutine xtq2r(cm)
 
       real(kind=nr),dimension(3),intent(in) :: cm
-
-      ho=gamm1*aoi*aoi; bo=1-ho*hv2; co=aoi*vn; dm(:)=aoi*cm(:); rv(:)=ho*ve(:)
-
+      real(kind=nr),dimension(3) :: rv
+      real(kind=nr) :: ho, bo, co
+      
+      ho=gamm1*aoi*aoi
+      bo=1-ho*hv2
+      co=aoi*vn
+      dm(:)=aoi*cm(:)
+      rv(:)=ho*ve(:)
+      
       xt(1,1)=bo*cm(1)+dm(2)*ve(3)-dm(3)*ve(2)
       xt(1,2)=cm(1)*rv(1)
       xt(1,3)=cm(1)*rv(2)+dm(3)
       xt(1,4)=cm(1)*rv(3)-dm(2)
       xt(1,5)=-ho*cm(1)
-
+      
       xt(2,1)=bo*cm(2)+dm(3)*ve(1)-dm(1)*ve(3)
       xt(2,2)=cm(2)*rv(1)-dm(3)
       xt(2,3)=cm(2)*rv(2)
       xt(2,4)=cm(2)*rv(3)+dm(1)
       xt(2,5)=-ho*cm(2)
-
+      
       xt(3,1)=bo*cm(3)+dm(1)*ve(2)-dm(2)*ve(1)
       xt(3,2)=cm(3)*rv(1)+dm(2)
       xt(3,3)=cm(3)*rv(2)-dm(1)
       xt(3,4)=cm(3)*rv(3)
       xt(3,5)=-ho*cm(3)
-
+      
       xt(4,1)=one-bo-co
       xt(4,2)=dm(1)-rv(1)
       xt(4,3)=dm(2)-rv(2)
       xt(4,4)=dm(3)-rv(3)
       xt(4,5)=ho
-
+      
       xt(5,1)=one-bo+co
       xt(5,2)=-dm(1)-rv(1)
       xt(5,3)=-dm(2)-rv(2)
       xt(5,4)=-dm(3)-rv(3)
       xt(5,5)=ho
-
+      
    end subroutine xtq2r
 
 !===== SUBROUTINE FOR INVERSE TRANSFORMATION FROM R TO Q IN GCBC/GCIC
@@ -465,8 +488,11 @@ MODULE mo_gcbc
    subroutine xtr2q(cm)
 
       real(kind=nr),dimension(3),intent(in) :: cm
+      real(kind=nr) :: bo, co
 
-      bo=hv2+hamm1*ao*ao; co=ao*vn; dm(:)=ao*cm(:)
+      bo=hv2+hamm1*ao*ao
+      co=ao*vn
+      dm(:)=ao*cm(:)
 
       xt(1,1)=cm(1)
       xt(1,2)=cm(2)
@@ -506,6 +532,7 @@ MODULE mo_gcbc
 
       integer(kind=ni),intent(in) :: l
       real(kind=nr),dimension(3),intent(in) :: cm
+      real(kind=nr) :: rhoi
 
       rhoi=one/qa(l,1)
       ao=sqrt(gam*rhoi*p(l))
