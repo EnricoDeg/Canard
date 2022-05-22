@@ -1,4 +1,5 @@
 MODULE mo_diagnostics
+   use mo_kind,       ONLY : ni
    use mo_parameters, ONLY : one, nrone, n45no
    use mo_vars,       ONLY : rr, ss, xim, etm, zem, de, qa, ijk, nbsize, &
                            & yaco, nbc, mcd
