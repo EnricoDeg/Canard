@@ -6,7 +6,6 @@ MODULE mo_mpi
 
   use mpi
   use mo_kind, ONLY : ni, nr, nli, nsp
-  use mo_vars, ONLY : ll
   IMPLICIT NONE
   PRIVATE
 
@@ -62,6 +61,7 @@ MODULE mo_mpi
   CONTAINS
 
   SUBROUTINE p_start
+    integer(kind=ni) :: ll
 
     ! Basic MPI initialization
     call MPI_INIT(ierr)
