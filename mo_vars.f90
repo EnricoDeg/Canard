@@ -47,11 +47,11 @@ module mo_vars
    real(kind=nr),dimension(5,5) :: xt
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: umf,dudtmf!,rv
-   real(kind=nr) :: ra0,ra1,ra2,ra3,res,fctr,dfdt
+   real(kind=nr) :: ra0,ra1,ra2,ra3,res,fctr
    real(kind=nr) :: wtemp,cfl,tmax,timf,dto
    real(kind=nr) :: aoo,srefoo,srefp1dre
    real(kind=nr) :: dt,dts,dte,dtk,dtko,dtsum,dtwi,timo,tsam,wts,wte,wtime
-   real(kind=nr) :: hv2,ao,bo,aoi,progmf,sqrtrema,sqrtremai
+   real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
    real(kind=nr) :: szco
    integer(kind=ni) :: nbody

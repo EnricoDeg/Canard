@@ -3,14 +3,14 @@
 !*****
 
 MODULE mo_physics
-   use mo_kind,       ONLY : nr
+   use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
    use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
                            & txy, tyy, hxx, hyy, tzz, xim, etm, zem, tyz,         &
-                           & yaco, p, ijk, lxi, let, lze, m, mcd, nbc, nbsize,    &
-                           & dfdt, fctr, nsmf, progmf, ra0, ra1, ra2, timf, timo, &
-                           & ao, bo, hv2, l, lmx, cinput, sqrtrema, sqrtremai,    &
+                           & yaco, p, ijk, lxi, let, lze, mcd, nbc, nbsize,       &
+                           & nsmf, timf, timo,                                    &
+                           & ao, bo, hv2, lmx, cinput, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
    use mo_numerics,   ONLY : mpigo, deriv
    implicit none
@@ -50,6 +50,7 @@ MODULE mo_physics
    subroutine initialo
       real(kind=nr),dimension(3) :: vee
       real(kind=nr) :: radv, k1, k2
+      integer(kind=ni) :: l
 
       radv = 1.0
       k1 = 12.5
@@ -70,8 +71,8 @@ MODULE mo_physics
 !===== SUBROUTINE FOR MOVING FRAME VELOCITIES
 
    subroutine movef(dtko,dtk)
-
       real(kind=nr),intent(in) :: dtko,dtk
+      real(kind=nr) :: ra0, ra1, ra2, dfdt, fctr, progmf
 
       if(nsmf==0) then
          ra0=pi/timf
@@ -98,62 +99,63 @@ MODULE mo_physics
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
 
    subroutine calc_viscous_shear_stress
+      integer(kind=ni) :: m
 #ifdef VISCOUS
-            de(:,1)=ss(:,1)
+      de(:,1)=ss(:,1)
 
-            rr(:,1)=de(:,2)
-            m=2
-            call mpigo(rr(:,1), ijk, nbc, mcd, nbsize,0,n45no,m)
-            call deriv(rr(:,1), rr(:,3), lxi, let, lze, ijk, 3, m)
-            call deriv(rr(:,1), rr(:,2), lxi, let, lze, ijk, 2, m)
-            call deriv(rr(:,1), rr(:,1), lxi, let, lze, ijk, 1, m)
-            txx(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
-            hzz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
-            tzx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
+      rr(:,1)=de(:,2)
+      m=2
+      call mpigo(rr(:,1), ijk, nbc, mcd, nbsize,0,n45no,m)
+      call deriv(rr(:,1), rr(:,3), lxi, let, lze, ijk, 3, m)
+      call deriv(rr(:,1), rr(:,2), lxi, let, lze, ijk, 2, m)
+      call deriv(rr(:,1), rr(:,1), lxi, let, lze, ijk, 1, m)
+      txx(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
+      hzz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
+      tzx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
-            rr(:,1)=de(:,3)
-            m=3
-            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-            txy(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
-            tyy(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
-            hxx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
+      rr(:,1)=de(:,3)
+      m=3
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      txy(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
+      tyy(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
+      hxx(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
-            rr(:,1)=de(:,4)
-            m=4
-            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-            hyy(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
-            tyz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
-            tzz(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
+      rr(:,1)=de(:,4)
+      m=4
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      hyy(:)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
+      tyz(:)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
+      tzz(:)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
-            rr(:,1)=de(:,5)
-            m=5
-            call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
-            call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
-            call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-            ss(:,1)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
-            ss(:,2)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
-            ss(:,3)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
+      rr(:,1)=de(:,5)
+      m=5
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrone,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      ss(:,1)=xim(:,1)*rr(:,1)+etm(:,1)*rr(:,2)+zem(:,1)*rr(:,3)
+      ss(:,2)=xim(:,2)*rr(:,1)+etm(:,2)*rr(:,2)+zem(:,2)*rr(:,3)
+      ss(:,3)=xim(:,3)*rr(:,1)+etm(:,3)*rr(:,2)+zem(:,3)*rr(:,3)
 
-            rr(:,1)=de(:,1)*yaco(:)
-            rr(:,2)=gamm1prndtli*rr(:,1)
-            de(:,5)=twothirds*(txx(:)+tyy(:)+tzz(:))
+      rr(:,1)=de(:,1)*yaco(:)
+      rr(:,2)=gamm1prndtli*rr(:,1)
+      de(:,5)=twothirds*(txx(:)+tyy(:)+tzz(:))
 
-            txx(:)=rr(:,1)*(txx(:)+txx(:)-de(:,5))
-            tyy(:)=rr(:,1)*(tyy(:)+tyy(:)-de(:,5))
-            tzz(:)=rr(:,1)*(tzz(:)+tzz(:)-de(:,5))
-            txy(:)=rr(:,1)*(txy(:)+hzz(:))
-            tyz(:)=rr(:,1)*(tyz(:)+hxx(:))
-            tzx(:)=rr(:,1)*(tzx(:)+hyy(:))
-            hxx(:)=rr(:,2)*ss(:,1)+de(:,2)*txx(:)+de(:,3)*txy(:)+de(:,4)*tzx(:)
-            hyy(:)=rr(:,2)*ss(:,2)+de(:,2)*txy(:)+de(:,3)*tyy(:)+de(:,4)*tyz(:)
-            hzz(:)=rr(:,2)*ss(:,3)+de(:,2)*tzx(:)+de(:,3)*tyz(:)+de(:,4)*tzz(:)
+      txx(:)=rr(:,1)*(txx(:)+txx(:)-de(:,5))
+      tyy(:)=rr(:,1)*(tyy(:)+tyy(:)-de(:,5))
+      tzz(:)=rr(:,1)*(tzz(:)+tzz(:)-de(:,5))
+      txy(:)=rr(:,1)*(txy(:)+hzz(:))
+      tyz(:)=rr(:,1)*(tyz(:)+hxx(:))
+      tzx(:)=rr(:,1)*(tzx(:)+hyy(:))
+      hxx(:)=rr(:,2)*ss(:,1)+de(:,2)*txx(:)+de(:,3)*txy(:)+de(:,4)*tzx(:)
+      hyy(:)=rr(:,2)*ss(:,2)+de(:,2)*txy(:)+de(:,3)*tyy(:)+de(:,4)*tyz(:)
+      hzz(:)=rr(:,2)*ss(:,3)+de(:,2)*tzx(:)+de(:,3)*tyz(:)+de(:,4)*tzz(:)
 #endif
    end subroutine calc_viscous_shear_stress
 
@@ -161,84 +163,85 @@ MODULE mo_physics
 !===== CALCULATION OF FLUX DERIVATIVES
 
    subroutine calc_fluxes
+      integer(kind=ni) :: m
 
-         rr(:,1)=de(:,2)+umf(1)
-         rr(:,2)=de(:,3)+umf(2)
-         rr(:,3)=de(:,4)+umf(3)
-         ss(:,1)=xim(:,1)*rr(:,1)+xim(:,2)*rr(:,2)+xim(:,3)*rr(:,3)
-         ss(:,2)=etm(:,1)*rr(:,1)+etm(:,2)*rr(:,2)+etm(:,3)*rr(:,3)
-         ss(:,3)=zem(:,1)*rr(:,1)+zem(:,2)*rr(:,2)+zem(:,3)*rr(:,3)
+      rr(:,1)=de(:,2)+umf(1)
+      rr(:,2)=de(:,3)+umf(2)
+      rr(:,3)=de(:,4)+umf(3)
+      ss(:,1)=xim(:,1)*rr(:,1)+xim(:,2)*rr(:,2)+xim(:,3)*rr(:,3)
+      ss(:,2)=etm(:,1)*rr(:,1)+etm(:,2)*rr(:,2)+etm(:,3)*rr(:,3)
+      ss(:,3)=zem(:,1)*rr(:,1)+zem(:,2)*rr(:,2)+zem(:,3)*rr(:,3)
 
-         rr(:,1)=qa(:,1)*ss(:,1)
-         rr(:,2)=qa(:,1)*ss(:,2)
-         rr(:,3)=qa(:,1)*ss(:,3)
-         m=1
-         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(rr, lxi, let, lze, ijk, 1,1,m)
-         call deriv(rr, lxi, let, lze, ijk, 2,2,m)
-         call deriv(rr, lxi, let, lze, ijk, 3,3,m)
-         de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
+      rr(:,1)=qa(:,1)*ss(:,1)
+      rr(:,2)=qa(:,1)*ss(:,2)
+      rr(:,3)=qa(:,1)*ss(:,3)
+      m=1
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 1,1,m)
+      call deriv(rr, lxi, let, lze, ijk, 2,2,m)
+      call deriv(rr, lxi, let, lze, ijk, 3,3,m)
+      de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
-         rr(:,1)=qa(:,2)*ss(:,1)+xim(:,1)*p(:)
-         rr(:,2)=qa(:,2)*ss(:,2)+etm(:,1)*p(:)
-         rr(:,3)=qa(:,2)*ss(:,3)+zem(:,1)*p(:)
+      rr(:,1)=qa(:,2)*ss(:,1)+xim(:,1)*p(:)
+      rr(:,2)=qa(:,2)*ss(:,2)+etm(:,1)*p(:)
+      rr(:,3)=qa(:,2)*ss(:,3)+zem(:,1)*p(:)
 #ifdef VISCOUS
-            rr(:,1)=rr(:,1)-xim(:,1)*txx(:)-xim(:,2)*txy(:)-xim(:,3)*tzx(:)
-            rr(:,2)=rr(:,2)-etm(:,1)*txx(:)-etm(:,2)*txy(:)-etm(:,3)*tzx(:)
-            rr(:,3)=rr(:,3)-zem(:,1)*txx(:)-zem(:,2)*txy(:)-zem(:,3)*tzx(:)
+      rr(:,1)=rr(:,1)-xim(:,1)*txx(:)-xim(:,2)*txy(:)-xim(:,3)*tzx(:)
+      rr(:,2)=rr(:,2)-etm(:,1)*txx(:)-etm(:,2)*txy(:)-etm(:,3)*tzx(:)
+      rr(:,3)=rr(:,3)-zem(:,1)*txx(:)-zem(:,2)*txy(:)-zem(:,3)*tzx(:)
 #endif
-         m=2
-         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
-         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
-         de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
+      m=2
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
+      de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
-         rr(:,1)=qa(:,3)*ss(:,1)+xim(:,2)*p(:)
-         rr(:,2)=qa(:,3)*ss(:,2)+etm(:,2)*p(:)
-         rr(:,3)=qa(:,3)*ss(:,3)+zem(:,2)*p(:)
+      rr(:,1)=qa(:,3)*ss(:,1)+xim(:,2)*p(:)
+      rr(:,2)=qa(:,3)*ss(:,2)+etm(:,2)*p(:)
+      rr(:,3)=qa(:,3)*ss(:,3)+zem(:,2)*p(:)
 #ifdef VISCOUS
-            rr(:,1)=rr(:,1)-xim(:,1)*txy(:)-xim(:,2)*tyy(:)-xim(:,3)*tyz(:)
-            rr(:,2)=rr(:,2)-etm(:,1)*txy(:)-etm(:,2)*tyy(:)-etm(:,3)*tyz(:)
-            rr(:,3)=rr(:,3)-zem(:,1)*txy(:)-zem(:,2)*tyy(:)-zem(:,3)*tyz(:)
+      rr(:,1)=rr(:,1)-xim(:,1)*txy(:)-xim(:,2)*tyy(:)-xim(:,3)*tyz(:)
+      rr(:,2)=rr(:,2)-etm(:,1)*txy(:)-etm(:,2)*tyy(:)-etm(:,3)*tyz(:)
+      rr(:,3)=rr(:,3)-zem(:,1)*txy(:)-zem(:,2)*tyy(:)-zem(:,3)*tyz(:)
 #endif
-         m=3
-         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
-         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
-         de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
+      m=3
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
+      de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
-         rr(:,1)=qa(:,4)*ss(:,1)+xim(:,3)*p(:)
-         rr(:,2)=qa(:,4)*ss(:,2)+etm(:,3)*p(:)
-         rr(:,3)=qa(:,4)*ss(:,3)+zem(:,3)*p(:)
+      rr(:,1)=qa(:,4)*ss(:,1)+xim(:,3)*p(:)
+      rr(:,2)=qa(:,4)*ss(:,2)+etm(:,3)*p(:)
+      rr(:,3)=qa(:,4)*ss(:,3)+zem(:,3)*p(:)
 #ifdef VISCOUS
-            rr(:,1)=rr(:,1)-xim(:,1)*tzx(:)-xim(:,2)*tyz(:)-xim(:,3)*tzz(:)
-            rr(:,2)=rr(:,2)-etm(:,1)*tzx(:)-etm(:,2)*tyz(:)-etm(:,3)*tzz(:)
-            rr(:,3)=rr(:,3)-zem(:,1)*tzx(:)-zem(:,2)*tyz(:)-zem(:,3)*tzz(:)
+      rr(:,1)=rr(:,1)-xim(:,1)*tzx(:)-xim(:,2)*tyz(:)-xim(:,3)*tzz(:)
+      rr(:,2)=rr(:,2)-etm(:,1)*tzx(:)-etm(:,2)*tyz(:)-etm(:,3)*tzz(:)
+      rr(:,3)=rr(:,3)-zem(:,1)*tzx(:)-zem(:,2)*tyz(:)-zem(:,3)*tzz(:)
 #endif
-         m=4
-         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
-         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
-         de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
+      m=4
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
+      de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
-         de(:,5)=qa(:,5)+p(:)
-         rr(:,1)=de(:,5)*ss(:,1)-p(:)*(umf(1)*xim(:,1)+umf(2)*xim(:,2)+umf(3)*xim(:,3))
-         rr(:,2)=de(:,5)*ss(:,2)-p(:)*(umf(1)*etm(:,1)+umf(2)*etm(:,2)+umf(3)*etm(:,3))
-         rr(:,3)=de(:,5)*ss(:,3)-p(:)*(umf(1)*zem(:,1)+umf(2)*zem(:,2)+umf(3)*zem(:,3))
+      de(:,5)=qa(:,5)+p(:)
+      rr(:,1)=de(:,5)*ss(:,1)-p(:)*(umf(1)*xim(:,1)+umf(2)*xim(:,2)+umf(3)*xim(:,3))
+      rr(:,2)=de(:,5)*ss(:,2)-p(:)*(umf(1)*etm(:,1)+umf(2)*etm(:,2)+umf(3)*etm(:,3))
+      rr(:,3)=de(:,5)*ss(:,3)-p(:)*(umf(1)*zem(:,1)+umf(2)*zem(:,2)+umf(3)*zem(:,3))
 #ifdef VISCOUS
-            rr(:,1)=rr(:,1)-xim(:,1)*hxx(:)-xim(:,2)*hyy(:)-xim(:,3)*hzz(:)
-            rr(:,2)=rr(:,2)-etm(:,1)*hxx(:)-etm(:,2)*hyy(:)-etm(:,3)*hzz(:)
-            rr(:,3)=rr(:,3)-zem(:,1)*hxx(:)-zem(:,2)*hyy(:)-zem(:,3)*hzz(:)
+      rr(:,1)=rr(:,1)-xim(:,1)*hxx(:)-xim(:,2)*hyy(:)-xim(:,3)*hzz(:)
+      rr(:,2)=rr(:,2)-etm(:,1)*hxx(:)-etm(:,2)*hyy(:)-etm(:,3)*hzz(:)
+      rr(:,3)=rr(:,3)-zem(:,1)*hxx(:)-zem(:,2)*hyy(:)-zem(:,3)*hzz(:)
 #endif
-         m=5
-         call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
-         call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
-         call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
-         call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
-         de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
+      m=5
+      call mpigo(rr, ijk, nbc, mcd, nbsize,0,nrall,n45no,m)
+      call deriv(rr, lxi, let, lze, ijk, 1, 1, m)
+      call deriv(rr, lxi, let, lze, ijk, 2, 2, m)
+      call deriv(rr, lxi, let, lze, ijk, 3, 3, m)
+      de(:,m)=rr(:,1)+rr(:,2)+rr(:,3)
 
    end subroutine calc_fluxes
 
