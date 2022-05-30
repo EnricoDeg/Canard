@@ -37,7 +37,7 @@ module mo_vars
    integer(kind=ni),dimension(3,3) :: ijk
    integer(kind=ni),dimension(3,0:1) :: nbc,mcd,nsz
    integer(kind=ni),dimension(3) :: ms,me,nbsize,nnf
-   integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,lsz,nrecs,nrecd
+   integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,nrecs,nrecd
    integer(kind=ni) :: i,ii,is,ie,ip,iq,j,jj,js,je,jp,jq,jk,k,kk,ks,ke,kp,l,lh,ll,lp,lq,ltomb
    integer(kind=ni) :: m,ma,mb,mm,mp,mq,mbk,mps,mpe,n,ndt,nn,nk,ns,ne,np,nq,nt,nz,ndati,nsigi,nout,nfile
    integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nkrk,nsmf,nrestart,nextrabc,nextgcic

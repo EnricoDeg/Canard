@@ -5,21 +5,24 @@
 MODULE mo_sponge
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : two, zero, pi, sml, one, half, hamhamm1
-   use mo_vars,       ONLY : szco, ra0, ra1, ra2, ra3, lsz, lmx, ll, l, de, &
-                           & yaco, ss, qa
-   use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh, tmpa,  &
-                           & tmpb
+   use mo_vars,       ONLY : szco, lmx, de, yaco, ss, qa
+   use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh
+
    IMPLICIT NONE
    PUBLIC
 
-   real(kind=nr), private, dimension(:), allocatable :: asz, bsz
+   real(kind=nr),    private, dimension(:), allocatable :: asz, bsz
    integer(kind=ni), private, dimension(:), allocatable :: lcsz
+   integer(kind=ni), private :: lsz
 
    CONTAINS
 
    !===== SETTING UP SPONGE ZONE PARAMETERS
 
    subroutine spongeup
+      integer(kind=ni) :: l, ll
+      real(kind=nr) :: ra0, ra1, ra2, ra3
+      real(kind=nr) :: tmpa, tmpb
 
       ll=-1
       ra2=skew/domh
@@ -52,6 +55,7 @@ MODULE mo_sponge
  !===== SPONGE IMPLEMENTATION
 
    subroutine spongego
+      integer(kind=ni) :: l, ll
 
       do ll=0,lsz
          l=lcsz(ll)
