@@ -6,37 +6,33 @@ module mo_gridgen
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : zero, twopi, two, three, onethird, halfpi,     &
                            & free, half, one, four, five, sml, pi, hamhamm1
-   use mo_vars,       ONLY : mb, xt, m, n, res, ra0, ra1, ra2, ra3, nrecd,  &
-                           & np, lxio, leto, ll, lh, k, js, jp, je, jj, mo, &
-                           & czonet, l, j, is, ie, ip, ii, i, fctr, cgrid,  &
-                           & cha, dha
+   use mo_vars,       ONLY : mb, nrecd, lxio, leto, mo, cgrid
    use mo_mpi,        ONLY : myid
    implicit none
    public
 
-   integer(kind=ni),parameter :: lnaca=90
-   integer(kind=ni) :: lxi0,lxi1,lxi2,let0,lze0
-   integer(kind=ni) :: lxit,lett,lxie0,lxis1,lxie1,lxis2,lete0,lets1,lxisz,im,jm
+   integer(kind=ni), private, parameter :: lnaca=90
+   integer(kind=ni) :: lxi0,lxi1,lxi2,let0,lze0 ! input vars
 
-   integer(kind=ni),dimension(-1:2) :: ilag
+   real(kind=nr), private, dimension(0:lnaca,2) :: xnaca,ynaca,xf,yf
+   real(kind=nr), private, dimension(4,2) :: xcij,ycij
+   real(kind=nr), private, dimension(4) :: xco,yco
+   real(kind=nr), private, dimension(-1:2) :: alag,blag
 
-   real(kind=nr),dimension(0:lnaca,2) :: xnaca,ynaca,xf,yf
-   real(kind=nr),dimension(4,2) :: xcij,ycij
-   real(kind=nr),dimension(4) :: xco,yco
-   real(kind=nr),dimension(-1:2) :: alag,blag
+   real(kind=nr), private, dimension(:,:), allocatable :: xx,yy,zz
+   real(kind=nr), private, dimension(:),   allocatable :: xyzmb,zs
+   real(kind=nr), private, dimension(:,:), allocatable :: xp,yp,xq,yq
+   real(kind=nr), private, dimension(:),   allocatable :: pxi,qet
+   real(kind=nr), private, dimension(:,:), allocatable :: qeto
 
-   real(kind=nr),dimension(:,:),allocatable :: xx,yy,zz
-   real(kind=nr),dimension(:),allocatable :: xyzmb,zs
-   real(kind=nr),dimension(:,:),allocatable :: xp,yp,xq,yq
-   real(kind=nr),dimension(:),allocatable :: pxi,qet
-   real(kind=nr),dimension(:,:),allocatable :: qeto
+   real(kind=nr), private :: ts,te,shs,she,shswle
+   real(kind=nr), private :: xa,xb,xc,xd,xe,xo,ya,yb,yc,yd,yo,sho,pp,qq
+   real(kind=nr), private :: am,tmp,tmpa,tmpb,gf
 
-   real(kind=nr) :: ts,te,shs,she,shswle
-   real(kind=nr) :: xa,xb,xc,xd,xe,xo,ya,yb,yc,yd,yo,sho,pp,qq
-   real(kind=nr) :: am,tmp,tmpa,tmpb,gf
+   integer(kind=ni) :: nthick ! input vars
+   real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx ! input vars
 
-   integer(kind=ni) :: nthick
-   real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
+   real(kind=nr), private, dimension(5,5) :: xt
 
 
    CONTAINS
@@ -53,8 +49,13 @@ module mo_gridgen
 
    subroutine gridaerofoil(nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
 
-      integer(kind=ni),intent(in) :: nthick
-      real(kind=nr),intent(in) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
+      integer(kind=ni), intent(in) :: nthick
+      real(kind=nr),    intent(in) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
+      integer(kind=ni)             :: m, n, np, ll, lh, k, js, je, jp, jj
+      integer(kind=ni)             :: l, j, i, is, ie, ip, ii, im, jm, lxisz
+      integer(kind=ni)             :: lxit, lett, lxie0, lxis1, lxie1, lxis2, lete0, lets1
+      real(kind=nr)                :: res, ra0, ra1, ra2, ra3, fctr
+      real(kind=nr) ,dimension(5)  :: cha, dha
 
       lxit=lxi0+lxi1+lxi2+2
       lett=2*let0+1
@@ -65,7 +66,8 @@ module mo_gridgen
       lete0=let0
       lets1=lete0+1
 
-      shs=smg; she=shs
+      shs=smg
+      she=shs
 
       np=3*(lxio+1)*(leto+1)-1
       allocate(xx(0:lxit,0:lett),yy(0:lxit,0:lett),zz(0:lxit,0:lett))
@@ -485,9 +487,10 @@ module mo_gridgen
 
    subroutine aerofint(i,ii,n,nn,shg)
 
-      integer(kind=ni),intent(in) :: i,ii,n,nn
-      real(kind=nr),intent(in) :: shg
-      real(kind=nr) :: err,fshg0,fshg1
+      integer(kind=ni), intent(in) :: i,ii,n,nn
+      real(kind=nr),    intent(in) :: shg
+      real(kind=nr)                :: err,fshg0,fshg1
+      real(kind=nr)                :: res, ra0, ra1, ra2, ra3
 
       err=1.0e-4_nr
       fshg0=0.8_nr
@@ -630,9 +633,5 @@ module mo_gridgen
       end do
 
    end subroutine gridf
-
-!=====
    
  end module mo_gridgen
-
-!*****
