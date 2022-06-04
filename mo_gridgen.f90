@@ -12,6 +12,7 @@ module mo_gridgen
                            & cha, dha
    use mo_mpi,        ONLY : myid
    implicit none
+   public
 
    integer(kind=ni),parameter :: lnaca=90
    integer(kind=ni) :: lxi0,lxi1,lxi2,let0,lze0
@@ -34,7 +35,7 @@ module mo_gridgen
    real(kind=nr) :: xa,xb,xc,xd,xe,xo,ya,yb,yc,yd,yo,sho,pp,qq
    real(kind=nr) :: am,tmp,tmpa,tmpb,gf
 
-   integer(kind=ni) :: nthick,ngridv
+   integer(kind=ni) :: nthick
    real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
 
 
@@ -44,15 +45,15 @@ module mo_gridgen
 
    subroutine makegrid
 
-      call gridaerofoil(ngridv,nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
+      call gridaerofoil(nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
 
    end subroutine makegrid
 
 !===== GRID GENERATION
 
-   subroutine gridaerofoil(ngridv,nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
+   subroutine gridaerofoil(nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
 
-      integer(kind=ni),intent(in) :: ngridv,nthick
+      integer(kind=ni),intent(in) :: nthick
       real(kind=nr),intent(in) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
 
       lxit=lxi0+lxi1+lxi2+2
@@ -474,27 +475,6 @@ module mo_gridgen
             write(9,rec=k+1) xyzmb(:)
          end do
          close(9)
-
-!----- GRID CHECKING
-
-         if(ngridv==1) then
-            open(8,file='misc/gridview'//czonet(mb)//'.dat')
-            write(8,*) 'variables=v1,v2'
-            write(8,"('zone i=',i4,' j=',i4)") ie-is+1,je-js+1
-            do j=js,je
-               do i=is,ie
-                  write(8,'(2es15.7)') xx(i,j),yy(i,j)
-               end do
-            end do
-            close(8)
-         else
-            open(8,file='misc/gridview'//czonet(mb)//'.dat')
-            close(8,status='delete')
-         end if
-         if(myid==0) then
-            write(*,"('Grid generation is complete.')")
-            write(*,"('Number of cells across sponge:',i4)") minloc(abs(xa+szth0-xp(:,1)),1)-1
-         end if
 
       end if
       deallocate(xx,yy,zz,xyzmb,xp,yp,xq,yq,pxi,qet)

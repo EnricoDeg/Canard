@@ -19,7 +19,7 @@ MODULE mo_io
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
    use mo_gridgen,    ONLY : domh, doml0, doml1, let0, lxi0, lxi1,          &
-                           & lxi2, lze0, ngridv, nthick, skew, smg,         &
+                           & lxi2, lze0, nthick, skew, smg,         &
                            & smgvr, span, spx, szth0, szth1, wlea,          &
                            & wlew
    IMPLICIT NONE
@@ -67,7 +67,6 @@ MODULE mo_io
       read(9,*) cinput,let0
       read(9,*) cinput,lze0
       read(9,*) cinput,nbody,nthick
-      read(9,*) cinput,ngridv
       read(9,*) cinput,nbpc(:,1)
       read(9,*) cinput,nbpc(:,2)
       read(9,*) cinput,nbpc(:,3)
