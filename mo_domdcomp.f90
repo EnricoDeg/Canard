@@ -6,7 +6,7 @@ MODULE mo_domdcomp
    use mo_kind, ONLY : ni, nr
    use mo_parameters, ONLY : one
    use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
-                     & mo, nbsize, rr, qa, nbpc, itag, mcd, nbc,   &
+                     & mo, nbsize, rr, qa, nbpc, mcd, nbc,   &
                      & lxio, leto, lzeo, lxi, let, lze, mb, ltomb, &
                      & lmx, lim, mbk
    use mo_mpi, ONLY : myid
@@ -58,7 +58,7 @@ MODULE mo_domdcomp
       integer(kind=ni), intent(in) :: nblocks, nkthick
       integer(kind=ni), intent(in) :: nkbody
       integer(kind=ni) :: ipk, jpk, mmk, nnk, nstart, nend
-      integer(kind=ni) :: llk, mpk, lpk, mak, lk, mm, mp
+      integer(kind=ni) :: llk, mpk, lpk, mak, lk, mm, mp, itag
 
       mo(0) = 0
       do mmk = 1,nblocks
@@ -398,7 +398,7 @@ MODULE mo_domdcomp
    END SUBROUTINE search_line
 
    SUBROUTINE average_point
-      integer(kind=ni) :: kp, l, jp, ip, ii, i, j, lp, lq
+      integer(kind=ni) :: kp, l, jp, ip, ii, i, j, lp, lq, itag
       real(kind=nr)    :: fctr
 
       call p_null_req
@@ -446,7 +446,7 @@ MODULE mo_domdcomp
 
    SUBROUTINE average_line
       integer(kind=ni) :: nn, ll, l, jp, ip, ii, i, j, k
-      integer(kind=ni) :: js, je, ks, ke, lp, lq
+      integer(kind=ni) :: js, je, ks, ke, lp, lq, itag
       real(kind=nr)    :: fctr
 
       call p_null_req

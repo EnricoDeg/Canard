@@ -11,7 +11,7 @@ MODULE mo_io
                            & ndata, times, nscrn, n, mb,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, nbpc, lzem, mo, letm, lxim, lximb, &
-                           & letmb, lzemb, czonet, lio, timf, nts, nsmf,    &
+                           & letmb, lzemb, lio, timf, nts, nsmf,    &
                            & nrestart, nsgnl, lze, lxi, let, dts,           &
                            & dte, dt, lxio, leto, lzeo, nrecs,              &
                            & ltomb, lmx, mq, varr, qa, nnf, vart
@@ -35,8 +35,7 @@ MODULE mo_io
    character(1),        private, dimension(0:4) :: cno
    integer(kind=ni),    private, dimension(0:4) :: no
    character(19),       private :: crestart
-
-
+   character(4),        private, dimension(:),allocatable :: czonet
    
    CONTAINS
 

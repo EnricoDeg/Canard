@@ -7,10 +7,10 @@ program canard
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_vars,       ONLY : times, tmax, timo, ss, nts,                           &
                            & tsam, nscrn, nrestart, nrecs, nrecd,                  &
-                           & nkrk, nk, ndt, ndati, ndatafl, ndataav,               &
+                           & nkrk, nk, ndt, ndatafl, ndataav,                      &
                            & ndata, nbsize, nbody, nbc, n, mbk, lxi, let, lze,     &
-                           & lmx, l, lim, dto, dts,                                &
-                           & dte, dtsum, dt, cinput, cfl, cdata, varr,             &
+                           & lmx, lim, dto, dts,                                   &
+                           & dte, dt, cinput, cfl, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de, mcd, ijk, xim, etm, zem,    &
                            & rr, umf, nnf, p, yaco, srefoo, srefp1dre,             &
@@ -34,8 +34,8 @@ program canard
                            & calc_viscous_shear_stress, calc_fluxes
    implicit none
 
-   integer(kind=ni) :: m, nn, ll, nsigi, nout, lis, lie
-   real(kind=nr)    :: res, ra0, ra1, fctr, dtko, dtk
+   integer(kind=ni) :: m, nn, ll, nsigi, nout, lis, lie, l, ndati
+   real(kind=nr)    :: res, ra0, ra1, fctr, dtko, dtk, dtsum
    integer(kind=int64) :: nlmx
 
 !===== PREPARATION FOR PARALLEL COMPUTING

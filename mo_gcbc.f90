@@ -12,7 +12,7 @@ MODULE mo_gcbc
                            & rr, yaco,   &
                            & mcd, nbc, ss, xim, zem, lmx, drva1,  &
                            & drva2, drva3, cm1, cm2, cm3, cm, drva, etm,  &
-                           & txy, nextgcic, nkrk, dtwi, dt, ao,     &
+                           & txy, nextgcic, nkrk, dt, ao,     &
                            & wtemp, txx, tmax, timo,       &
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
@@ -190,7 +190,7 @@ MODULE mo_gcbc
    SUBROUTINE gcbc_update
       integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k
       integer(kind=ni) :: jk, kp
-      real(kind=nr)    :: ra0
+      real(kind=nr)    :: ra0, dtwi
 
       ll=-1
       do nn=1,3
