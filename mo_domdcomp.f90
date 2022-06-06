@@ -7,7 +7,7 @@ MODULE mo_domdcomp
    use mo_parameters, ONLY : one
    use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
                      & mo, nbsize, nbpc, mcd, nbc,   &
-                     & lxio, leto, lzeo, lxi, let, lze, mb, ltomb, &
+                     & lxio, leto, lzeo, lxi, let, lze, mb, &
                      & lmx, lim, mbk
    use mo_mpi, ONLY : myid
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
@@ -215,8 +215,6 @@ MODULE mo_domdcomp
       call p_bcast(lxim(:), 0)
       call p_bcast(letm(:), 0)
       call p_bcast(lzem(:), 0)
-
-      ltomb=(lxio+1)*(leto+1)*(lzeo+1)
 
       lmx=(lxi+1)*(let+1)*(lze+1)-1
       lim=(lxi+1)+(let+1)+(lze+1)-1

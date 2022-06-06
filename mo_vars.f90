@@ -34,7 +34,7 @@ module mo_vars
    integer(kind=ni),dimension(3,0:1) :: nbc,mcd
    integer(kind=ni),dimension(3) :: nbsize,nnf
    integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,nrecs,nrecd
-   integer(kind=ni) :: ltomb, mb, mbk, n, ndt, nk, mq
+   integer(kind=ni) :: mb, mbk, n, ndt, nk, mq
    integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nkrk,nsmf,nrestart,nextrabc,nextgcic
 
    real(kind=nr),dimension(5,5) :: xt

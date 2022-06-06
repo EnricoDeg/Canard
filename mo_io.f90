@@ -14,7 +14,7 @@ MODULE mo_io
                            & letmb, lzemb, lio, timf, nts, nsmf,    &
                            & nrestart, nsgnl, lze, lxi, let, dts,           &
                            & dte, dt, lxio, leto, lzeo, nrecs,              &
-                           & ltomb, lmx, mq, varr, qa, nnf, vart
+                           & lmx, mq, varr, qa, nnf, vart
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
@@ -211,7 +211,9 @@ MODULE mo_io
    SUBROUTINE write_output_file
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
+      integer(kind=ni) :: ltomb
 
+      ltomb=(lxio+1)*(leto+1)*(lzeo+1)
       lje=-1
       do n=-1,ndata
          mq=3+2*min(n+1,1)
