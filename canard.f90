@@ -66,6 +66,8 @@ program canard
 
    call domdcomp_init(mbk, nthick, nbody)
 
+   lim=(lxi+1)+(let+1)+(lze+1)-1
+
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
    call output_init
