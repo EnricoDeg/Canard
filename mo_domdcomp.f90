@@ -416,7 +416,7 @@ MODULE mo_domdcomp
             kp=i/4
             lp=lp+5
             l=indx3(ip*lxi,jp*let,kp*lze,1)
-            rr(lp:lp+4,1)=qak(l,:)
+            rr(lp:lp+4,1)=qak(l,1:5)
             do j=1,imjp(ii)
                lq=lq+5
                call p_isend(rr(lp:lp+4,1), jpcd(i,j), itag)
@@ -440,7 +440,7 @@ MODULE mo_domdcomp
             end do
             fctr=one/(imjp(ii)+1)
             l=indx3(ip*lxi,jp*let,kp*lze,1)
-            qak(l,:)=fctr*rr(lp:lp+4,1)
+            qak(l,1:5)=fctr*rr(lp:lp+4,1)
          end if
       end do
       deallocate(rr)
@@ -472,7 +472,7 @@ MODULE mo_domdcomp
             do k=0,ijk(3,nn)
                ll=ks+5*k
                l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn)
-               rr(ll:ll+4,1)=qak(l,:)
+               rr(ll:ll+4,1)=qak(l,1:5)
             end do
             do j=1,imjl(ii)
                js=lq
@@ -505,7 +505,7 @@ MODULE mo_domdcomp
             do k=0,ijk(3,nn)
                ll=ks+5*k
                l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn)
-               qak(l,:)=fctr*rr(ll:ll+4,1)
+               qak(l,1:5)=fctr*rr(ll:ll+4,1)
             end do
          end if
       end do
