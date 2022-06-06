@@ -6,7 +6,8 @@ module mo_gridgen
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : zero, twopi, two, three, onethird, halfpi,     &
                            & free, half, one, four, five, sml, pi, hamhamm1
-   use mo_vars,       ONLY : mb, nrecd, lxio, leto, mo, cgrid
+   use mo_vars,       ONLY : nrecd, cgrid
+   use mo_domdcomp,   ONLY : mb, lxio, leto, mo
    use mo_mpi,        ONLY : myid
    implicit none
    public

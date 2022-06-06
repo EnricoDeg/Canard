@@ -5,7 +5,8 @@
 MODULE mo_sponge
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : two, zero, pi, sml, one, half, hamhamm1
-   use mo_vars,       ONLY : szco, lmx, de, yaco, ss, qa
+   use mo_vars,       ONLY : szco, de, yaco, ss, qa
+   use mo_domdcomp,   ONLY : lmx
    use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh
 
    IMPLICIT NONE

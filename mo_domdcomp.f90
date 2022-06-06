@@ -5,17 +5,18 @@
 MODULE mo_domdcomp
    use mo_kind, ONLY : ni, nr
    use mo_parameters, ONLY : one
-   use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
-                     & mo, nbsize, nbpc, mcd, nbc,   &
-                     & lxio, leto, lzeo, lxi, let, lze, mb, &
-                     & lmx
+!   use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
+!                     & mo, nbsize, nbpc, mcd, nbc,   &
+!                     & lxio, leto, lzeo, lxi, let, lze, mb, &
+!                     & lmx
    use mo_mpi, ONLY : myid
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
                       p_recv, p_send, p_bcast, mpro
    use mo_utils, ONLY : indx3
    IMPLICIT NONE
-   PUBLIC
+   PRIVATE
 
+   ! private vars
    integer(kind=ni), private, parameter                    :: ljpl=100
 
    integer(kind=ni), private, dimension(3,0:1)             :: mmcd
@@ -36,6 +37,25 @@ MODULE mo_domdcomp
    integer(kind=ni), private, dimension(:), allocatable     :: imjl
    integer(kind=ni), private, dimension(:), allocatable     :: jltag
 
+   ! public vars
+   integer(kind=ni), public                              :: mb
+   integer(kind=ni), public                              :: lmx
+   integer(kind=ni), public                              :: lxio, leto, lzeo
+   integer(kind=ni), public                              :: lxi, let, lze
+   integer(kind=ni), public, dimension(3)                :: nbsize
+   integer(kind=ni), public, dimension(3,3)              :: ijk
+   integer(kind=ni), public, dimension(3,0:1)            :: nbc,mcd
+   integer(kind=ni), public, dimension(:),   allocatable :: lxim, letm, lzem
+   integer(kind=ni), public, dimension(:),   allocatable :: lximb, letmb, lzemb
+   integer(kind=ni), public, dimension(:),   allocatable :: mo
+   integer(kind=ni), public, dimension(:,:), allocatable :: nbpc
+
+   ! private subroutines / functions
+   private :: trimm, idsd3
+
+   ! public subroutines / functions
+   public :: allocate_domdcomp, domdcomp_init, search_point, search_line
+   public :: average_point, average_line
 
    CONTAINS
 
@@ -414,7 +434,7 @@ MODULE mo_domdcomp
             jp=mod(i,4)/2
             kp=i/4
             lp=lp+5
-            l=indx3(ip*lxi,jp*let,kp*lze,1)
+            l=indx3(ip*lxi,jp*let,kp*lze,1,lxi,let)
             rr(lp:lp+4,1)=qak(l,1:5)
             do j=1,imjp(ii)
                lq=lq+5
@@ -438,7 +458,7 @@ MODULE mo_domdcomp
                rr(lp:lp+4,1)=rr(lp:lp+4,1)+rr(lq:lq+4,2)
             end do
             fctr=one/(imjp(ii)+1)
-            l=indx3(ip*lxi,jp*let,kp*lze,1)
+            l=indx3(ip*lxi,jp*let,kp*lze,1,lxi,let)
             qak(l,1:5)=fctr*rr(lp:lp+4,1)
          end if
       end do
@@ -470,7 +490,7 @@ MODULE mo_domdcomp
             lp=lp+ke-ks+1
             do k=0,ijk(3,nn)
                ll=ks+5*k
-               l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn)
+               l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn,lxi,let)
                rr(ll:ll+4,1)=qak(l,1:5)
             end do
             do j=1,imjl(ii)
@@ -503,7 +523,7 @@ MODULE mo_domdcomp
             fctr=one/(imjl(ii)+1)
             do k=0,ijk(3,nn)
                ll=ks+5*k
-               l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn)
+               l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn,lxi,let)
                qak(l,1:5)=fctr*rr(ll:ll+4,1)
             end do
          end if

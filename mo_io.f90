@@ -8,13 +8,15 @@ MODULE mo_io
    use mo_vars,       ONLY : dha, cha, lpos, wtemp, tsam, tmax,             &
                            & nkrk, nextrabc, nextgcic, ndata, ndatafl,      &
                            & ndataav, mbk, dto, cinput, cfl, szco, nbody,   &
-                           & ndata, times, nscrn, n, mb,                    &
+                           & ndata, times, nscrn, n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
-                           & nrecd, ndt, nbpc, lzem, mo, letm, lxim, lximb, &
-                           & letmb, lzemb, lio, timf, nts, nsmf,    &
-                           & nrestart, nsgnl, lze, lxi, let, dts,           &
-                           & dte, dt, lxio, leto, lzeo, nrecs,              &
-                           & lmx, mq, varr, qa, nnf, vart
+                           & nrecd, ndt, &
+                           & lio, timf, nts, nsmf,    &
+                           & nrestart, nsgnl, dts,           &
+                           & dte, dt, nrecs,              &
+                           & mq, varr, qa, nnf, vart
+   use mo_domdcomp,   ONLY : mb, nbpc, lzem, mo, letm, lxim, lximb, letmb,  &
+                           & lzemb, lze, lxi, let, lxio, leto, lzeo, lmx
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
@@ -172,7 +174,7 @@ MODULE mo_io
          do j=0,let
             lq=lp+lio(j,k)
             do i=0,lxi
-               l=indx3(i,j,k,1)
+               l=indx3(i,j,k,1,lxi,let)
                read(9,rec=lq+i+1) qa(l,:)
             end do
          end do
@@ -199,7 +201,7 @@ MODULE mo_io
          do j=0,let
             lq=lp+lio(j,k)
             do i=0,lxi
-               l=indx3(i,j,k,1)
+               l=indx3(i,j,k,1,lxi,let)
                write(9,rec=lq+i+1) qa(l,:)
             end do
          end do

@@ -8,9 +8,8 @@ module mo_vars
    PUBLIC
 
 !===== ALLOCATABLE MAIN ARRAYS
-   integer(kind=ni),dimension(:,:),allocatable :: nbpc,lio
-   integer(kind=ni),dimension(:),allocatable :: lxim,letm,lzem,lpos
-   integer(kind=ni),dimension(:),allocatable :: lximb,letmb,lzemb,mo
+   integer(kind=ni),dimension(:,:),allocatable :: lio
+   integer(kind=ni),dimension(:),allocatable :: lpos
 
    real(kind=nr),dimension(:,:),allocatable :: qo,qa,qb,de
    real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz
@@ -30,11 +29,9 @@ module mo_vars
    real(kind=ieee32),dimension(:),allocatable :: varr,vart,vmean
 
 !===== CONSTANT-SIZED MAIN VARIABLES
-   integer(kind=ni),dimension(3,3) :: ijk
-   integer(kind=ni),dimension(3,0:1) :: nbc,mcd
-   integer(kind=ni),dimension(3) :: nbsize,nnf
-   integer(kind=ni) :: lxio,leto,lzeo,lxi,let,lze,lmx,lim,nrecs,nrecd
-   integer(kind=ni) :: mb, mbk, n, ndt, nk, mq
+   integer(kind=ni),dimension(3) :: nnf
+   integer(kind=ni) :: lim,nrecs,nrecd
+   integer(kind=ni) :: mbk, n, ndt, nk, mq
    integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nkrk,nsmf,nrestart,nextrabc,nextgcic
 
    real(kind=nr),dimension(5,5) :: xt
@@ -55,7 +52,9 @@ module mo_vars
 
    CONTAINS
 
-   SUBROUTINE allocate_memory
+   SUBROUTINE allocate_memory(lmx, nbsize)
+      integer(kind=ni), intent(IN)               :: lmx
+      integer(kind=ni), dimension(3), intent(IN) :: nbsize
       integer(kind=ni) :: ii, jj, kk
 
       allocate(qo(0:lmx,5),qa(0:lmx,5),qb(0:lmx,5),de(0:lmx,5))

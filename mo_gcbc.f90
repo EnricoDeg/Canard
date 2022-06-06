@@ -8,15 +8,16 @@ MODULE mo_gcbc
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : dha, cha, xt,    &
-                           & umf, ijk, nbsize, p, qa,     &
+                           & umf, p, qa,     &
                            & rr, yaco,   &
-                           & mcd, nbc, ss, xim, zem, lmx, drva1,  &
-                           & drva2, drva3, cm1, cm2, cm3, cm, drva, etm,  &
+                           & ss, drva1,  &
+                           & drva2, drva3, cm1, cm2, cm3, cm, drva, &
                            & txy, nextgcic, nkrk, dt, ao,     &
                            & wtemp, txx, tmax, timo,       &
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
-                           & de, dudtmf, varr
+                           & de, dudtmf, varr, xim, etm, zem
+   use mo_domdcomp,   ONLY : ijk, nbsize, mcd, nbc, lmx, lxi, let
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
    use mo_utils,      ONLY : indx3, mtrxi
    IMPLICIT NONE
@@ -80,14 +81,14 @@ MODULE mo_gcbc
             if((np-10)*(np-20)*(np-25)*(np-30)==0) then
                do k=0,ijk(3,nn)
                   do j=0,ijk(2,nn)
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      ll=ll+1
                      res=one/yaco(l)
                      rr(l,1)=rr(l,1)+one
                      rr(ll,2)=res
                      rr(ll,3)=l+sml
                      do ii=1,mbci
-                        l=indx3(i+iq*ii,j,k,nn)
+                        l=indx3(i+iq*ii,j,k,nn,lxi,let)
                         ll=ll+1
                         rr(l,1)=rr(l,1)+one
                         rr(ll,2)=res*sbci(ii)
@@ -99,7 +100,7 @@ MODULE mo_gcbc
             if((np-30)*(np-35)*(np-45)==0) then
                do k=0,ijk(3,nn)
                   do j=0,ijk(2,nn)
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      nrr(l)=1
                   end do
                end do
@@ -144,7 +145,7 @@ MODULE mo_gcbc
                   kp=k*(ijk(2,nn)+1)
                   do j=0,ijk(2,nn)
                      jk=kp+j
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      call eleme(l,cm(jk,:,ip))
                      call xtq2r(cm(jk,:,ip))
                      cha(:)=ra0*drva(jk,:,ip)+ra1*de(l,:)
@@ -219,7 +220,7 @@ MODULE mo_gcbc
                   kp=k*(ijk(2,nn)+1)
                   do j=0,ijk(2,nn)
                      jk=kp+j
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      call eleme(l,cm(jk,:,ip))
                      cha(:)=drva(jk,:,ip)
                      dha(:)=drvb(jk,:,ip)
@@ -232,7 +233,7 @@ MODULE mo_gcbc
                      call xtr2q(cm(jk,:,ip))
                      dha(:)=matmul(xt(:,:),(cha(:)-drva(jk,:,ip)))
                      do ii=0,mbci
-                        l=indx3(i+iq*ii,j,k,nn)
+                        l=indx3(i+iq*ii,j,k,nn,lxi,let)
                         ll=ll+1
                         de(l,:)=de(l,:)+sbcc(ll)*dha(:)
                      end do
@@ -244,7 +245,7 @@ MODULE mo_gcbc
                   kp=k*(ijk(2,nn)+1)
                   do j=0,ijk(2,nn)
                      jk=kp+j
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      call eleme(l,cm(jk,:,ip))
                      cha(:)=drva(jk,:,ip)
                      dha(:)=drvb(jk,:,ip)
@@ -255,7 +256,7 @@ MODULE mo_gcbc
                      call xtr2q(cm(jk,:,ip))
                      dha(:)=matmul(xt(:,:),(cha(:)-drva(jk,:,ip)))
                      do ii=0,mbci
-                        l=indx3(i+iq*ii,j,k,nn)
+                        l=indx3(i+iq*ii,j,k,nn,lxi,let)
                         ll=ll+1
                         de(l,:)=de(l,:)+sbcc(ll)*dha(:)
                      end do
@@ -266,7 +267,7 @@ MODULE mo_gcbc
                   kp=k*(ijk(2,nn)+1)
                   do j=0,ijk(2,nn)
                      jk=kp+j
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      call eleme(l,cm(jk,:,ip))
                      cha(:)=drva(jk,:,ip)
                      dha(:)=drvb(jk,:,ip)
@@ -282,7 +283,7 @@ MODULE mo_gcbc
                      call xtr2q(cm(jk,:,ip))
                      dha(:)=matmul(xt(:,:),(cha(:)-drva(jk,:,ip)))
                      do ii=0,mbci
-                        l=indx3(i+iq*ii,j,k,nn)
+                        l=indx3(i+iq*ii,j,k,nn,lxi,let)
                         ll=ll+1
                         de(l,:)=de(l,:)+sbcc(ll)*dha(:)
                      end do
@@ -321,7 +322,7 @@ MODULE mo_gcbc
                do k=0,ijk(3,nn)
                   kp=k*(ijk(2,nn)+1)
                   do j=0,ijk(2,nn)
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      jk=kp+j
                      drva(jk,:,ip)=qa(l,:)
                      rr(l,1)=one
@@ -350,7 +351,7 @@ MODULE mo_gcbc
                do k=0,ijk(3,nn)
                   kp=k*(ijk(2,nn)+1)
                   do j=0,ijk(2,nn)
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      jk=kp+j
                      rr(l,1)=rr(l,1)+nrr(l)
                      rr(l,2)=nrr(l)/rr(l,1)
@@ -375,7 +376,7 @@ MODULE mo_gcbc
             case(20)
                do k=0,ijk(3,nn)
                   do j=0,ijk(2,nn)
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      qa(l,5)=npex(l)*qa(l,5)+(one-npex(l))*(hamhamm1*qa(l,1)**gam+half*sum(qa(l,2:4)*qa(l,2:4))/qa(l,1))
                   end do
                end do
@@ -383,7 +384,7 @@ MODULE mo_gcbc
                ra0=hamhamm1*wtemp
                do k=0,ijk(3,nn)
                   do j=0,ijk(2,nn)
-                     l=indx3(i,j,k,nn)
+                     l=indx3(i,j,k,nn,lxi,let)
                      fctr=(one-npex(l))*qa(l,1)
                      qa(l,2:4)=npex(l)*qa(l,2:4)-fctr*umf(:)
                      qa(l,5)=npex(l)*qa(l,5)+(one-npex(l))*(ra0*qa(l,1)+half*sum(qa(l,2:4)*qa(l,2:4))/qa(l,1))
@@ -420,7 +421,7 @@ MODULE mo_gcbc
                rv(:)=zero
                do j=0,ijk(2,nn)
                   jk=kp+j
-                  l=indx3(i,j,k,nn)
+                  l=indx3(i,j,k,nn,lxi,let)
                   ra0=two*acos(cm2(jk,1,ip))
                   ra1=abs(half*sin(ra0)*(tyy(l)-txx(l))+cos(ra0)*txy(l))
                   ra2=gam*p(l)/qa(l,1); ra3=sqrt(ra1*qa(l,1))*(ra2+srefoo)/(srefp1dre*ra2**1.5_nr)

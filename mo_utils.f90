@@ -5,7 +5,6 @@
 module mo_utils
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : one
-   use mo_vars,       ONLY : lxi, let
    implicit none
    public
 
@@ -52,9 +51,10 @@ module mo_utils
 
 !===== FUNCTION FOR MAIN INDEX TRANSFORMATION IN 3D
 
-   function indx3(i,j,k,nn) result(lm)
+   function indx3(i,j,k,nn, lxi, let) result(lm)
 
       integer(kind=ni),intent(in) :: i,j,k,nn
+      integer(kind=ni),intent(in) :: lxi, let
       integer(kind=ni) :: lm
 
       select case(nn)

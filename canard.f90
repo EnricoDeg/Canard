@@ -8,13 +8,15 @@ program canard
    use mo_vars,       ONLY : times, tmax, timo, ss, nts,                           &
                            & tsam, nscrn, nrestart, nrecs, nrecd,                  &
                            & nkrk, nk, ndt, ndatafl, ndataav,                      &
-                           & ndata, nbsize, nbody, nbc, n, mbk, lxi, let, lze,     &
-                           & lmx, lim, dto, dts,                                   &
+                           & ndata, nbody, n, mbk,     &
+                           & lim, dto, dts,                                   &
                            & dte, dt, cinput, cfl, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
-                           & hyy, hzz, qo, qa, qb, de, mcd, ijk, xim, etm, zem,    &
+                           & hyy, hzz, qo, qa, qb, de,    &
                            & rr, umf, nnf, p, yaco, srefoo, srefp1dre,             &
-                           & lxim, letm, lzem, lpos
+                           & lpos, xim, etm, zem
+   use mo_domdcomp,   ONLY : nbc, lxi, let, lze, lmx, mcd, ijk,    &
+                           & lxim, letm, lzem, nbsize
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
@@ -74,7 +76,7 @@ program canard
 
 !===== ALLOCATION OF MAIN ARRAYS
 
-   call allocate_memory
+   call allocate_memory(lmx, nbsize)
    call allocate_numerics(lim, nbsize)
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES

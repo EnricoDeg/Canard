@@ -10,7 +10,8 @@ module mo_numerics
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
-   use mo_vars,       ONLY : drva1, drva2, drva3, drva, lim, lmx
+   use mo_vars,       ONLY : drva1, drva2, drva3, drva, lim
+   use mo_domdcomp,   ONLY : lmx, lxi, let
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private
@@ -463,10 +464,10 @@ module mo_numerics
                   kpp = kkk * ( ijks(2,nnk) + 1 )
                   do jjj = 0,ijks(2,nnk)
                      jkk  = kpp + jjj
-                     lll  = indx3(istart, jjj, kkk, nnk)
+                     lll  = indx3(istart, jjj, kkk, nnk,lxi,let)
                      resk = ra0k * rfield(lll)
                      do iii = 0,mpk
-                        lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk)
+                        lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk,lxi,let)
                         sap(iii) = rfield(lll)
                      end do
                      send(jkk,0,ipk)    = sum( pbco(0:mpk,0,nt) * sap(0:mpk) ) - resk * pbcot(0,nt)
@@ -516,7 +517,7 @@ module mo_numerics
                      kpp = kkk * ( ijks(2,nnk) + 1 )
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
-                        lll = indx3(istart, jjj, kkk, nnk)
+                        lll = indx3(istart, jjj, kkk, nnk,lxi,let)
                         recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rfield(lll) * pbcot(0,nt)
                         recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rfield(lll) * pbcot(1,nt)
                         recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rfield(lll)
@@ -599,10 +600,10 @@ module mo_numerics
                   kpp = kkk * ( ijks(2,nnk) + 1 )
                   do jjj = 0,ijks(2,nnk)
                      jkk  = kpp + jjj
-                     lll  = indx3(istart, jjj, kkk, nnk)
+                     lll  = indx3(istart, jjj, kkk, nnk,lxi,let)
                      resk = ra0k * rfield(lll,nzk)
                      do iii = 0,mpk
-                        lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk)
+                        lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk,lxi,let)
                         sap(iii) = rfield(lll,nzk)
                      end do
                      send(jkk,0,ipk)    = sum( pbco(0:mpk,0,nt) * sap(0:mpk) ) - resk * pbcot(0,nt)
@@ -653,7 +654,7 @@ module mo_numerics
                      kpp = kkk * ( ijks(2,nnk) + 1 )
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
-                        lll = indx3(istart, jjj, kkk, nnk)
+                        lll = indx3(istart, jjj, kkk, nnk,lxi,let)
                         recv(jkk,0,ipk)    = recv(jkk,0,ipk) + rfield(lll,nzk) * pbcot(0,nt)
                         recv(jkk,1,ipk)    = recv(jkk,1,ipk) + rfield(lll,nzk) * pbcot(1,nt)
                         recv(jkk,nt+1,ipk) = recv(jkk,nt+1,ipk) + nt * rfield(lll,nzk)
@@ -704,7 +705,7 @@ module mo_numerics
          do jjj=  0,ijks(2,nn)
             jkk = kpp + jjj
             do iii = istart,iend
-               lll = indx3(iii-istart, jjj, kkk, nn)
+               lll = indx3(iii-istart, jjj, kkk, nn,lxi,let)
                li(iii) = lll
                sa(iii) = rfieldin(lll)
             end do
@@ -791,7 +792,7 @@ module mo_numerics
          do jjj=  0,ijks(2,nn)
             jkk = kpp + jjj
             do iii = istart,iend
-               lll = indx3(iii-istart, jjj, kkk, nn)
+               lll = indx3(iii-istart, jjj, kkk, nn,lxi,let)
                li(iii) = lll
                sa(iii) = rfield(lll,nz)
             end do
@@ -878,7 +879,7 @@ module mo_numerics
          do jjj = 0,ijks(2,nn)
             jkk = kpp + jjj
             do iii = istart,iend
-               lll     = indx3(iii-istart, jjj, kkk, nn)
+               lll     = indx3(iii-istart, jjj, kkk, nn,lxi,let)
                li(iii) = lll
                sa(iii) = rfield(lll)
             end do

@@ -6,10 +6,12 @@ MODULE mo_grid
    use mo_mpi,        ONLY : myid, p_barrier
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : n45go, n45no, nrone, one, three
-   use mo_vars,       ONLY : lio, lmx, xim, etm, zem, yaco,  &
-                           & cm1, cm2, cm3, lxi, let, lze, mcd, nbc, &
-                           & nbsize, cgrid, leto, lxio, mb, ijk,     &
-                           & nrecd, nnf, lpos, mo
+   use mo_vars,       ONLY : lio, yaco,  &
+                           & cm1, cm2, cm3, &
+                           & cgrid,     &
+                           & nrecd, nnf, lpos, xim, etm, zem
+   use mo_domdcomp,   ONLY : lmx, lxi, let, lze, mcd, &
+                           & nbc, nbsize, leto, lxio, mb, ijk, mo
    use mo_numerics,   ONLY : mpigo, deriv, filte
    use mo_utils,      ONLY : indx3
    use mo_gridgen,    ONLY : makegrid
@@ -39,7 +41,7 @@ MODULE mo_grid
          do j=0,let
             lq=lp+lio(j,k)
             do i=0,lxi
-               l=indx3(i,j,k,1)
+               l=indx3(i,j,k,1,lxi,let)
                read(9,rec=lq+i+1) ssk(l,:)
             end do
          end do
@@ -135,7 +137,7 @@ MODULE mo_grid
                kp=k*(ijk(2,nn)+1)
                do j=0,ijk(2,nn)
                   jk=kp+j
-                  l=indx3(i,j,k,nn)
+                  l=indx3(i,j,k,nn,lxi,let)
                   select case(nn)
                   case(1)
                      rv(:)=yaco(l)*xim(l,:)

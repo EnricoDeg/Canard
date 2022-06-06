@@ -1,8 +1,8 @@
 MODULE mo_diagnostics
    use mo_kind,       ONLY : ni
    use mo_parameters, ONLY : one, nrone, n45no
-   use mo_vars,       ONLY : rr, ss, xim, etm, zem, de, qa, ijk, nbsize, &
-                           & yaco, nbc, mcd
+   use mo_vars,       ONLY : rr, ss, de, qa, yaco, xim, etm, zem
+   use mo_domdcomp,   ONLY : ijk, nbsize, nbc, mcd
    use mo_numerics,   ONLY : mpigo, deriv
    public
 

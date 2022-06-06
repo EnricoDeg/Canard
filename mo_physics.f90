@@ -7,11 +7,13 @@ MODULE mo_physics
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
    use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
-                           & txy, tyy, hxx, hyy, tzz, xim, etm, zem, tyz,         &
-                           & yaco, p, ijk, lxi, let, lze, mcd, nbc, nbsize,       &
+                           & txy, tyy, hxx, hyy, tzz, tyz,         &
+                           & yaco, p,       &
                            & nsmf, timf, timo,                                    &
-                           & ao, bo, hv2, lmx, cinput, sqrtrema, sqrtremai,       &
-                           & srefoo, srefp1dre
+                           & ao, bo, hv2, cinput, sqrtrema, sqrtremai,       &
+                           & srefoo, srefp1dre, xim, etm, zem
+   use mo_domdcomp,   ONLY : ijk, lxi, let, lze, mcd, nbc, nbsize, &
+                           & lmx
    use mo_numerics,   ONLY : mpigo, deriv
    implicit none
 
