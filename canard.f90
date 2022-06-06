@@ -263,11 +263,11 @@ program canard
 
 !----- POINT JUNCTION AVERAGING
 
-         call average_point
+         call average_point(qa)
 
 !----- LINE JUNCTION AVERAGING
 
-         call average_line
+         call average_line(qa)
 
 !----- INTERFACE SURFACE AVERAGING
 

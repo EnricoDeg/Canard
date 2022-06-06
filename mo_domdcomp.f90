@@ -6,7 +6,7 @@ MODULE mo_domdcomp
    use mo_kind, ONLY : ni, nr
    use mo_parameters, ONLY : one
    use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
-                     & mo, nbsize, rr, qa, nbpc, mcd, nbc,   &
+                     & mo, nbsize, nbpc, mcd, nbc,   &
                      & lxio, leto, lzeo, lxi, let, lze, mb, ltomb, &
                      & lmx, lim, mbk
    use mo_mpi, ONLY : myid
@@ -397,10 +397,13 @@ MODULE mo_domdcomp
 
    END SUBROUTINE search_line
 
-   SUBROUTINE average_point
+   SUBROUTINE average_point(qak)
+      real(kind=nr),    intent(inout), dimension(0:lmx,5) :: qak
       integer(kind=ni) :: kp, l, jp, ip, ii, i, j, lp, lq, itag
       real(kind=nr)    :: fctr
+      real(kind=nr),dimension(:,:),allocatable :: rr
 
+      allocate(rr(0:lmx,3))
       call p_null_req
       lp=-5
       lq=-5
@@ -413,7 +416,7 @@ MODULE mo_domdcomp
             kp=i/4
             lp=lp+5
             l=indx3(ip*lxi,jp*let,kp*lze,1)
-            rr(lp:lp+4,1)=qa(l,:)
+            rr(lp:lp+4,1)=qak(l,:)
             do j=1,imjp(ii)
                lq=lq+5
                call p_isend(rr(lp:lp+4,1), jpcd(i,j), itag)
@@ -437,18 +440,22 @@ MODULE mo_domdcomp
             end do
             fctr=one/(imjp(ii)+1)
             l=indx3(ip*lxi,jp*let,kp*lze,1)
-            qa(l,:)=fctr*rr(lp:lp+4,1)
+            qak(l,:)=fctr*rr(lp:lp+4,1)
          end if
       end do
+      deallocate(rr)
 
    END SUBROUTINE average_point
 
 
-   SUBROUTINE average_line
+   SUBROUTINE average_line(qak)
+      real(kind=nr),    intent(inout), dimension(0:lmx,5) :: qak
       integer(kind=ni) :: nn, ll, l, jp, ip, ii, i, j, k
       integer(kind=ni) :: js, je, ks, ke, lp, lq, itag
       real(kind=nr)    :: fctr
+      real(kind=nr),dimension(:,:),allocatable :: rr
 
+      allocate(rr(0:lmx,3))
       call p_null_req
       lp=0
       lq=0
@@ -465,7 +472,7 @@ MODULE mo_domdcomp
             do k=0,ijk(3,nn)
                ll=ks+5*k
                l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn)
-               rr(ll:ll+4,1)=qa(l,:)
+               rr(ll:ll+4,1)=qak(l,:)
             end do
             do j=1,imjl(ii)
                js=lq
@@ -498,10 +505,11 @@ MODULE mo_domdcomp
             do k=0,ijk(3,nn)
                ll=ks+5*k
                l=indx3(ip*ijk(1,nn),jp*ijk(2,nn),k,nn)
-               qa(l,:)=fctr*rr(ll:ll+4,1)
+               qak(l,:)=fctr*rr(ll:ll+4,1)
             end do
          end if
       end do
+      deallocate(rr)
 
    END SUBROUTINE average_line
 
