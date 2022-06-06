@@ -8,7 +8,7 @@ MODULE mo_domdcomp
    use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
                      & mo, nbsize, nbpc, mcd, nbc,   &
                      & lxio, leto, lzeo, lxi, let, lze, mb, &
-                     & lmx, lim, mbk
+                     & lmx, lim
    use mo_mpi, ONLY : myid
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
                       p_recv, p_send, p_bcast, mpro
@@ -233,12 +233,13 @@ MODULE mo_domdcomp
 
    END SUBROUTINE domdcomp_init
 
-   SUBROUTINE search_point
+   SUBROUTINE search_point(mbki)
+      integer(kind=ni), intent(IN) :: mbki
       integer(kind=ni) :: is, ie, kk, jj, mm, mp, kp, nn
       integer(kind=ni) :: ll, l, jp, ip, ii, i, j, k
       integer(kind=ni) :: ks, ke, lp
 
-      lp=8*mbk+7
+      lp=8*mbki+7
       imjp(:)=0
       jjp(:,:)=-1
       do ip=0,1
@@ -249,7 +250,7 @@ MODULE mo_domdcomp
       do i=0,lp
          jjp(i,0)=i
       end do
-      do mm=0,mbk
+      do mm=0,mbki
          do nn=1,3
             do ip=0,1
                mp=mbcd(mm,nn,ip)
@@ -312,13 +313,14 @@ MODULE mo_domdcomp
 
    END SUBROUTINE search_point
 
-   SUBROUTINE search_line
+   SUBROUTINE search_line(mbki)
+      integer(kind=ni), intent(IN) :: mbki
       integer(kind=ni) :: ns, ne, is, ie, np, nq
       integer(kind=ni) :: kk, jj, mm, mp, nn, ll
       integer(kind=ni) :: l, jp, ip, ii, i, j, k
       integer(kind=ni) :: ks, ke, lp
 
-      lp=12*mbk+11
+      lp=12*mbki+11
       imjl(:)=0
       jjl(:,:)=-1
       njl(0:3)=(/2,2,1,1/)
@@ -330,7 +332,7 @@ MODULE mo_domdcomp
       do i=0,lp
          jjl(i,0)=i
       end do
-      do mm=0,mbk
+      do mm=0,mbki
          do nn=1,3
             do ip=0,1
                mp=mbcd(mm,nn,ip)

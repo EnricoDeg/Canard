@@ -94,11 +94,11 @@ program canard
 
 !===== POINT JUNCTION SEARCH
 
-   call search_point
+   call search_point(mbk)
 
 !===== LINE JUNCTION SEARCH
 
-   call search_line
+   call search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
 
