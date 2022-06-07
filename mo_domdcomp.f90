@@ -5,13 +5,8 @@
 MODULE mo_domdcomp
    use mo_kind, ONLY : ni, nr
    use mo_parameters, ONLY : one
-!   use mo_vars, ONLY : ijk, lxim, letm, lzem, lximb, letmb, lzemb, &
-!                     & mo, nbsize, nbpc, mcd, nbc,   &
-!                     & lxio, leto, lzeo, lxi, let, lze, mb, &
-!                     & lmx
-   use mo_mpi, ONLY : myid
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
-                      p_recv, p_send, p_bcast, mpro
+                      p_recv, p_send, p_bcast, mpro, myid
    use mo_utils, ONLY : indx3
    IMPLICIT NONE
    PRIVATE
@@ -44,7 +39,7 @@ MODULE mo_domdcomp
    integer(kind=ni), public                              :: lxi, let, lze
    integer(kind=ni), public, dimension(3)                :: nbsize
    integer(kind=ni), public, dimension(3,3)              :: ijk
-   integer(kind=ni), public, dimension(3,0:1)            :: nbc,mcd
+   integer(kind=ni), public, dimension(3,0:1)            :: nbc, mcd
    integer(kind=ni), public, dimension(:),   allocatable :: lxim, letm, lzem
    integer(kind=ni), public, dimension(:),   allocatable :: lximb, letmb, lzemb
    integer(kind=ni), public, dimension(:),   allocatable :: mo
@@ -59,8 +54,9 @@ MODULE mo_domdcomp
 
    CONTAINS
 
-   subroutine allocate_domdcomp(nblocks)
+   subroutine allocate_domdcomp(nblocks, mpro)
       integer(kind=ni), INTENT(IN) :: nblocks
+      integer(kind=ni), INTENT(IN) :: mpro
       integer(kind=ni)             :: lpp, lqq
 
       lpp=8*nblocks+7
@@ -71,6 +67,7 @@ MODULE mo_domdcomp
       allocate(jjl(0:lqq,0:ljpl))
       allocate(lximb(0:nblocks), letmb(0:nblocks), lzemb(0:nblocks))
       allocate(mo(0:nblocks), nbpc(0:nblocks,3))
+      allocate(lxim(0:mpro),letm(0:mpro),lzem(0:mpro))
 
    end subroutine allocate_domdcomp
 

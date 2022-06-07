@@ -16,7 +16,7 @@ program canard
                            & rr, umf, nnf, p, yaco, srefoo, srefp1dre,             &
                            & lpos, xim, etm, zem
    use mo_domdcomp,   ONLY : nbc, lxi, let, lze, lmx, mcd, ijk,    &
-                           & lxim, letm, lzem, nbsize
+                           & nbsize
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
@@ -44,7 +44,7 @@ program canard
 
    CALL p_start
 
-   allocate(lxim(0:mpro),letm(0:mpro),lzem(0:mpro),lpos(0:mpro))
+   allocate(lpos(0:mpro))
 
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
    inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
@@ -60,7 +60,7 @@ program canard
 
    call allocate_io_memory
 
-   call allocate_domdcomp(mbk)
+   call allocate_domdcomp(mbk,mpro)
 
    call read_inputp
 
