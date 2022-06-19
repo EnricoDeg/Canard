@@ -7,7 +7,6 @@ module mo_gridgen
    use mo_parameters, ONLY : zero, twopi, two, three, onethird, halfpi,     &
                            & free, half, one, four, five, sml, pi, hamhamm1
    use mo_vars,       ONLY : nrecd, cgrid
-   use mo_domdcomp,   ONLY : mb, lxio, leto, mo
    use mo_mpi,        ONLY : myid
    implicit none
    public
@@ -40,16 +39,19 @@ module mo_gridgen
 
 !===== GRID GENERATION
 
-   subroutine makegrid
-
-      call gridaerofoil(nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
-
+   subroutine makegrid(mb, lxio, leto, mo, nblocks)
+      integer(kind=ni), intent(in) :: mb, lxio, leto, nblocks
+      integer(kind=ni), intent(in), dimension(0:nblocks) :: mo
+      call gridaerofoil(mb, lxio, leto, mo, nblocks, &
+                        nthick, smg, smgvr, doml0, doml1, domh, span, wlew, wlea, szth0, szth1, skew, spx)
    end subroutine makegrid
 
 !===== GRID GENERATION
 
-   subroutine gridaerofoil(nthick,smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx)
-
+   subroutine gridaerofoil(mb, lxio, leto, mo, nblocks, &
+                           nthick, smg, smgvr, doml0, doml1, domh, span, wlew, wlea, szth0, szth1, skew, spx)
+      integer(kind=ni), intent(in) :: mb, lxio, leto, nblocks
+      integer(kind=ni), intent(in), dimension(0:nblocks) :: mo
       integer(kind=ni), intent(in) :: nthick
       real(kind=nr),    intent(in) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
       integer(kind=ni)             :: m, n, np, ll, lh, k, js, je, jp, jj

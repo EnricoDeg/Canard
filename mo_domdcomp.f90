@@ -5,6 +5,7 @@
 MODULE mo_domdcomp
    use mo_kind, ONLY : ni, nr
    use mo_parameters, ONLY : one
+   use mo_vars, ONLY : cinput
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
                       p_recv, p_send, p_bcast, mpro, myid
    use mo_utils, ONLY : indx3
@@ -52,8 +53,9 @@ MODULE mo_domdcomp
       procedure, private :: idsd3
 
       ! public subroutines / functions
-      procedure, public :: allocate_domdcomp
-      procedure, public :: domdcomp_init
+      procedure, public :: allocate => allocate_domdcomp
+      procedure, public :: init => domdcomp_init
+      procedure, public :: read => domdcomp_read_input
       procedure, public :: search_point
       procedure, public :: search_line
       procedure, public :: average_point
@@ -262,6 +264,20 @@ MODULE mo_domdcomp
       this%nbsize(:) = ( this%ijk(2,:) + 1 ) * ( this%ijk(3,:) + 1 )
 
    END SUBROUTINE domdcomp_init
+
+   SUBROUTINE domdcomp_read_input(this)
+      class(t_domdcomp), INTENT(INOUT) :: this
+
+      open(9,file='input.domdcomp',status='old')
+      read(9,*) cinput,this%nbpc(:,1)
+      read(9,*) cinput,this%nbpc(:,2)
+      read(9,*) cinput,this%nbpc(:,3)
+      read(9,*) cinput,this%lximb(:)
+      read(9,*) cinput,this%letmb(:)
+      read(9,*) cinput,this%lzemb(:)
+      close(9)
+
+   END SUBROUTINE
 
    SUBROUTINE search_point(this, mbki)
       class(t_domdcomp), INTENT(INOUT) :: this

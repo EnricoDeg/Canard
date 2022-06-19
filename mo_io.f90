@@ -15,8 +15,7 @@ MODULE mo_io
                            & nrestart, nsgnl, dts,           &
                            & dte, dt, nrecs,              &
                            & mq, varr, qa, nnf, vart
-   use mo_domdcomp,   ONLY : mb, nbpc, lzem, mo, letm, lxim, lximb, letmb,  &
-                           & lzemb, lze, lxi, let, lxio, leto, lzeo, lmx
+   use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
@@ -68,9 +67,6 @@ MODULE mo_io
       read(9,*) cinput,let0
       read(9,*) cinput,lze0
       read(9,*) cinput,nbody,nthick
-      read(9,*) cinput,nbpc(:,1)
-      read(9,*) cinput,nbpc(:,2)
-      read(9,*) cinput,nbpc(:,3)
       read(9,*) cinput,smg,smgvr
       read(9,*) cinput,doml0,doml1,domh
       read(9,*) cinput,span
@@ -78,10 +74,6 @@ MODULE mo_io
       read(9,*) cinput,szth0,szth1,szco
       read(9,*) cinput,skew,spx
       close(9)
-
-      lximb(:)=(/lxi0,lxi1,lxi2,lxi0,lxi1,lxi2/)
-      letmb(:)=(/let0,let0,let0,let0,let0,let0/)
-      lzemb(:)=(/lze0,lze0,lze0,lze0,lze0,lze0/)
 
       allocate(idsgnl(0:lze0),lsgnl(0:lze0))
 
@@ -97,59 +89,63 @@ MODULE mo_io
                czonet(0:mbk),lhmb(0:mbk))
    END SUBROUTINE allocate_io_memory
 
-   SUBROUTINE output_init
+   SUBROUTINE output_init(p_domdcomp)
+      type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni) :: mm, mp, kp, jp, i, j, k
 
-      cfilet(-1)='grid'
+      cfilet(-1) = 'grid'
       do n=0,ndata
-         no(2)=n/100
-         no(1)=mod(n,100)/10
-         no(0)=mod(n,10)
-         cno=achar(no+48)
-         cfilet(n)='n'//cno(2)//cno(1)//cno(0)
+         no(2) = n / 100
+         no(1) = mod(n,100) / 10
+         no(0) = mod(n,10)
+         cno   = achar(no+48)
+         cfilet(n)  = 'n'//cno(2)//cno(1)//cno(0)
       end do
       do n=-1,ndata
-         ctecplt(n)='data/'//cfilet(n)//'.plt'
+         ctecplt(n) = 'data/'//cfilet(n)//'.plt'
       end do
       do mm=0,mbk
-         no(2)=mm/100
-         no(1)=mod(mm,100)/10
-         no(0)=mod(mm,10)
-         cno=achar(no+48)
-         czonet(mm)='z'//cno(2)//cno(1)//cno(0)
-         cthead(mm)='data/'//czonet(mm)//'.plt'
+         no(2) = mm / 100
+         no(1) = mod(mm,100) / 10
+         no(0) = mod(mm,10)
+         cno   = achar(no+48)
+         czonet(mm) = 'z'//cno(2)//cno(1)//cno(0)
+         cthead(mm) = 'data/'//czonet(mm)//'.plt'
       end do
-      cgrid='misc/grid'//czonet(mb)//'.dat'
-      crestart='misc/restart'//czonet(mb)//'.dat'
+      cgrid    = 'misc/grid'//czonet(p_domdcomp%mb)//'.dat'
+      crestart = 'misc/restart'//czonet(p_domdcomp%mb)//'.dat'
 
-      no(4)=myid/10000
-      no(3)=mod(myid,10000)/1000
-      no(2)=mod(myid,1000)/100
-      no(1)=mod(myid,100)/10
-      no(0)=mod(myid,10)
-      cno=achar(no+48)
-      cnnode=cno(4)//cno(3)//cno(2)//cno(1)//cno(0)
-      cdata='misc/data'//cnnode//'.dat'
+      no(4) = myid / 10000
+      no(3) = mod(myid,10000) / 1000
+      no(2) = mod(myid,1000) / 100
+      no(1) = mod(myid,100) / 10
+      no(0) = mod(myid,10)
+      cno   = achar(no+48)
+      cnnode = cno(4)//cno(3)//cno(2)//cno(1)//cno(0)
+      cdata  = 'misc/data'//cnnode//'.dat'
 
       do mm=0,mbk
-         lpos(mo(mm))=0
-         do i=1,nbpc(mm,1)-1
-            mp=mo(mm)+i
-            lpos(mp)=lpos(mp-1)+lxim(mp-1)+1
+         lpos(p_domdcomp%mo(mm)) = 0
+         do i=1,p_domdcomp%nbpc(mm,1)-1
+            mp       = p_domdcomp%mo(mm) + i
+            lpos(mp) = lpos(mp-1) + p_domdcomp%lxim(mp-1) + 1
          end do
-         jp=nbpc(mm,1)
-         do j=1,nbpc(mm,2)-1
-            do i=0,nbpc(mm,1)-1
-               mp=mo(mm)+j*jp+i
-               lpos(mp)=lpos(mp-jp)+(lximb(mm)+1)*(letm(mp-jp)+1)
+         jp = p_domdcomp%nbpc(mm,1)
+         do j=1,p_domdcomp%nbpc(mm,2)-1
+            do i=0,p_domdcomp%nbpc(mm,1)-1
+               mp       = p_domdcomp%mo(mm) + j * jp + i
+               lpos(mp) = lpos(mp-jp) + ( p_domdcomp%lximb(mm) + 1 ) * &
+                                        ( p_domdcomp%letm(mp-jp) + 1 )
             end do
          end do
-         kp=nbpc(mm,1)*nbpc(mm,2)
-         do k=1,nbpc(mm,3)-1
-            do j=0,nbpc(mm,2)-1
-               do i=0,nbpc(mm,1)-1
-                  mp=mo(mm)+k*kp+j*jp+i
-                  lpos(mp)=lpos(mp-kp)+(lximb(mm)+1)*(letmb(mm)+1)*(lzem(mp-kp)+1)
+         kp = p_domdcomp%nbpc(mm,1) * p_domdcomp%nbpc(mm,2)
+         do k=1,p_domdcomp%nbpc(mm,3)-1
+            do j=0,p_domdcomp%nbpc(mm,2)-1
+               do i=0,p_domdcomp%nbpc(mm,1)-1
+                  mp       = p_domdcomp%mo(mm) + k * kp + j * jp + i
+                  lpos(mp) = lpos(mp-kp) + ( p_domdcomp%lximb(mm) + 1 ) * &
+                                           ( p_domdcomp%letmb(mm) + 1 ) * &
+                                           ( p_domdcomp%lzem(mp-kp) + 1 )
                end do
             end do
          end do
@@ -157,24 +153,25 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
-   SUBROUTINE read_restart_file
+   SUBROUTINE read_restart_file(p_domdcomp)
+      type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
       read(9,rec=1) cha(:)
       read(9,rec=2) dha(:)
-      n=cha(1)
-      ndt=cha(2)
-      dt=cha(3)
-      dts=cha(4)
-      dte=cha(5)
-      timo=dha(1)
-      lp=lpos(myid)+2
-      do k=0,lze
-         do j=0,let
-            lq=lp+lio(j,k)
-            do i=0,lxi
-               l=indx3(i,j,k,1,lxi,let)
+      n    = cha(1)
+      ndt  = cha(2)
+      dt   = cha(3)
+      dts  = cha(4)
+      dte  = cha(5)
+      timo = dha(1)
+      lp   = lpos(myid)+2
+      do k=0,p_domdcomp%lze
+         do j=0,p_domdcomp%let
+            lq = lp + lio(j,k)
+            do i=0,p_domdcomp%lxi
+               l = indx3(i, j, k, 1, p_domdcomp%lxi, p_domdcomp%let)
                read(9,rec=lq+i+1) qa(l,:)
             end do
          end do
@@ -183,25 +180,26 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file
+   SUBROUTINE write_restart_file(p_domdcomp)
+      type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni) :: lp, i, j, k, lq, l
 
-      if(myid==mo(mb)) then
+      if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
          open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='replace')
-         cha(:)=(/real(n,kind=nr),real(ndt,kind=nr),dt,dts,dte/)
-         dha(:)=(/timo,zero,zero,zero,zero/)
+         cha(:) = (/ real(n,kind=nr), real(ndt,kind=nr), dt, dts, dte /)
+         dha(:) = (/ timo, zero, zero, zero, zero /)
          write(9,rec=1) cha(:)
          write(9,rec=2) dha(:)
          close(9)
       end if
       call p_barrier
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
-      lp=lpos(myid)+2
-      do k=0,lze
-         do j=0,let
-            lq=lp+lio(j,k)
-            do i=0,lxi
-               l=indx3(i,j,k,1,lxi,let)
+      lp = lpos(myid) + 2
+      do k=0,p_domdcomp%lze
+         do j=0,p_domdcomp%let
+            lq = lp + lio(j,k)
+            do i=0,p_domdcomp%lxi
+               l = indx3(i, j, k, 1, p_domdcomp%lxi, p_domdcomp%let)
                write(9,rec=lq+i+1) qa(l,:)
             end do
          end do
@@ -210,69 +208,78 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file
+   SUBROUTINE write_output_file(p_domdcomp)
+      type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb
 
-      ltomb=(lxio+1)*(leto+1)*(lzeo+1)
-      lje=-1
+      ltomb = ( p_domdcomp%lxio + 1 ) * &
+              ( p_domdcomp%leto + 1 ) * &
+              ( p_domdcomp%lzeo + 1 )
+      lje   = -1
       do n=-1,ndata
-         mq=3+2*min(n+1,1)
-         llmb=mq*ltomb-1
+         mq   = 3 + 2 * min(n+1,1)
+         llmb = mq * ltomb - 1
          allocate(vara(0:llmb),varb(0:llmb))
-         ljs=lje+1
-         lje=ljs+mq*(lmx+1)-1
-         if(myid==mo(mb)) then !===========================
-            mps=mo(mb)
-            mpe=mps+nbpc(mb,1)*nbpc(mb,2)*nbpc(mb,3)-1
-            lis=0
-            lie=mq*(lmx+1)-1
-            vara(lis:lie)=vart(ljs:lje)
+         ljs = lje + 1
+         lje = ljs + mq * ( p_domdcomp%lmx + 1 ) - 1
+         if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then !===========================
+            mps = p_domdcomp%mo(p_domdcomp%mb)
+            mpe = mps + p_domdcomp%nbpc(p_domdcomp%mb,1) * &
+                        p_domdcomp%nbpc(p_domdcomp%mb,2) * &
+                        p_domdcomp%nbpc(p_domdcomp%mb,3)-1
+            lis = 0
+            lie = mq * ( p_domdcomp%lmx + 1 ) - 1
+            vara(lis:lie) = vart(ljs:lje)
             do mp=mps+1,mpe
-               lis=lie+1
-               lie=lis+mq*(lxim(mp)+1)*(letm(mp)+1)*(lzem(mp)+1)-1
-               lmpi = lie-lis+1
-               itag=1
+               lis = lie + 1
+               lie = lis + mq * ( p_domdcomp%lxim(mp) + 1 ) * &
+                                ( p_domdcomp%letm(mp) + 1 ) * &
+                                ( p_domdcomp%lzem(mp) + 1 ) - 1
+               lmpi = lie - lis + 1
+               itag = 1
                call p_recv(vara(lis:lie), mp, itag, lmpi)
             end do
             lis=0
             do mp=mps,mpe
                do m=1,mq
-                  do k=0,lzem(mp)
-                     do j=0,letm(mp)
-                        ljs=lpos(mp)+(m-1)*ltomb+k*(leto+1)*(lxio+1)+j*(lxio+1)
-                        varb(ljs:ljs+lxim(mp))=vara(lis:lis+lxim(mp))
-                        lis=lis+lxim(mp)+1
+                  do k=0,p_domdcomp%lzem(mp)
+                     do j=0,p_domdcomp%letm(mp)
+                        ljs = lpos(mp) + ( m - 1 ) * ltomb + k * ( p_domdcomp%leto + 1 ) *     &
+                                                                 ( p_domdcomp%lxio + 1 ) + j * &
+                                                                 ( p_domdcomp%lxio + 1 )
+                        varb(ljs:ljs+p_domdcomp%lxim(mp)) = vara(lis:lis+p_domdcomp%lxim(mp))
+                        lis = lis + p_domdcomp%lxim(mp) + 1
                      end do
                   end do
                end do
             end do
-            open(9,file=cthead(mb),access='stream',form='unformatted',status='replace')
-            call techead(9,n,mb,lh)
+            open(9,file=cthead(p_domdcomp%mb),access='stream',form='unformatted',status='replace')
+            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh)
             deallocate(vara)
             allocate(vara(0:lh+llmb))
             read(9,pos=1) vara(0:lh-1)
             close(9,status='delete')
-            lhmb(mb)=lh+llmb+1
-            vara(lh:lh+llmb)=varb(:)
-            if(mb==0) then !---------------------
+            lhmb(p_domdcomp%mb) = lh + llmb + 1
+            vara(lh:lh+llmb)    = varb(:)
+            if(p_domdcomp%mb==0) then !---------------------
                do mm=1,mbk
                   itag=2
-                  call p_recv(lhmb(mm), mo(mm), itag)
+                  call p_recv(lhmb(mm), p_domdcomp%mo(mm), itag)
                end do
-               llmo=sum(lhmb(:))-1
+               llmo = sum(lhmb(:)) - 1
                deallocate(varb)
                allocate(varb(0:llmo))
-               lis=0
-               lie=lhmb(mb)-1
-               varb(lis:lie)=vara(:)
+               lis = 0
+               lie = lhmb(p_domdcomp%mb)-1
+               varb(lis:lie) = vara(:)
                do mm=1,mbk
-                  lis=lie+1
-                  lie=lis+lhmb(mm)-1
-                  lmpi = lie-lis+1
-                  itag=3
-                  call p_recv(varb(lis:lie), mo(mm), itag, lmpi)
+                  lis  = lie + 1
+                  lie  = lis + lhmb(mm) - 1
+                  lmpi = lie - lis + 1
+                  itag = 3
+                  call p_recv(varb(lis:lie), p_domdcomp%mo(mm), itag, lmpi)
                end do
                open(0,file=ctecplt(n),status='unknown')
                close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
@@ -280,16 +287,16 @@ MODULE mo_io
                write(0,rec=1) varb(:)
                close(0)
             else !-------------------
-               itag=2
-               call p_send(lhmb(mb), mo(0), itag)
-               lmpi = lhmb(mb)
-               itag=3
-               call p_send(vara(:), mo(0), itag, lmpi)
+               itag = 2
+               call p_send(lhmb(p_domdcomp%mb), p_domdcomp%mo(0), itag)
+               lmpi = lhmb(p_domdcomp%mb)
+               itag = 3
+               call p_send(vara(:), p_domdcomp%mo(0), itag, lmpi)
             end if !-----------
          else !===========================
-            lmpi = lje-ljs+1
-            itag=1
-            call p_send(vart(ljs:lje), mo(mb), itag, lmpi)
+            lmpi = lje - ljs + 1
+            itag = 1
+            call p_send(vart(ljs:lje), p_domdcomp%mo(p_domdcomp%mb), itag, lmpi)
          end if !=========================
          deallocate(vara,varb)
       end do
@@ -298,11 +305,11 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR GENERATING TECPLOT DATA FILE
 
-   subroutine techead(nf,n,mb,lh)
-
-      integer(kind=ni),intent(in) :: nf,n,mb
-      integer(kind=ni),intent(inout) :: lh
-      integer(kind=ni) :: mm, m, nn
+   subroutine techead(p_domdcomp, nf, n, mb, lh)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
+      integer(kind=ni), intent(in)    :: nf,n,mb
+      integer(kind=ni), intent(inout) :: lh
+      integer(kind=ni)                :: mm, m, nn
 
       lh=0
       if(mb==0) then
@@ -356,11 +363,11 @@ MODULE mo_io
             lh=lh+1 ! Raw Local 1-to-1 Face Neighbours Suppliled
             write(nf,pos=4*lh+1) 0
             lh=lh+1 ! Number of Miscellaneous Face Neighbour Connections
-            write(nf,pos=4*lh+1) int(lximb(mm)+1,kind=int32)
+            write(nf,pos=4*lh+1) int(p_domdcomp%lximb(mm)+1,kind=int32)
             lh=lh+1 ! IMax
-            write(nf,pos=4*lh+1) int(letmb(mm)+1,kind=int32)
+            write(nf,pos=4*lh+1) int(p_domdcomp%letmb(mm)+1,kind=int32)
             lh=lh+1 ! JMax
-            write(nf,pos=4*lh+1) int(lzemb(mm)+1,kind=int32)
+            write(nf,pos=4*lh+1) int(p_domdcomp%lzemb(mm)+1,kind=int32)
             lh=lh+1 ! KMax
             write(nf,pos=4*lh+1) 0
             lh=lh+1 ! No Auxillary Data Pairs
@@ -410,28 +417,30 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR FINDING VARIABLE MIN/MAX VALUES FOR TECPLOT DATA FILE
 
-   subroutine vminmax(nn)
-
+   subroutine vminmax(p_domdcomp, nn)
+      type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni),intent(in) :: nn
       integer(kind=ni) :: mp, mps, mpe, itag
 
-      varmin(nn)=minval(varr)
-      varmax(nn)=maxval(varr)
-      varm(:,myid)=(/varmin(nn),varmax(nn)/)
+      varmin(nn)   = minval(varr)
+      varmax(nn)   = maxval(varr)
+      varm(:,myid) = (/varmin(nn),varmax(nn)/)
 
       call p_null_req
-      itag=nn
-      if(myid==mo(mb)) then
-         mps=mo(mb)
-         mpe=mps+nbpc(mb,1)*nbpc(mb,2)*nbpc(mb,3)-1
+      itag = nn
+      if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
+         mps = p_domdcomp%mo(p_domdcomp%mb)
+         mpe = mps + p_domdcomp%nbpc(p_domdcomp%mb,1) * &
+                     p_domdcomp%nbpc(p_domdcomp%mb,2) * &
+                     p_domdcomp%nbpc(p_domdcomp%mb,3) - 1
          do mp=mps+1,mpe
             call p_irecv(varm(:,mp), mp, itag, 2)
          end do
          call p_waitall
-         varmin(nn)=minval(varm(0,mps:mpe))
-         varmax(nn)=maxval(varm(1,mps:mpe))
+         varmin(nn) = minval(varm(0,mps:mpe))
+         varmax(nn) = maxval(varm(1,mps:mpe))
       else
-         call p_send(varm(:,myid), mo(mb), itag, 2)
+         call p_send(varm(:,myid), p_domdcomp%mo(p_domdcomp%mb), itag, 2)
       end if
 
    end subroutine vminmax

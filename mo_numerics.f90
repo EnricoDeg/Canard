@@ -11,7 +11,6 @@ module mo_numerics
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
    use mo_vars,       ONLY : drva1, drva2, drva3, drva, lim
-   use mo_domdcomp,   ONLY : lmx, lxi, let
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private
@@ -395,13 +394,15 @@ module mo_numerics
 
 !===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo_1d(rfield, ijks, nbck, mcdk, nbsizek, nt, n45, itag)
+   subroutine mpigo_1d(rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, itag, lxi, let)
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
+      integer(kind=ni), intent(in)                   :: lmx
       integer(kind=ni), intent(in), dimension(3,3)   :: ijks
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,n45,itag
+      integer(kind=ni), intent(in)                   :: lxi, let
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
@@ -530,13 +531,15 @@ module mo_numerics
 
    end subroutine mpigo_1d
 
-   subroutine mpigo_2d(rfield, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag)
+   subroutine mpigo_2d(rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag, lxi, let)
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
+      integer(kind=ni), intent(in)                   :: lmx
       integer(kind=ni), intent(in), dimension(3,3)   :: ijks
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
+      integer(kind=ni), intent(in)                   :: lxi, let
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
@@ -669,9 +672,10 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FINITE DIFFERENTIATING
 
-   subroutine deriv_nooverwrite(rfieldin, rfieldout, lxik, letk, lzek, ijks, nn, m)
+   subroutine deriv_nooverwrite(rfieldin, rfieldout, lmx, lxik, letk, lzek, ijks, nn, m)
       real(kind=nr),    intent(in),  dimension(0:lmx) :: rfieldin
       real(kind=nr),    intent(out), dimension(0:lmx) :: rfieldout
+      integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, m
@@ -705,7 +709,7 @@ module mo_numerics
          do jjj=  0,ijks(2,nn)
             jkk = kpp + jjj
             do iii = istart,iend
-               lll = indx3(iii-istart, jjj, kkk, nn,lxi,let)
+               lll = indx3(iii-istart, jjj, kkk, nn, lxik, letk)
                li(iii) = lll
                sa(iii) = rfieldin(lll)
             end do
@@ -757,8 +761,9 @@ module mo_numerics
 
    end subroutine deriv_nooverwrite
 
-   subroutine deriv_overwrite(rfield, lxik, letk, lzek, ijks, nn, nz, m)
+   subroutine deriv_overwrite(rfield, lmx, lxik, letk, lzek, ijks, nn, nz, m)
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
+      integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz, m
@@ -792,7 +797,7 @@ module mo_numerics
          do jjj=  0,ijks(2,nn)
             jkk = kpp + jjj
             do iii = istart,iend
-               lll = indx3(iii-istart, jjj, kkk, nn,lxi,let)
+               lll = indx3(iii-istart, jjj, kkk, nn, lxik, letk)
                li(iii) = lll
                sa(iii) = rfield(lll,nz)
             end do
@@ -846,8 +851,9 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(rfield, lxik, letk, lzek, ijks, nn)
+   subroutine filte(rfield, lmx, lxik, letk, lzek, ijks, nn)
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
+      integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn
@@ -879,7 +885,7 @@ module mo_numerics
          do jjj = 0,ijks(2,nn)
             jkk = kpp + jjj
             do iii = istart,iend
-               lll     = indx3(iii-istart, jjj, kkk, nn,lxi,let)
+               lll     = indx3(iii-istart, jjj, kkk, nn, lxik, letk)
                li(iii) = lll
                sa(iii) = rfield(lll)
             end do

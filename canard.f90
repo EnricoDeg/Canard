@@ -15,16 +15,13 @@ program canard
                            & hyy, hzz, qo, qa, qb, de,    &
                            & rr, umf, nnf, p, yaco, srefoo, srefp1dre,             &
                            & lpos, xim, etm, zem
-   use mo_domdcomp,   ONLY : nbc, lxi, let, lze, lmx, mcd, ijk,    &
-                           & nbsize
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
    use mo_io,         ONLY : read_inputo, allocate_io_memory, read_inputp,         &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_file
-   use mo_domdcomp,   ONLY : allocate_domdcomp, domdcomp_init, search_point,       &
-                           & search_line, average_line, average_point
+   use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : calc_grid, calc_grid_metrics
    use mo_gridgen,    ONLY : nthick
    use mo_sponge,     ONLY : spongeup, spongego
@@ -36,9 +33,10 @@ program canard
                            & calc_viscous_shear_stress, calc_fluxes
    implicit none
 
-   integer(kind=ni) :: m, nn, ll, nsigi, nout, lis, lie, l, ndati
-   real(kind=nr)    :: res, ra0, ra1, fctr, dtko, dtk, dtsum
+   integer(kind=ni)    :: m, nn, ll, nsigi, nout, lis, lie, l, ndati
+   real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
    integer(kind=int64) :: nlmx
+   type(t_domdcomp)    :: p_domdcomp
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -60,24 +58,26 @@ program canard
 
    call allocate_io_memory
 
-   call allocate_domdcomp(mbk,mpro)
+   call p_domdcomp%allocate(mbk,mpro)
 
    call read_inputp
 
+   call p_domdcomp%read()
+
 !===== DOMAIN DECOMPOSITION / BOUNDARY INFORMATION / SUBDOMAIN SIZES
 
-   call domdcomp_init(mbk, nthick, nbody)
+   call p_domdcomp%init(mbk, nthick, nbody)
 
-   lim=(lxi+1)+(let+1)+(lze+1)-1
+   lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
-   call output_init
+   call output_init(p_domdcomp)
 
 !===== ALLOCATION OF MAIN ARRAYS
 
-   call allocate_memory(lmx, nbsize)
-   call allocate_numerics(lim, nbsize)
+   call allocate_memory(p_domdcomp%lmx, p_domdcomp%nbsize)
+   call allocate_numerics(lim, p_domdcomp%nbsize)
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
@@ -85,40 +85,40 @@ program canard
 
 !===== PENTADIAGONAL MATRICES FOR DIFFERENCING & FILETERING
 
-   call init_penta(lxi, let, lze, nbc)
+   call init_penta(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc)
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 
-   call calc_grid(ss)
-   call calc_grid_metrics(ss)
+   call calc_grid(p_domdcomp, ss)
+   call calc_grid_metrics(p_domdcomp, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC
 
-   call gcbc_init
+   call gcbc_init(p_domdcomp)
 
 !===== POINT JUNCTION SEARCH
 
-   call search_point(mbk)
+   call p_domdcomp%search_point(mbk)
 
 !===== LINE JUNCTION SEARCH
 
-   call search_line(mbk)
+   call p_domdcomp%search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
 
    open(0,file=cdata,status='unknown')
    close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
-   open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(lmx+1),status='new')
+   open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
    do nn=1,3
       varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
       write(0,rec=nn) varr(:)
-      call vminmax(nn)
+      call vminmax(p_domdcomp, nn)
    end do
    close(0)
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   call spongeup ! use ss which contains grid data
+   call spongeup(p_domdcomp%lmx) ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
 
@@ -129,9 +129,9 @@ program canard
       dts=zero
       dte=zero
       timo=zero
-      call initialo ! use ss which contains grid data
+      call initialo(p_domdcomp%lmx) ! use ss which contains grid data
    else
-      call read_restart_file ! ss is not used
+      call read_restart_file(p_domdcomp) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -158,12 +158,21 @@ program canard
 !----- FILTERING & RE-INITIALISING
 
       do m=1,5
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,n45no,3*(m-1)+1)
-         call filte(qa(:,m), lxi, let, lze, ijk, nnf(1))
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,n45no,3*(m-1)+2)
-         call filte(qa(:,m), lxi, let, lze, ijk, nnf(2))
-         call mpigo(qa(:,m), ijk, nbc, mcd, nbsize,1,n45no,3*(m-1)+3)
-         call filte(qa(:,m), lxi, let, lze, ijk, nnf(3))
+         call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+                             p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+1, &
+                             p_domdcomp%lxi, p_domdcomp%let)
+         call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+                             p_domdcomp%lze, p_domdcomp%ijk, nnf(1))
+         call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+                             p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+2, &
+                             p_domdcomp%lxi, p_domdcomp%let)
+         call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+                             p_domdcomp%lze, p_domdcomp%ijk, nnf(2))
+         call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+                             p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+3, &
+                             p_domdcomp%lxi, p_domdcomp%let)
+         call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+                             p_domdcomp%lze, p_domdcomp%ijk, nnf(3))
       end do
       qo(:,:)=qa(:,:)
 
@@ -227,20 +236,21 @@ program canard
             end if
          end if
 
-         call calc_viscous_shear_stress
+         call calc_viscous_shear_stress(p_domdcomp)
 
-         call calc_fluxes
+         call calc_fluxes(p_domdcomp)
+
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup
+         call gcbc_setup(p_domdcomp)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
-         call gcbc_comm
+         call gcbc_comm(p_domdcomp)
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update
+         call gcbc_update(p_domdcomp)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -259,23 +269,23 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon
+         call extracon(p_domdcomp)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
-         call wall_condition_update
+         call wall_condition_update(p_domdcomp)
 
 !----- POINT JUNCTION AVERAGING
 
-         call average_point(qa)
+         call p_domdcomp%average_point(qa)
 
 !----- LINE JUNCTION AVERAGING
 
-         call average_line(qa)
+         call p_domdcomp%average_line(qa)
 
 !----- INTERFACE SURFACE AVERAGING
 
-         call average_surface
+         call average_surface(p_domdcomp)
 
 !-------------------------------
 !----- END OF RUNGE-KUTTA STAGES
@@ -298,7 +308,7 @@ program canard
          qb(:,:)=qb(:,:)+fctr*(qo(:,:)+qa(:,:))
          if(nout==1) then
             times(ndati)=timo-half*dtsum
-            open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(lmx+1),status='old')
+            open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='old')
             if(n==1) then
                qb(:,:)=qo(:,:)
             else
@@ -318,7 +328,7 @@ program canard
                end select
                nn=3+5*ndati+m
                write(0,rec=nn) varr(:)
-               call vminmax(nn)
+               call vminmax(p_domdcomp, nn)
             end do
             close(0)
             dtsum=zero
@@ -341,7 +351,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file
+      call write_restart_file(p_domdcomp)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE
@@ -356,8 +366,8 @@ program canard
          deallocate(txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz)
 #endif
       if(tmax>=tsam) then
-         nlmx=(3+5*(ndata+1))*(lmx+1)-1
-         ll=5*(lmx+1)-1
+         nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
+         ll=5*(p_domdcomp%lmx+1)-1
          allocate(vart(0:nlmx),vmean(0:ll))
          open(9,file=cdata,access='direct',form='unformatted',recl=nrecs*(nlmx+1),status='old')
          read(9,rec=1) vart(:)
@@ -369,7 +379,7 @@ program canard
             fctr=half/(times(ndata)-times(0))
             vmean(:)=zero
             do n=0,ndata
-               lis=(3+5*n)*(lmx+1)
+               lis=(3+5*n)*(p_domdcomp%lmx+1)
                lie=lis+ll
                nn=n/ndata
                if(n*(n-ndata)==0) then
@@ -380,21 +390,21 @@ program canard
                vmean(:)=vmean(:)+ra0*vart(lis:lie)
             end do
             do n=0,ndata
-               lis=(3+5*n)*(lmx+1)
+               lis=(3+5*n)*(p_domdcomp%lmx+1)
                lie=lis+ll
                vart(lis:lie)=vart(lis:lie)-vmean(:)
                do m=1,5
                   nn=3+5*n+m
-                  l=lis+(m-1)*(lmx+1)
-                  varr(:)=vart(l:l+lmx)
-                  call vminmax(nn)
+                  l=lis+(m-1)*(p_domdcomp%lmx+1)
+                  varr(:)=vart(l:l+p_domdcomp%lmx)
+                  call vminmax(p_domdcomp, nn)
                end do
             end do
          end if
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
 
-         call write_output_file
+         call write_output_file(p_domdcomp)
 
 !-----
       end if
