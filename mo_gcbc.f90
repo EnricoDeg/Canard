@@ -17,7 +17,7 @@ MODULE mo_gcbc
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
                            & de, dudtmf, varr
-   use mo_grid,       ONLY : yaco, cm1, cm2, cm3, cm, xim, etm, zem
+   use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
    use mo_utils,      ONLY : indx3, mtrxi
@@ -128,6 +128,7 @@ MODULE mo_gcbc
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni) :: nn, np, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: ra0, ra1
+      real(kind=nr), dimension(:,:,:), pointer :: cm
 
       do nn=1,3
          select case(nn)
@@ -202,6 +203,7 @@ MODULE mo_gcbc
       integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k
       integer(kind=ni) :: jk, kp
       real(kind=nr)    :: ra0, dtwi
+      real(kind=nr), dimension(:,:,:), pointer :: cm
 
       ll = -1
       do nn=1,3
