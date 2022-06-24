@@ -7,16 +7,13 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : dha, cha, xt,    &
-                           & umf, p, qa,     &
-                           & rr,   &
-                           & ss, drva1,  &
-                           & drva2, drva3, drva, &
+   use mo_vars,       ONLY : dha, cha, xt, umf, p, qa, rr, ss,  &
                            & txy, nextgcic, nkrk, dt, ao,     &
                            & wtemp, txx, tmax, timo,       &
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
                            & de, dudtmf, varr
+   use mo_numerics,   ONLY : drva1, drva2, drva3, drva
    use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall

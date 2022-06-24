@@ -19,10 +19,6 @@ module mo_vars
 
    real(kind=nr),dimension(:),allocatable :: times
 
-   real(kind=nr),dimension(:,:,:),pointer :: drva
-
-   real(kind=nr),dimension(:,:,:),allocatable,target :: drva1,drva2,drva3
-
    real(kind=ieee32),dimension(:),allocatable :: varr,vart,vmean
 
 !===== CONSTANT-SIZED MAIN VARIABLES
@@ -52,7 +48,6 @@ module mo_vars
    SUBROUTINE allocate_memory(lmx, nbsize)
       integer(kind=ni), intent(IN)               :: lmx
       integer(kind=ni), dimension(3), intent(IN) :: nbsize
-      integer(kind=ni) :: ii, jj, kk
 
       allocate(qo(0:lmx,5),qa(0:lmx,5),qb(0:lmx,5),de(0:lmx,5))
       allocate(rr(0:lmx,3),ss(0:lmx,3))
@@ -63,11 +58,6 @@ module mo_vars
          allocate(txy(0:lmx), tyz(0:lmx), tzx(0:lmx))
          allocate(hxx(0:lmx), hyy(0:lmx), hzz(0:lmx))
 #endif
-
-      ii=nbsize(1)-1
-      jj=nbsize(2)-1
-      kk=nbsize(3)-1
-      allocate(drva1(0:ii,5,0:1), drva2(0:jj,5,0:1), drva3(0:kk,5,0:1))
 
    END SUBROUTINE allocate_memory
 

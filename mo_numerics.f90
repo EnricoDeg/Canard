@@ -10,7 +10,7 @@ module mo_numerics
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
-   use mo_vars,       ONLY : drva1, drva2, drva3, drva, lim
+   use mo_vars,       ONLY : lim
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private
@@ -35,8 +35,11 @@ module mo_numerics
    real(kind=nr), dimension(:,:,:), allocatable, target :: recv01,recv02,recv03
    real(kind=nr), dimension(:,:,:), allocatable, target :: recv11,recv12,recv13
    real(kind=nr), dimension(:,:,:), pointer :: send,recv
-   integer(kind=ni), dimension(:),     allocatable :: li
+   integer(kind=ni), dimension(:),  allocatable :: li
    real(kind=nr), dimension(:),     allocatable :: sa,sb
+
+   real(kind=nr), public, dimension(:,:,:), allocatable, target :: drva1,drva2,drva3
+   real(kind=nr), public, dimension(:,:,:), pointer :: drva
 
    public :: allocate_numerics, read_input_numerics, init_extracoeff_bounds
    public :: init_penta, mpigo, deriv, filte
@@ -68,6 +71,7 @@ module mo_numerics
       allocate(recv01(0:iik,0:1,0:1),recv02(0:jjk,0:1,0:1),recv03(0:kkk,0:1,0:1))
       allocate(send11(0:iik,0:2,0:1),send12(0:jjk,0:2,0:1),send13(0:kkk,0:2,0:1))
       allocate(recv11(0:iik,0:2,0:1),recv12(0:jjk,0:2,0:1),recv13(0:kkk,0:2,0:1))
+      allocate(drva1(0:iik,5,0:1), drva2(0:jjk,5,0:1), drva3(0:kkk,5,0:1))
 
    END SUBROUTINE allocate_numerics
 
