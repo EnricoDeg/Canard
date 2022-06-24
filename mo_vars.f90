@@ -8,23 +8,20 @@ module mo_vars
    PUBLIC
 
 !===== ALLOCATABLE MAIN ARRAYS
-   integer(kind=ni),dimension(:,:),allocatable :: lio
    integer(kind=ni),dimension(:),allocatable :: lpos
 
    real(kind=nr),dimension(:,:),allocatable :: qo,qa,qb,de
    real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz
 
-   real(kind=nr),dimension(:,:),allocatable :: xim,etm,zem
-   real(kind=nr),dimension(:),allocatable :: p,yaco
+   real(kind=nr),dimension(:),allocatable :: p
 
    real(kind=nr),dimension(:,:),allocatable :: rr,ss
 
    real(kind=nr),dimension(:),allocatable :: times
 
-   real(kind=nr),dimension(:,:,:),pointer :: drva,cm
+   real(kind=nr),dimension(:,:,:),pointer :: drva
 
    real(kind=nr),dimension(:,:,:),allocatable,target :: drva1,drva2,drva3
-   real(kind=nr),dimension(:,:,:),allocatable,target :: cm1,cm2,cm3
 
    real(kind=ieee32),dimension(:),allocatable :: varr,vart,vmean
 
@@ -58,8 +55,8 @@ module mo_vars
       integer(kind=ni) :: ii, jj, kk
 
       allocate(qo(0:lmx,5),qa(0:lmx,5),qb(0:lmx,5),de(0:lmx,5))
-      allocate(xim(0:lmx,3),etm(0:lmx,3),zem(0:lmx,3),rr(0:lmx,3),ss(0:lmx,3))
-      allocate(p(0:lmx),yaco(0:lmx),varr(0:lmx))
+      allocate(rr(0:lmx,3),ss(0:lmx,3))
+      allocate(p(0:lmx),varr(0:lmx))
 
 #ifdef VISCOUS
          allocate(txx(0:lmx), tyy(0:lmx), tzz(0:lmx))
@@ -71,7 +68,6 @@ module mo_vars
       jj=nbsize(2)-1
       kk=nbsize(3)-1
       allocate(drva1(0:ii,5,0:1), drva2(0:jj,5,0:1), drva3(0:kk,5,0:1))
-      allocate(cm1(0:ii,3,0:1)  , cm2(0:jj,3,0:1)  , cm3(0:kk,3,0:1))
 
    END SUBROUTINE allocate_memory
 

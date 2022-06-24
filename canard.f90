@@ -13,8 +13,9 @@ program canard
                            & dte, dt, cinput, cfl, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
-                           & rr, umf, nnf, p, yaco, srefoo, srefp1dre,             &
-                           & lpos, xim, etm, zem
+                           & rr, umf, nnf, p, srefoo, srefp1dre,             &
+                           & lpos
+   use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
@@ -22,7 +23,7 @@ program canard
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_file
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_grid,       ONLY : calc_grid, calc_grid_metrics
+   use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid
    use mo_gridgen,    ONLY : nthick
    use mo_sponge,     ONLY : spongeup, spongego
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
@@ -89,6 +90,7 @@ program canard
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 
+   call allocate_grid(p_domdcomp)
    call calc_grid(p_domdcomp, ss)
    call calc_grid_metrics(p_domdcomp, ss)
 

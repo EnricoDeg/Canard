@@ -11,10 +11,11 @@ MODULE mo_io
                            & ndata, times, nscrn, n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
-                           & lio, timf, nts, nsmf,    &
+                           & timf, nts, nsmf,    &
                            & nrestart, nsgnl, dts,           &
                            & dte, dt, nrecs,              &
                            & mq, varr, qa, nnf, vart
+   use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall

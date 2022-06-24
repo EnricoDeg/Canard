@@ -8,10 +8,11 @@ MODULE mo_physics
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
    use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
                            & txy, tyy, hxx, hyy, tzz, tyz,         &
-                           & yaco, p,       &
+                           & p,       &
                            & nsmf, timf, timo,                                    &
                            & ao, bo, hv2, cinput, sqrtrema, sqrtremai,       &
-                           & srefoo, srefp1dre, xim, etm, zem
+                           & srefoo, srefp1dre
+   use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : mpigo, deriv
    implicit none
