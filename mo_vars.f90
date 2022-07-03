@@ -37,7 +37,6 @@ module mo_vars
    real(kind=nr) :: dt,dts,dte,timo,tsam
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
-   real(kind=nr) :: szco
    integer(kind=ni) :: nbody
 
    character(5) :: cnnode

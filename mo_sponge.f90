@@ -5,7 +5,7 @@
 MODULE mo_sponge
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : two, zero, pi, sml, one, half, hamhamm1
-   use mo_vars,       ONLY : szco, de, ss, qa
+   use mo_vars,       ONLY : de, ss, qa
    use mo_grid,       ONLY : yaco
    use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh
 
@@ -15,8 +15,18 @@ MODULE mo_sponge
    real(kind=nr),    private, dimension(:), allocatable :: asz, bsz
    integer(kind=ni), private, dimension(:), allocatable :: lcsz
    integer(kind=ni), private :: lsz
+   real(kind=nr) :: szco
 
    CONTAINS
+
+   subroutine read_input_sponge
+      character(16) :: ccinput
+
+      open(9,file='input.sponge',status='old')
+      read(9,*) ccinput,szco
+      close(9)
+
+   end subroutine read_input_sponge
 
    !===== SETTING UP SPONGE ZONE PARAMETERS
 

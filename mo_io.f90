@@ -7,7 +7,7 @@ MODULE mo_io
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos, wtemp, tsam, tmax,             &
                            & nkrk, nextgcic,      &
-                           & mbk, cinput, szco, nbody,   &
+                           & mbk, cinput, nbody,   &
                            & times, n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
@@ -78,7 +78,7 @@ MODULE mo_io
       read(9,*) cinput,doml0,doml1,domh
       read(9,*) cinput,span
       read(9,*) cinput,wlew,wlea
-      read(9,*) cinput,szth0,szth1,szco
+      read(9,*) cinput,szth0,szth1
       read(9,*) cinput,skew,spx
       close(9)
 
