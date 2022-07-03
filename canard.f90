@@ -5,12 +5,12 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : times, tmax, timo, ss, nts,                           &
-                           & tsam, nscrn, nrestart, nrecs, nrecd,                  &
-                           & nkrk, nk, ndt, ndatafl, ndataav,                      &
-                           & ndata, nbody, n, mbk,     &
-                           & lim, dto, dts,                                   &
-                           & dte, dt, cinput, cfl, cdata, varr,             &
+   use mo_vars,       ONLY : times, tmax, timo, ss,                           &
+                           & tsam, nrecs, nrecd,                  &
+                           & nkrk, nk, ndt,                      &
+                           & nbody, n, mbk,     &
+                           & lim, dts,                               &
+                           & dte, dt, cinput, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
                            & rr, umf, nnf, p, srefoo, srefp1dre,             &
@@ -38,6 +38,9 @@ program canard
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
    integer(kind=int64) :: nlmx
    type(t_domdcomp)    :: p_domdcomp
+   integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
+   integer(kind=ni)    :: nrestart
+   real(kind=nr)       :: cfl, dto
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -50,14 +53,14 @@ program canard
 
 !===== INPUT PARAMETERS
 
-   call read_inputo
+   call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, dto)
    call read_input_numerics
     
    cinput=cinput
 
    call init_physics
 
-   call allocate_io_memory
+   call allocate_io_memory(ndata)
 
    call p_domdcomp%allocate(mbk,mpro)
 
@@ -73,7 +76,7 @@ program canard
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
-   call output_init(p_domdcomp)
+   call output_init(p_domdcomp, ndata)
 
 !===== ALLOCATION OF MAIN ARRAYS
 
@@ -406,7 +409,7 @@ program canard
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
 
-         call write_output_file(p_domdcomp)
+         call write_output_file(p_domdcomp, ndata)
 
 !-----
       end if

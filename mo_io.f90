@@ -6,13 +6,13 @@ MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos, wtemp, tsam, tmax,             &
-                           & nkrk, nextgcic, ndata, ndatafl,      &
-                           & ndataav, mbk, dto, cinput, cfl, szco, nbody,   &
-                           & times, nscrn, n,                    &
+                           & nkrk, nextgcic,      &
+                           & mbk, cinput, szco, nbody,   &
+                           & times, n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
-                           & timf, nts, nsmf,    &
-                           & nrestart, dts,           &
+                           & timf, nsmf,    &
+                           & dts,           &
                            & dte, dt, nrecs,              &
                            & mq, varr, qa, nnf, vart
    use mo_grid,       ONLY : lio
@@ -40,10 +40,14 @@ MODULE mo_io
    real(kind=nr),       private, dimension(5)                :: cha, dha
    character(19),       private                              :: crestart
    character(4),        private, dimension(:),allocatable    :: czonet
-   
+
    CONTAINS
 
-   SUBROUTINE read_inputo
+   SUBROUTINE read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
+                          cfl, dto)
+      integer(kind=ni), intent(out) :: nts, nscrn, ndata, ndatafl, ndataav
+      integer(kind=ni), intent(out) :: nrestart
+      real(kind=nr),    intent(out) :: cfl, dto
 
       open(9,file='inputo.dat',status='old')
       read(9,*) cinput,mbk
@@ -82,7 +86,8 @@ MODULE mo_io
 
    END SUBROUTINE read_inputp
 
-   SUBROUTINE allocate_io_memory
+   SUBROUTINE allocate_io_memory(ndata)
+      integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: ll
       
       ll=3+5*(ndata+1)
@@ -92,8 +97,9 @@ MODULE mo_io
                czonet(0:mbk),lhmb(0:mbk))
    END SUBROUTINE allocate_io_memory
 
-   SUBROUTINE output_init(p_domdcomp)
+   SUBROUTINE output_init(p_domdcomp, ndata)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: mm, mp, kp, jp, i, j, k
 
       cfilet(-1) = 'grid'
@@ -211,8 +217,9 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file(p_domdcomp)
+   SUBROUTINE write_output_file(p_domdcomp, ndata)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb

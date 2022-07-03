@@ -11,7 +11,8 @@ module mo_vars
    integer(kind=ni),dimension(:),allocatable :: lpos
 
    real(kind=nr),dimension(:,:),allocatable :: qo,qa,qb,de
-   real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz
+   real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx
+   real(kind=nr),dimension(:),allocatable :: hxx,hyy,hzz
 
    real(kind=nr),dimension(:),allocatable :: p
 
@@ -25,12 +26,13 @@ module mo_vars
    integer(kind=ni),dimension(3) :: nnf
    integer(kind=ni) :: lim,nrecs,nrecd
    integer(kind=ni) :: mbk, n, ndt, nk, mq
-   integer(kind=ni) :: nts,nscrn,nsgnl,ndata,ndatafl,ndataav,nkrk,nsmf,nrestart,nextgcic
+   integer(kind=ni) :: nkrk,nsmf
+   integer(kind=ni) :: nextgcic
 
    real(kind=nr),dimension(5,5) :: xt
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: umf,dudtmf
-   real(kind=nr) :: wtemp,cfl,tmax,timf,dto
+   real(kind=nr) :: wtemp,tmax,timf
    real(kind=nr) :: aoo,srefoo,srefp1dre
    real(kind=nr) :: dt,dts,dte,timo,tsam
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
