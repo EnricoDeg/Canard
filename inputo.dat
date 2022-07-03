@@ -9,5 +9,5 @@ nextgcic        0
 nnf1-2-3        2,3,1
 wtemp           1.0e0
 cfl             1.4e0
-tmax-timf-tsam  0.15e0,0.0e0,0.01e0
+tmax-tsam       0.15e0,0.01e0
 dto             -0.0001e0

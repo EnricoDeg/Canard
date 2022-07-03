@@ -9,7 +9,7 @@ MODULE mo_physics
    use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
                            & txy, tyy, hxx, hyy, tzz, tyz,         &
                            & p,       &
-                           & nsmf, timf, timo,                                    &
+                           & nsmf, timo,                                    &
                            & ao, bo, hv2, cinput, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
@@ -19,6 +19,7 @@ MODULE mo_physics
 
    real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3
    real(kind=nr) :: amachoo
+   real(kind=nr) :: timf
    real(kind=nr), dimension(3) :: uoo
 
    contains
@@ -33,6 +34,7 @@ MODULE mo_physics
       read(9,*) cinput,amach1
       read(9,*) cinput,amach2
       read(9,*) cinput,amach3
+      read(9,*) cinput,timf
       close(9)
 
       amachoo = sqrt( amach1 * amach1 + amach2 * amach2 + amach3 * amach3 )
