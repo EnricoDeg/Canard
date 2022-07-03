@@ -15,7 +15,7 @@ MODULE mo_sponge
    real(kind=nr),    private, dimension(:), allocatable :: asz, bsz
    integer(kind=ni), private, dimension(:), allocatable :: lcsz
    integer(kind=ni), private :: lsz
-   real(kind=nr) :: szco
+   real(kind=nr),    private :: szco
 
    CONTAINS
 
