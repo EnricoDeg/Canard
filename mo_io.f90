@@ -8,7 +8,7 @@ MODULE mo_io
    use mo_vars,       ONLY : lpos, wtemp, tsam, tmax,             &
                            & nkrk, nextgcic,      &
                            & mbk, cinput,   &
-                           & times, n,                    &
+                           & n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
                            & timf, nsmf,    &
@@ -92,7 +92,7 @@ MODULE mo_io
       integer(kind=ni) :: ll
       
       ll=3+5*(ndata+1)
-      allocate(times(0:ndata),cfilet(-1:ndata),     &
+      allocate(cfilet(-1:ndata),     &
                ctecplt(-1:ndata),varm(0:1,0:mpro),  &
                varmin(ll),varmax(ll),cthead(0:mbk), &
                czonet(0:mbk),lhmb(0:mbk))
@@ -218,9 +218,10 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file(p_domdcomp, ndata)
+   SUBROUTINE write_output_file(p_domdcomp, ndata, times)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: ndata
+      real(kind=nr), dimension(0:ndata), intent(in) :: times
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb, mq
@@ -267,7 +268,7 @@ MODULE mo_io
                end do
             end do
             open(9,file=cthead(p_domdcomp%mb),access='stream',form='unformatted',status='replace')
-            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq)
+            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq, ndata, times)
             deallocate(vara)
             allocate(vara(0:lh+llmb))
             read(9,pos=1) vara(0:lh-1)
@@ -316,11 +317,13 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR GENERATING TECPLOT DATA FILE
 
-   subroutine techead(p_domdcomp, nf, n, mb, lh, mq)
+   subroutine techead(p_domdcomp, nf, n, mb, lh, mq, ndata, times)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       integer(kind=ni), intent(in)    :: nf,n,mb
       integer(kind=ni), intent(inout) :: lh
       integer(kind=ni), intent(in)    :: mq
+      integer(kind=ni), intent(in) :: ndata
+      real(kind=nr), dimension(0:ndata), intent(in) :: times
       integer(kind=ni)                :: mm, m, nn
 
       lh=0

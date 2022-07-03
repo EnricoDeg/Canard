@@ -18,8 +18,6 @@ module mo_vars
 
    real(kind=nr),dimension(:,:),allocatable :: rr,ss
 
-   real(kind=nr),dimension(:),allocatable :: times
-
    real(kind=ieee32),dimension(:),allocatable :: varr,vart,vmean
 
 !===== CONSTANT-SIZED MAIN VARIABLES

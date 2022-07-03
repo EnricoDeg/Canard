@@ -5,7 +5,7 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : times, tmax, timo, ss,                           &
+   use mo_vars,       ONLY : tmax, timo, ss,                           &
                            & tsam, nrecs, nrecd,                  &
                            & nkrk, nk, ndt,                      &
                            & n, mbk,     &
@@ -42,6 +42,7 @@ program canard
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
    integer(kind=ni)    :: nbody
+   real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -62,6 +63,7 @@ program canard
    call init_physics
 
    call allocate_io_memory(ndata)
+   allocate(times(0:ndata))
 
    call p_domdcomp%allocate(mbk,mpro)
 
