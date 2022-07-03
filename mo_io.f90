@@ -12,7 +12,7 @@ MODULE mo_io
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
                            & timf, nts, nsmf,    &
-                           & nrestart, nsgnl, dts,           &
+                           & nrestart, dts,           &
                            & dte, dt, nrecs,              &
                            & mq, varr, qa, nnf, vart
    use mo_grid,       ONLY : lio
@@ -48,7 +48,7 @@ MODULE mo_io
       open(9,file='inputo.dat',status='old')
       read(9,*) cinput,mbk
       read(9,*) cinput,nts
-      read(9,*) cinput,nscrn,nsgnl
+      read(9,*) cinput,nscrn
       read(9,*) cinput,ndata,ndatafl,ndataav
       read(9,*) cinput,nkrk
       read(9,*) cinput,nsmf
