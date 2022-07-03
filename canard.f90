@@ -25,7 +25,7 @@ program canard
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid
    use mo_gridgen,    ONLY : nthick
-   use mo_sponge,     ONLY : spongeup, spongego
+   use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
                            & extracon, wall_condition_update, average_surface
    use mo_numerics,   ONLY : allocate_numerics, init_extracoeff_bounds,            &
@@ -65,6 +65,7 @@ program canard
    call p_domdcomp%allocate(mbk,mpro)
 
    call read_inputp
+   call read_input_sponge
 
    call p_domdcomp%read()
 
