@@ -14,7 +14,7 @@ MODULE mo_io
                            & timf, nsmf,    &
                            & dts,           &
                            & dte, dt, nrecs,              &
-                           & mq, varr, qa, nnf, vart
+                           & varr, qa, nnf, vart
    use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
@@ -222,7 +222,7 @@ MODULE mo_io
       integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
-      integer(kind=ni) :: ltomb
+      integer(kind=ni) :: ltomb, mq
 
       ltomb = ( p_domdcomp%lxio + 1 ) * &
               ( p_domdcomp%leto + 1 ) * &
@@ -266,7 +266,7 @@ MODULE mo_io
                end do
             end do
             open(9,file=cthead(p_domdcomp%mb),access='stream',form='unformatted',status='replace')
-            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh)
+            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq)
             deallocate(vara)
             allocate(vara(0:lh+llmb))
             read(9,pos=1) vara(0:lh-1)
@@ -315,10 +315,11 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR GENERATING TECPLOT DATA FILE
 
-   subroutine techead(p_domdcomp, nf, n, mb, lh)
+   subroutine techead(p_domdcomp, nf, n, mb, lh, mq)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       integer(kind=ni), intent(in)    :: nf,n,mb
       integer(kind=ni), intent(inout) :: lh
+      integer(kind=ni), intent(in)    :: mq
       integer(kind=ni)                :: mm, m, nn
 
       lh=0
