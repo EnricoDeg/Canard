@@ -5,10 +5,10 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : dha, cha, lpos, wtemp, tsam, tmax,             &
-                           & nkrk, nextrabc, nextgcic, ndata, ndatafl,      &
+   use mo_vars,       ONLY : lpos, wtemp, tsam, tmax,             &
+                           & nkrk, nextgcic, ndata, ndatafl,      &
                            & ndataav, mbk, dto, cinput, cfl, szco, nbody,   &
-                           & ndata, times, nscrn, n,                    &
+                           & times, nscrn, n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
                            & timf, nts, nsmf,    &
@@ -34,10 +34,12 @@ MODULE mo_io
    real(kind=ieee32),   private, dimension(:),   allocatable :: vara, varb
    character(13),       private, dimension(:),   allocatable :: ctecplt, cthead
    character(4),        private, dimension(:),   allocatable :: cfilet
-   character(1),        private, dimension(0:4) :: cno
-   integer(kind=ni),    private, dimension(0:4) :: no
-   character(19),       private :: crestart
-   character(4),        private, dimension(:),allocatable :: czonet
+
+   character(1),        private, dimension(0:4)              :: cno
+   integer(kind=ni),    private, dimension(0:4)              :: no
+   real(kind=nr),       private, dimension(5)                :: cha, dha
+   character(19),       private                              :: crestart
+   character(4),        private, dimension(:),allocatable    :: czonet
    
    CONTAINS
 
@@ -51,7 +53,7 @@ MODULE mo_io
       read(9,*) cinput,nkrk
       read(9,*) cinput,nsmf
       read(9,*) cinput,nrestart
-      read(9,*) cinput,nextrabc,nextgcic
+      read(9,*) cinput,nextgcic
       read(9,*) cinput,nnf(:)
       read(9,*) cinput,wtemp
       read(9,*) cinput,cfl
