@@ -7,7 +7,7 @@ MODULE mo_io
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos, wtemp, tsam, tmax,             &
                            & nkrk, nextgcic,      &
-                           & mbk, cinput, nbody,   &
+                           & mbk, cinput,   &
                            & times, n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
@@ -67,7 +67,8 @@ MODULE mo_io
 
    END SUBROUTINE read_inputo
 
-   SUBROUTINE read_inputp
+   SUBROUTINE read_inputp(nbody)
+      integer(kind=ni), intent(out) :: nbody
 
       open(9,file='inputp.dat',status='old')
       read(9,*) cinput,lxi0,lxi1,lxi2

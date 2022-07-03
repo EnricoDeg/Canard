@@ -37,8 +37,6 @@ module mo_vars
    real(kind=nr) :: dt,dts,dte,timo,tsam
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
-   integer(kind=ni) :: nbody
-
    character(5) :: cnnode
    character(16) :: cinput
    character(16) :: cgrid

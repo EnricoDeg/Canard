@@ -8,7 +8,7 @@ program canard
    use mo_vars,       ONLY : times, tmax, timo, ss,                           &
                            & tsam, nrecs, nrecd,                  &
                            & nkrk, nk, ndt,                      &
-                           & nbody, n, mbk,     &
+                           & n, mbk,     &
                            & lim, dts,                               &
                            & dte, dt, cinput, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
@@ -41,6 +41,7 @@ program canard
    integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
+   integer(kind=ni)    :: nbody
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -64,7 +65,7 @@ program canard
 
    call p_domdcomp%allocate(mbk,mpro)
 
-   call read_inputp
+   call read_inputp(nbody)
    call read_input_sponge
 
    call p_domdcomp%read()
