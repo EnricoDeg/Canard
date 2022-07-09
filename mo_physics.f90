@@ -37,6 +37,7 @@ MODULE mo_physics
       read(9,*) cinput,amach2
       read(9,*) cinput,amach3
       read(9,*) cinput,timf
+      read(9,*) cinput,nsmf
       close(9)
 
       amachoo = sqrt( amach1 * amach1 + amach2 * amach2 + amach3 * amach3 )
