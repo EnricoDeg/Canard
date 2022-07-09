@@ -6,7 +6,7 @@ MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos, tsam, tmax,             &
-                           & nkrk, nextgcic,      &
+                           & nkrk,      &
                            & mbk, cinput,   &
                            & n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
@@ -57,7 +57,6 @@ MODULE mo_io
       read(9,*) cinput,nkrk
       read(9,*) cinput,nsmf
       read(9,*) cinput,nrestart
-      read(9,*) cinput,nextgcic
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,tsam
       read(9,*) cinput,dto

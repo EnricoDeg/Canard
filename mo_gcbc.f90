@@ -8,7 +8,7 @@ MODULE mo_gcbc
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : dha, cha, xt, umf, p, qa, rr, ss,  &
-                           & txy, nextgcic, nkrk, dt, ao,     &
+                           & txy, nkrk, dt, ao,     &
                            & txx, tmax, timo,       &
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
@@ -32,6 +32,7 @@ MODULE mo_gcbc
    real(kind=nr),    private, dimension(:,:,:), allocatable, target :: drvb1,drvb2,drvb3
    real(kind=nr),    private, dimension(3) :: dm
    real(kind=nr),    private  :: wtemp
+   integer(kind=ni), private  :: nextgcic
 
    private :: eleme, xtq2r, xtr2q
 
@@ -42,6 +43,7 @@ MODULE mo_gcbc
      
       open(9,file='input.gcbc',status='old')
       read(9,*) ccinput,wtemp
+      read(9,*) ccinput,nextgcic
       close(9)
      
    END SUBROUTINE read_input_gcbc

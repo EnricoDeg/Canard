@@ -24,7 +24,6 @@ module mo_vars
    integer(kind=ni) :: lim,nrecs,nrecd
    integer(kind=ni) :: mbk, n, ndt, nk, mq
    integer(kind=ni) :: nkrk,nsmf
-   integer(kind=ni) :: nextgcic
 
    real(kind=nr),dimension(5,5) :: xt
    real(kind=nr),dimension(5) :: cha,dha
