@@ -30,7 +30,7 @@ module mo_vars
    real(kind=nr),dimension(3) :: umf,dudtmf
    real(kind=nr) :: tmax
    real(kind=nr) :: aoo,srefoo,srefp1dre
-   real(kind=nr) :: dt,timo,tsam
+   real(kind=nr) :: dt,timo
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
    character(5) :: cnnode
