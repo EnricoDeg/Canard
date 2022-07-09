@@ -11,8 +11,7 @@ MODULE mo_io
                            & n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
-                           & dts,           &
-                           & dte, dt, nrecs,              &
+                           & dt, nrecs,              &
                            & varr, qa, vart
    use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -158,8 +157,9 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
-   SUBROUTINE read_restart_file(p_domdcomp)
+   SUBROUTINE read_restart_file(p_domdcomp, dts, dte)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      real(kind=nr), intent(INOUT) :: dts, dte
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
@@ -185,8 +185,9 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file(p_domdcomp)
+   SUBROUTINE write_restart_file(p_domdcomp, dts, dte)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      real(kind=nr), intent(INOUT) :: dts, dte
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then

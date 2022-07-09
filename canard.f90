@@ -9,8 +9,8 @@ program canard
                            & tsam, nrecs, nrecd,                  &
                            & nkrk, nk, ndt,                      &
                            & n, mbk,     &
-                           & lim, dts,                               &
-                           & dte, dt, cinput, cdata, varr,             &
+                           & lim,                               &
+                           & dt, cinput, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
@@ -43,6 +43,7 @@ program canard
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
    integer(kind=ni)    :: nbody
+   real(kind=nr)       :: dts, dte
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -142,7 +143,7 @@ program canard
       timo=zero
       call initialo(p_domdcomp%lmx) ! use ss which contains grid data
    else
-      call read_restart_file(p_domdcomp) ! ss is not used
+      call read_restart_file(p_domdcomp, dts, dte) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -362,7 +363,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file(p_domdcomp)
+      call write_restart_file(p_domdcomp, dts, dte)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE
