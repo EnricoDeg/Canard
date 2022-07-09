@@ -13,7 +13,7 @@ program canard
                            & dte, dt, cinput, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
-                           & rr, umf, nnf, p, srefoo, srefp1dre,             &
+                           & rr, umf, p, srefoo, srefp1dre,             &
                            & lpos
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_vars,       ONLY : allocate_memory
@@ -171,17 +171,17 @@ program canard
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+1, &
                              p_domdcomp%lxi, p_domdcomp%let)
          call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                             p_domdcomp%lze, p_domdcomp%ijk, nnf(1))
+                             p_domdcomp%lze, p_domdcomp%ijk, 1)
          call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+2, &
                              p_domdcomp%lxi, p_domdcomp%let)
          call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                             p_domdcomp%lze, p_domdcomp%ijk, nnf(2))
+                             p_domdcomp%lze, p_domdcomp%ijk, 2)
          call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+3, &
                              p_domdcomp%lxi, p_domdcomp%let)
          call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                             p_domdcomp%lze, p_domdcomp%ijk, nnf(3))
+                             p_domdcomp%lze, p_domdcomp%ijk, 3)
       end do
       qo(:,:)=qa(:,:)
 

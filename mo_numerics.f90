@@ -24,6 +24,7 @@ module mo_numerics
    real(kind=nr), dimension(0:lmp) :: sap
    real(kind=nr), dimension(0:4,0:2) :: fbc
    integer(kind=ni), dimension(3,0:1,0:1) :: ndf
+   integer(kind=ni),dimension(3) :: nnf
 
    real(kind=nr), dimension(:,:), allocatable :: xu,yu
    real(kind=nr), dimension(:,:), allocatable :: xl,yl
@@ -80,6 +81,7 @@ module mo_numerics
       open(9,file='input.numerics',status='old')
       read(9,*) ccinput,fltk
       read(9,*) ccinput,fltrbc
+      read(9,*) ccinput,nnf(:)
       close(9)
       fltk=pi*fltk
 
@@ -855,15 +857,17 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(rfield, lmx, lxik, letk, lzek, ijks, nn)
+   subroutine filte(rfield, lmx, lxik, letk, lzek, ijks, inn)
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
-      integer(kind=ni), intent(in)                  :: nn
-      integer(kind=ni) :: nstart, nend, istart, iend, ntk
+      integer(kind=ni), intent(in)                  :: inn
+      integer(kind=ni) :: nstart, nend, istart, iend, ntk, nn
       integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
       real(kind=nr)    :: resk, ra2k
+
+      nn = nnf(inn)
 
       ntk    = 1
       nstart = ndf(nn,0,1)

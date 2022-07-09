@@ -14,7 +14,7 @@ MODULE mo_io
                            & nsmf,    &
                            & dts,           &
                            & dte, dt, nrecs,              &
-                           & varr, qa, nnf, vart
+                           & varr, qa, vart
    use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
@@ -58,7 +58,6 @@ MODULE mo_io
       read(9,*) cinput,nsmf
       read(9,*) cinput,nrestart
       read(9,*) cinput,nextgcic
-      read(9,*) cinput,nnf(:)
       read(9,*) cinput,wtemp
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,tsam
