@@ -11,7 +11,6 @@ MODULE mo_io
                            & n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
-                           & nsmf,    &
                            & dts,           &
                            & dte, dt, nrecs,              &
                            & varr, qa, vart
@@ -55,7 +54,6 @@ MODULE mo_io
       read(9,*) cinput,nscrn
       read(9,*) cinput,ndata,ndatafl,ndataav
       read(9,*) cinput,nkrk
-      read(9,*) cinput,nsmf
       read(9,*) cinput,nrestart
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,tsam

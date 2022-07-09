@@ -9,17 +9,19 @@ MODULE mo_physics
    use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
                            & txy, tyy, hxx, hyy, tzz, tyz,         &
                            & p,       &
-                           & nsmf, timo,                                    &
+                           & timo,                                    &
                            & ao, bo, hv2, cinput, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : mpigo, deriv
    implicit none
+   public
 
    real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3
    real(kind=nr) :: amachoo
    real(kind=nr) :: timf
+   integer(kind=ni), private :: nsmf
    real(kind=nr), dimension(3) :: uoo
 
    contains

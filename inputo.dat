@@ -3,7 +3,6 @@ nts             0
 nscrn           1
 ndata-fl-av     1,0,1
 nkrk            4
-nsmf            1
 nrestart        1
 cfl             1.4e0
 tmax-tsam       0.15e0,0.01e0
