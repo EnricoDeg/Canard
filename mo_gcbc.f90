@@ -9,7 +9,7 @@ MODULE mo_gcbc
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : dha, cha, xt, umf, p, qa, rr, ss,  &
                            & txy, nextgcic, nkrk, dt, ao,     &
-                           & wtemp, txx, tmax, timo,       &
+                           & txx, tmax, timo,       &
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
                            & de, dudtmf, varr
@@ -31,10 +31,20 @@ MODULE mo_gcbc
    real(kind=nr),    private, dimension(:,:,:), pointer :: drvb
    real(kind=nr),    private, dimension(:,:,:), allocatable, target :: drvb1,drvb2,drvb3
    real(kind=nr),    private, dimension(3) :: dm
+   real(kind=nr),    private  :: wtemp
 
    private :: eleme, xtq2r, xtr2q
 
    CONTAINS
+
+   SUBROUTINE read_input_gcbc
+      character(16) :: ccinput
+     
+      open(9,file='input.gcbc',status='old')
+      read(9,*) ccinput,wtemp
+      close(9)
+     
+   END SUBROUTINE read_input_gcbc
 
    SUBROUTINE gcbc_init(p_domdcomp)
       type(t_domdcomp), intent(IN) :: p_domdcomp

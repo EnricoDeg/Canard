@@ -29,7 +29,7 @@ module mo_vars
    real(kind=nr),dimension(5,5) :: xt
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: umf,dudtmf
-   real(kind=nr) :: wtemp,tmax
+   real(kind=nr) :: tmax
    real(kind=nr) :: aoo,srefoo,srefp1dre
    real(kind=nr) :: dt,dts,dte,timo,tsam
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai

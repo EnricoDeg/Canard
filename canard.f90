@@ -27,7 +27,8 @@ program canard
    use mo_gridgen,    ONLY : nthick
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
-                           & extracon, wall_condition_update, average_surface
+                           & extracon, wall_condition_update, average_surface,     &
+                           & read_input_gcbc
    use mo_numerics,   ONLY : allocate_numerics, init_extracoeff_bounds,            &
                            & init_penta, mpigo, filte, read_input_numerics
    use mo_physics,    ONLY : init_physics, initialo, movef,                        &
@@ -57,6 +58,7 @@ program canard
 
    call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, dto)
    call read_input_numerics
+   call read_input_gcbc
     
    cinput=cinput
 
