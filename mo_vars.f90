@@ -22,7 +22,7 @@ module mo_vars
 
 !===== CONSTANT-SIZED MAIN VARIABLES
    integer(kind=ni) :: nrecs,nrecd
-   integer(kind=ni) :: mbk, n, mq
+   integer(kind=ni) :: mbk, n
 
    real(kind=nr),dimension(5,5) :: xt
    real(kind=nr),dimension(5) :: cha,dha
