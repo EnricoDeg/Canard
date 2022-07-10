@@ -6,7 +6,6 @@ MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos,             &
-                           & nkrk,      &
                            & mbk, cinput,   &
                            & n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
@@ -42,11 +41,12 @@ MODULE mo_io
    CONTAINS
 
    SUBROUTINE read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
-                          cfl, dto, tsam, tmax)
+                          cfl, dto, tsam, tmax, nkrk)
       integer(kind=ni), intent(out) :: nts, nscrn, ndata, ndatafl, ndataav
       integer(kind=ni), intent(out) :: nrestart
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
+      integer(kind=ni), intent(out) :: nkrk
 
       open(9,file='inputo.dat',status='old')
       read(9,*) cinput,mbk

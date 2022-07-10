@@ -7,7 +7,7 @@ program canard
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_vars,       ONLY : timo, ss,                           &
                            & nrecs, nrecd,                  &
-                           & nkrk, nk, ndt,                      &
+                           & nk, ndt,                      &
                            & n, mbk,     &
                            & lim,                               &
                            & dt, cinput, cdata, varr,             &
@@ -46,6 +46,7 @@ program canard
    real(kind=nr)       :: dts, dte
    real(kind=nr)       :: tsam
    real(kind=nr)       :: tmax
+   integer(kind=ni)    :: nkrk
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -60,7 +61,7 @@ program canard
 !===== INPUT PARAMETERS
 
    call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
-                    dto, tsam, tmax)
+                    dto, tsam, tmax, nkrk)
    call read_input_numerics
    call read_input_gcbc
     
@@ -265,7 +266,7 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp)
+         call gcbc_update(p_domdcomp, nkrk)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -284,7 +285,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, tmax)
+         call extracon(p_domdcomp, tmax, nkrk)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
