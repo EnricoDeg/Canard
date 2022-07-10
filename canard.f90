@@ -10,7 +10,7 @@ program canard
                            & mbk,     &
                            & cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
-                           & hyy, hzz, qo, qa, qb, de,    &
+                           & hyy, hzz, qa, qb, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
                            & lpos
    use mo_grid,       ONLY : yaco, xim, etm, zem
@@ -51,7 +51,8 @@ program canard
    integer(kind=ni)    :: lim
    integer(kind=ni)    :: n
    real(kind=nr)       :: dt
-   real(kind=nr), dimension(:), allocatable :: times
+   real(kind=nr), dimension(:), allocatable   :: times
+   real(kind=nr), dimension(:,:), allocatable :: qo
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -95,6 +96,7 @@ program canard
 
    call allocate_memory(p_domdcomp%lmx, p_domdcomp%nbsize)
    call allocate_numerics(lim, p_domdcomp%nbsize)
+   allocate(qo(0:p_domdcomp%lmx,5))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
