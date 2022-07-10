@@ -26,7 +26,6 @@ module mo_vars
 
    real(kind=nr),dimension(3) :: umf,dudtmf
    real(kind=nr) :: aoo,srefoo,srefp1dre
-   real(kind=nr) :: dt
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
    character(5) :: cnnode

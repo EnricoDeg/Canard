@@ -8,7 +8,7 @@ program canard
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
                            & mbk,     &
-                           & dt, cdata, varr,             &
+                           & cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
@@ -50,6 +50,7 @@ program canard
    integer(kind=ni)    :: nk
    integer(kind=ni)    :: lim
    integer(kind=ni)    :: n
+   real(kind=nr)       :: dt
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -148,7 +149,7 @@ program canard
       timo=zero
       call initialo(p_domdcomp%lmx) ! use ss which contains grid data
    else
-      call read_restart_file(p_domdcomp, dts, dte, timo, ndt, n) ! ss is not used
+      call read_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -267,7 +268,7 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, nkrk)
+         call gcbc_update(p_domdcomp, nkrk, dt)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -286,7 +287,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, tmax, nkrk, timo, nk)
+         call extracon(p_domdcomp, tmax, nkrk, timo, nk, dt)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
@@ -368,7 +369,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file(p_domdcomp, dts, dte, timo, ndt, n)
+      call write_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE

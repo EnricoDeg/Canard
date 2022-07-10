@@ -8,7 +8,7 @@ MODULE mo_gcbc
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : umf, p, qa, rr, ss,  &
-                           & txy, dt, ao,     &
+                           & txy, ao,     &
                            & txx,       &
                            & srefp1dre, tyy, srefoo, nrecs, &
                            & cnnode, cdata, hv2, aoi,  &
@@ -209,9 +209,10 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_comm
 
-   SUBROUTINE gcbc_update(p_domdcomp, nkrk)
+   SUBROUTINE gcbc_update(p_domdcomp, nkrk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: nkrk
+      real(kind=nr),    intent(in) :: dt
       integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k
       integer(kind=ni) :: jk, kp
       real(kind=nr)    :: ra0, dtwi
@@ -430,12 +431,13 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, tmax, nkrk, timo, nk)
+   subroutine extracon(p_domdcomp, tmax, nkrk, timo, nk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       real(kind=nr), intent(in)    :: tmax
       integer(kind=ni), intent(in) :: nkrk
       real(kind=nr), intent(in)    :: timo
       integer(kind=ni), intent(in) :: nk
+      real(kind=nr), intent(in)    :: dt
       real(kind=nr),dimension(3) :: vee
       integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3
