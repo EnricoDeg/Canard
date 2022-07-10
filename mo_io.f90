@@ -7,7 +7,6 @@ MODULE mo_io
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos,             &
                            & mbk,   &
-                           & n,                    &
                            & cnnode, cgrid, cdata,                    &
                            & nrecd, &
                            & dt, nrecs,              &
@@ -98,6 +97,7 @@ MODULE mo_io
    SUBROUTINE output_init(p_domdcomp, ndata)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: ndata
+      integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, kp, jp, i, j, k
 
       cfilet(-1) = 'grid'
@@ -160,11 +160,12 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
-   SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo, ndt)
+   SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo, ndt, n)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       real(kind=nr), intent(INOUT)    :: dts, dte
       real(kind=nr), intent(inout)    :: timo
       integer(kind=ni), intent(inout) :: ndt
+      integer(kind=ni), intent(inout) :: n
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
@@ -190,11 +191,12 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file(p_domdcomp, dts, dte, timo, ndt)
+   SUBROUTINE write_restart_file(p_domdcomp, dts, dte, timo, ndt, n)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       real(kind=nr), intent(INOUT)    :: dts, dte
       real(kind=nr), intent(inout)    :: timo
       integer(kind=ni), intent(inout) :: ndt
+      integer(kind=ni), intent(inout) :: n
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
@@ -225,6 +227,7 @@ MODULE mo_io
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
+      integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb, mq

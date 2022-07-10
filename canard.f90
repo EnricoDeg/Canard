@@ -7,7 +7,7 @@ program canard
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
-                           & n, mbk,     &
+                           & mbk,     &
                            & dt, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
@@ -49,6 +49,7 @@ program canard
    integer(kind=ni)    :: ndt
    integer(kind=ni)    :: nk
    integer(kind=ni)    :: lim
+   integer(kind=ni)    :: n
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -147,7 +148,7 @@ program canard
       timo=zero
       call initialo(p_domdcomp%lmx) ! use ss which contains grid data
    else
-      call read_restart_file(p_domdcomp, dts, dte, timo, ndt) ! ss is not used
+      call read_restart_file(p_domdcomp, dts, dte, timo, ndt, n) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -367,7 +368,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file(p_domdcomp, dts, dte, timo, ndt)
+      call write_restart_file(p_domdcomp, dts, dte, timo, ndt, n)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE
