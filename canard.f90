@@ -10,7 +10,7 @@ program canard
                            & nk, ndt,                      &
                            & n, mbk,     &
                            & lim,                               &
-                           & dt, cinput, cdata, varr,             &
+                           & dt, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
@@ -65,8 +65,6 @@ program canard
    call read_input_numerics
    call read_input_gcbc
     
-   cinput=cinput
-
    call init_physics
 
    call allocate_io_memory(ndata)

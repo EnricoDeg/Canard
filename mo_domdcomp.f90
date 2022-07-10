@@ -5,7 +5,6 @@
 MODULE mo_domdcomp
    use mo_kind, ONLY : ni, nr
    use mo_parameters, ONLY : one
-   use mo_vars, ONLY : cinput
    use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
                       p_recv, p_send, p_bcast, mpro, myid
    use mo_utils, ONLY : indx3
@@ -267,6 +266,7 @@ MODULE mo_domdcomp
 
    SUBROUTINE domdcomp_read_input(this)
       class(t_domdcomp), INTENT(INOUT) :: this
+      character(16) :: cinput
 
       open(9,file='input.domdcomp',status='old')
       read(9,*) cinput,this%nbpc(:,1)

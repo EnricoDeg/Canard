@@ -10,7 +10,7 @@ MODULE mo_physics
                            & txy, tyy, hxx, hyy, tzz, tyz,         &
                            & p,       &
                            & timo,                                    &
-                           & ao, bo, hv2, cinput, sqrtrema, sqrtremai,       &
+                           & ao, bo, hv2, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -29,6 +29,7 @@ MODULE mo_physics
 !===== INITIALIZE PHYSICS
 
    subroutine init_physics
+      character(16) :: cinput
 
       open(9,file='input.physics',status='old')
       read(9,*) cinput,reoo

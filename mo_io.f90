@@ -6,7 +6,7 @@ MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
    use mo_vars,       ONLY : lpos,             &
-                           & mbk, cinput,   &
+                           & mbk,   &
                            & n,                    &
                            & cnnode, cgrid, cdata, timo,                    &
                            & nrecd, ndt, &
@@ -47,6 +47,7 @@ MODULE mo_io
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
       integer(kind=ni), intent(out) :: nkrk
+      character(16) :: cinput
 
       open(9,file='inputo.dat',status='old')
       read(9,*) cinput,mbk
@@ -64,6 +65,7 @@ MODULE mo_io
 
    SUBROUTINE read_inputp(nbody)
       integer(kind=ni), intent(out) :: nbody
+      character(16) :: cinput
 
       open(9,file='inputp.dat',status='old')
       read(9,*) cinput,lxi0,lxi1,lxi2
@@ -322,6 +324,7 @@ MODULE mo_io
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
       integer(kind=ni)                :: mm, m, nn
+      character(16) :: cinput
 
       lh=0
       if(mb==0) then
