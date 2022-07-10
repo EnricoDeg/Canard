@@ -9,7 +9,7 @@ MODULE mo_gcbc
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : dha, cha, xt, umf, p, qa, rr, ss,  &
                            & txy, dt, ao,     &
-                           & txx, timo,       &
+                           & txx,       &
                            & srefp1dre, tyy, srefoo, nrecs, nk, &
                            & cnnode, cdata, hv2, aoi,  &
                            & de, dudtmf, varr
@@ -428,10 +428,11 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, tmax, nkrk)
+   subroutine extracon(p_domdcomp, tmax, nkrk, timo)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       real(kind=nr), intent(in)    :: tmax
       integer(kind=ni), intent(in) :: nkrk
+      real(kind=nr), intent(in)    :: timo
       real(kind=nr),dimension(3) :: vee
       integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3

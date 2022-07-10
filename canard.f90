@@ -5,7 +5,7 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : timo, ss,                           &
+   use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
                            & nk, ndt,                      &
                            & n, mbk,     &
@@ -47,6 +47,7 @@ program canard
    real(kind=nr)       :: tsam
    real(kind=nr)       :: tmax
    integer(kind=ni)    :: nkrk
+   real(kind=nr)       :: timo
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -145,7 +146,7 @@ program canard
       timo=zero
       call initialo(p_domdcomp%lmx) ! use ss which contains grid data
    else
-      call read_restart_file(p_domdcomp, dts, dte) ! ss is not used
+      call read_restart_file(p_domdcomp, dts, dte, timo) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -199,7 +200,7 @@ program canard
 
          dtko=dt*min(max(nk-2,0),1)/(nkrk-nk+3)
          dtk=dt*min(nk-1,1)/(nkrk-nk+2)
-         call movef(dtko,dtk)
+         call movef(dtko, dtk, timo)
 
 !----- TEMPORARY STORAGE OF PRIMITIVE VARIABLES & PRESSURE
 
@@ -274,7 +275,7 @@ program canard
 
          dtko=dt*min(nk-1,1)/(nkrk-nk+2)
          dtk=dt/(nkrk-nk+1)
-         call movef(dtko,dtk)
+         call movef(dtko, dtk, timo)
 
          rr(:,1)=dtk*yaco(:)
          qa(:,1)=qo(:,1)-rr(:,1)*de(:,1)
@@ -283,7 +284,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, tmax, nkrk)
+         call extracon(p_domdcomp, tmax, nkrk, timo)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
@@ -365,7 +366,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file(p_domdcomp, dts, dte)
+      call write_restart_file(p_domdcomp, dts, dte, timo)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE

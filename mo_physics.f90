@@ -9,7 +9,6 @@ MODULE mo_physics
    use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
                            & txy, tyy, hxx, hyy, tzz, tyz,         &
                            & p,       &
-                           & timo,                                    &
                            & ao, bo, hv2, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
@@ -79,8 +78,9 @@ MODULE mo_physics
 
 !===== SUBROUTINE FOR MOVING FRAME VELOCITIES
 
-   subroutine movef(dtko,dtk)
-      real(kind=nr),intent(in) :: dtko, dtk
+   subroutine movef(dtko, dtk, timo)
+      real(kind=nr), intent(in) :: dtko, dtk
+      real(kind=nr), intent(in) :: timo
       real(kind=nr) :: ra0, ra1, ra2, dfdt, fctr, progmf
 
       if ( nsmf == 0 ) then

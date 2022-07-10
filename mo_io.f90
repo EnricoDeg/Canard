@@ -8,7 +8,7 @@ MODULE mo_io
    use mo_vars,       ONLY : lpos,             &
                            & mbk,   &
                            & n,                    &
-                           & cnnode, cgrid, cdata, timo,                    &
+                           & cnnode, cgrid, cdata,                    &
                            & nrecd, ndt, &
                            & dt, nrecs,              &
                            & varr, qa, vart
@@ -160,9 +160,10 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
-   SUBROUTINE read_restart_file(p_domdcomp, dts, dte)
+   SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       real(kind=nr), intent(INOUT) :: dts, dte
+      real(kind=nr), intent(inout) :: timo
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
@@ -188,9 +189,10 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file(p_domdcomp, dts, dte)
+   SUBROUTINE write_restart_file(p_domdcomp, dts, dte, timo)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       real(kind=nr), intent(INOUT) :: dts, dte
+      real(kind=nr), intent(inout) :: timo
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then

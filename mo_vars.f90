@@ -28,7 +28,7 @@ module mo_vars
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: umf,dudtmf
    real(kind=nr) :: aoo,srefoo,srefp1dre
-   real(kind=nr) :: dt,timo
+   real(kind=nr) :: dt
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
    character(5) :: cnnode
