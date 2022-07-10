@@ -7,7 +7,6 @@ program canard
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
-                           & nk,                      &
                            & n, mbk,     &
                            & lim,                               &
                            & dt, cdata, varr,             &
@@ -49,6 +48,7 @@ program canard
    integer(kind=ni)    :: nkrk
    real(kind=nr)       :: timo
    integer(kind=ni)    :: ndt
+   integer(kind=ni)    :: nk
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -285,7 +285,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, tmax, nkrk, timo)
+         call extracon(p_domdcomp, tmax, nkrk, timo, nk)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  

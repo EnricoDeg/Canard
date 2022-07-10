@@ -10,7 +10,7 @@ MODULE mo_gcbc
    use mo_vars,       ONLY : dha, cha, xt, umf, p, qa, rr, ss,  &
                            & txy, dt, ao,     &
                            & txx,       &
-                           & srefp1dre, tyy, srefoo, nrecs, nk, &
+                           & srefp1dre, tyy, srefoo, nrecs, &
                            & cnnode, cdata, hv2, aoi,  &
                            & de, dudtmf, varr
    use mo_numerics,   ONLY : drva1, drva2, drva3, drva
@@ -428,11 +428,12 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, tmax, nkrk, timo)
+   subroutine extracon(p_domdcomp, tmax, nkrk, timo, nk)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       real(kind=nr), intent(in)    :: tmax
       integer(kind=ni), intent(in) :: nkrk
       real(kind=nr), intent(in)    :: timo
+      integer(kind=ni), intent(in) :: nk
       real(kind=nr),dimension(3) :: vee
       integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3
