@@ -7,7 +7,7 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : dha, cha, xt, umf, p, qa, rr, ss,  &
+   use mo_vars,       ONLY : dha, cha, umf, p, qa, rr, ss,  &
                            & txy, dt, ao,     &
                            & txx,       &
                            & srefp1dre, tyy, srefoo, nrecs, &
@@ -33,6 +33,7 @@ MODULE mo_gcbc
    real(kind=nr),    private, dimension(3) :: dm
    real(kind=nr),    private  :: wtemp
    integer(kind=ni), private  :: nextgcic
+   real(kind=nr),    private, dimension(5,5) :: xt
 
    private :: eleme, xtq2r, xtr2q
 

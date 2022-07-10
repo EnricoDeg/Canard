@@ -24,7 +24,6 @@ module mo_vars
    integer(kind=ni) :: nrecs,nrecd
    integer(kind=ni) :: mbk, n
 
-   real(kind=nr),dimension(5,5) :: xt
    real(kind=nr),dimension(5) :: cha,dha
    real(kind=nr),dimension(3) :: umf,dudtmf
    real(kind=nr) :: aoo,srefoo,srefp1dre
