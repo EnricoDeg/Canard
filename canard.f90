@@ -5,7 +5,7 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : tmax, timo, ss,                           &
+   use mo_vars,       ONLY : timo, ss,                           &
                            & nrecs, nrecd,                  &
                            & nkrk, nk, ndt,                      &
                            & n, mbk,     &
@@ -45,6 +45,7 @@ program canard
    integer(kind=ni)    :: nbody
    real(kind=nr)       :: dts, dte
    real(kind=nr)       :: tsam
+   real(kind=nr)       :: tmax
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -58,7 +59,8 @@ program canard
 
 !===== INPUT PARAMETERS
 
-   call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, dto, tsam)
+   call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
+                    dto, tsam, tmax)
    call read_input_numerics
    call read_input_gcbc
     
@@ -282,7 +284,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp)
+         call extracon(p_domdcomp, tmax)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
