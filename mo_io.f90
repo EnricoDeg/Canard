@@ -9,7 +9,7 @@ MODULE mo_io
                            & mbk,   &
                            & n,                    &
                            & cnnode, cgrid, cdata,                    &
-                           & nrecd, ndt, &
+                           & nrecd, &
                            & dt, nrecs,              &
                            & varr, qa, vart
    use mo_grid,       ONLY : lio
@@ -160,10 +160,11 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
-   SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
-      real(kind=nr), intent(INOUT) :: dts, dte
-      real(kind=nr), intent(inout) :: timo
+   SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo, ndt)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
+      real(kind=nr), intent(INOUT)    :: dts, dte
+      real(kind=nr), intent(inout)    :: timo
+      integer(kind=ni), intent(inout) :: ndt
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
@@ -189,10 +190,11 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file(p_domdcomp, dts, dte, timo)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
-      real(kind=nr), intent(INOUT) :: dts, dte
-      real(kind=nr), intent(inout) :: timo
+   SUBROUTINE write_restart_file(p_domdcomp, dts, dte, timo, ndt)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
+      real(kind=nr), intent(INOUT)    :: dts, dte
+      real(kind=nr), intent(inout)    :: timo
+      integer(kind=ni), intent(inout) :: ndt
       integer(kind=ni) :: lp, i, j, k, lq, l
 
       if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
