@@ -10,7 +10,6 @@ module mo_numerics
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send, myid
-   use mo_vars,       ONLY : lim
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private
@@ -110,9 +109,10 @@ module mo_numerics
 
    END SUBROUTINE init_extracoeff_bounds
 
-   SUBROUTINE init_penta(lxik, letk, lzek, nbck)
+   SUBROUTINE init_penta(lxik, letk, lzek, nbck, lim)
       integer(kind=ni), intent(in) :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,0:1) :: nbck
+      integer(kind=ni), intent(in) :: lim
       integer(kind=ni) :: nnk, ipk, istart, iend
       integer(kind=ni) :: nstart, nend, npk
 
@@ -141,21 +141,22 @@ module mo_numerics
          end do
          nstart = ndf(nnk,0,0)
          nend   = ndf(nnk,1,0)
-         call penta(xu(:,:), xl(:,:), istart, iend, nstart, nend, 0)
+         call penta(xu(:,:), xl(:,:), istart, iend, nstart, nend, 0, lim)
          nstart = ndf(nnk,0,1)
          nend   = ndf(nnk,1,1)
-         call penta(yu(:,:), yl(:,:), istart, iend, nstart, nend, 1)
+         call penta(yu(:,:), yl(:,:), istart, iend, nstart, nend, 1, lim)
       end do
   
    END SUBROUTINE init_penta
 
 !===== SUBROUTINE FOR CHOLESKY DECOMPOSITION OF PENTADIAGONAL MATRICES
 
-   subroutine penta(xu,xl,is,ie,ns,ne,nt)
+   subroutine penta(xu,xl,is,ie,ns,ne,nt,lim)
 
       integer(kind=ni),intent(in) :: is,ie,ns,ne,nt
       real(kind=nr),dimension(0:lim,3),intent(inout) :: xu
       real(kind=nr),dimension(0:lim,2),intent(inout) :: xl
+      integer(kind=ni), intent(in) :: lim
       real(kind=nr),dimension(-2:2,0:2,0:1) :: albe
       real(kind=nr) :: alpho,beto
       integer(kind=ni) :: iik

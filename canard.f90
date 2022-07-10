@@ -8,7 +8,6 @@ program canard
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
                            & n, mbk,     &
-                           & lim,                               &
                            & dt, cdata, varr,             &
                            & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qo, qa, qb, de,    &
@@ -49,6 +48,7 @@ program canard
    real(kind=nr)       :: timo
    integer(kind=ni)    :: ndt
    integer(kind=ni)    :: nk
+   integer(kind=ni)    :: lim
    real(kind=nr), dimension(:), allocatable :: times
 
 !===== PREPARATION FOR PARALLEL COMPUTING
@@ -100,7 +100,7 @@ program canard
 
 !===== PENTADIAGONAL MATRICES FOR DIFFERENCING & FILETERING
 
-   call init_penta(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc)
+   call init_penta(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 

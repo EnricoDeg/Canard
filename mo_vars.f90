@@ -21,7 +21,7 @@ module mo_vars
    real(kind=ieee32),dimension(:),allocatable :: varr,vart,vmean
 
 !===== CONSTANT-SIZED MAIN VARIABLES
-   integer(kind=ni) :: lim,nrecs,nrecd
+   integer(kind=ni) :: nrecs,nrecd
    integer(kind=ni) :: mbk, n, mq
 
    real(kind=nr),dimension(5,5) :: xt
