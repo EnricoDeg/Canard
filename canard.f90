@@ -9,7 +9,7 @@ program canard
                            & nrecs, nrecd,                  &
                            & mbk,     &
                            & cdata, varr,             &
-                           & vart, vmean, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
+                           & vart, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qa, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
                            & lpos
@@ -51,9 +51,10 @@ program canard
    integer(kind=ni)    :: lim
    integer(kind=ni)    :: n
    real(kind=nr)       :: dt
-   real(kind=nr), dimension(:), allocatable   :: times
-   real(kind=nr), dimension(:,:), allocatable :: qo
-   real(kind=nr), dimension(:,:), allocatable :: qb
+   real(kind=nr), dimension(:), allocatable     :: times
+   real(kind=nr), dimension(:,:), allocatable   :: qo
+   real(kind=nr), dimension(:,:), allocatable   :: qb
+   real(kind=ieee32), dimension(:), allocatable :: vmean
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
