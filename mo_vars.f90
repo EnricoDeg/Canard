@@ -10,7 +10,7 @@ module mo_vars
 !===== ALLOCATABLE MAIN ARRAYS
    integer(kind=ni),dimension(:),allocatable :: lpos
 
-   real(kind=nr),dimension(:,:),allocatable :: qa,qb,de
+   real(kind=nr),dimension(:,:),allocatable :: qa,de
    real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx
    real(kind=nr),dimension(:),allocatable :: hxx,hyy,hzz
 
@@ -38,7 +38,7 @@ module mo_vars
       integer(kind=ni), intent(IN)               :: lmx
       integer(kind=ni), dimension(3), intent(IN) :: nbsize
 
-      allocate(qa(0:lmx,5),qb(0:lmx,5),de(0:lmx,5))
+      allocate(qa(0:lmx,5),de(0:lmx,5))
       allocate(rr(0:lmx,3),ss(0:lmx,3))
       allocate(p(0:lmx),varr(0:lmx))
 
