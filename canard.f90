@@ -428,7 +428,7 @@ program canard
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
 
-         call write_output_file(p_domdcomp, ndata, times, vart, nlmx)
+         call write_output_file(p_domdcomp, ndata, times, nlmx, vart)
 
 !-----
       end if

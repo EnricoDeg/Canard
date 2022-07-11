@@ -225,12 +225,12 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file(p_domdcomp, ndata, times, vart, nlmx)
+   SUBROUTINE write_output_file(p_domdcomp, ndata, times, nlmx, vart)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
-      real(kind=ieee32), dimension(0:nlmx), intent(inout) :: vart
       integer(kind=int64), intent(in) :: nlmx
+      real(kind=ieee32), dimension(0:nlmx), intent(inout) :: vart
       integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
