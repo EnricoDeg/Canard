@@ -9,7 +9,7 @@ program canard
                            & nrecs, nrecd,                  &
                            & mbk,     &
                            & cdata, varr,             &
-                           & vart, txx, tyy, tzz, txy, tyz, tzx, hxx,       &
+                           & txx, tyy, tzz, txy, tyz, tzx, hxx,       &
                            & hyy, hzz, qa, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
                            & lpos
@@ -55,6 +55,7 @@ program canard
    real(kind=nr), dimension(:,:), allocatable   :: qo
    real(kind=nr), dimension(:,:), allocatable   :: qb
    real(kind=ieee32), dimension(:), allocatable :: vmean
+   real(kind=ieee32),dimension(:),allocatable   :: vart
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -427,7 +428,7 @@ program canard
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
 
-         call write_output_file(p_domdcomp, ndata, times)
+         call write_output_file(p_domdcomp, ndata, times, vart, nlmx)
 
 !-----
       end if

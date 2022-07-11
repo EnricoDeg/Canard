@@ -10,7 +10,7 @@ MODULE mo_io
                            & cnnode, cgrid, cdata,                    &
                            & nrecd, &
                            & nrecs,              &
-                           & varr, qa, vart
+                           & varr, qa
    use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
@@ -225,10 +225,12 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file(p_domdcomp, ndata, times)
+   SUBROUTINE write_output_file(p_domdcomp, ndata, times, vart, nlmx)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
+      real(kind=ieee32), dimension(0:nlmx), intent(inout) :: vart
+      integer(kind=int64), intent(in) :: nlmx
       integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
