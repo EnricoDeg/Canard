@@ -18,7 +18,7 @@ MODULE mo_grid
    integer(kind=ni), public, dimension(:,:),   allocatable          :: lio
    real(kind=nr),    public, dimension(:),     allocatable          :: yaco
    real(kind=nr),    public, dimension(:,:),   allocatable          :: xim, etm, zem
-   real(kind=nr),    public, dimension(:,:,:), allocatable, target  :: cm1, cm2, cm3
+   real(kind=nr),    public, dimension(:,:,:), pointer  :: cm1, cm2, cm3
 
    CONTAINS
 
