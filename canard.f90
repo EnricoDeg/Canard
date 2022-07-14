@@ -27,8 +27,7 @@ program canard
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
                            & extracon, wall_condition_update, average_surface,     &
                            & read_input_gcbc
-   use mo_numerics,   ONLY : allocate_numerics, init_extracoeff_bounds,            &
-                           & init_penta, mpigo, filte, read_input_numerics
+   use mo_numerics,   ONLY : t_numerics
    use mo_physics,    ONLY : init_physics, initialo, movef,                        &
                            & calc_viscous_shear_stress, calc_fluxes
    implicit none
@@ -37,6 +36,7 @@ program canard
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
    integer(kind=int64) :: nlmx
    type(t_domdcomp)    :: p_domdcomp
+   type(t_numerics)    :: p_numerics
    integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
@@ -70,7 +70,7 @@ program canard
 
    call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
                     dto, tsam, tmax, nkrk)
-   call read_input_numerics
+   call p_numerics%read()
    call read_input_gcbc
     
    call init_physics
@@ -98,23 +98,23 @@ program canard
 !===== ALLOCATION OF MAIN ARRAYS
 
    call allocate_memory(p_domdcomp%lmx, p_domdcomp%nbsize)
-   call allocate_numerics(lim, p_domdcomp%nbsize)
+   call p_numerics%allocate(lim, p_domdcomp%nbsize)
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
-   call init_extracoeff_bounds
+   call p_numerics%init_extra
 
 !===== PENTADIAGONAL MATRICES FOR DIFFERENCING & FILETERING
 
-   call init_penta(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
+   call p_numerics%init(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 
    call allocate_grid(p_domdcomp)
    call calc_grid(p_domdcomp, ss)
-   call calc_grid_metrics(p_domdcomp, ss)
+   call calc_grid_metrics(p_domdcomp, p_numerics, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC
 
@@ -182,20 +182,20 @@ program canard
 !----- FILTERING & RE-INITIALISING
 
       do m=1,5
-         call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+         call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+1, &
                              p_domdcomp%lxi, p_domdcomp%let)
-         call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+         call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                              p_domdcomp%lze, p_domdcomp%ijk, 1)
-         call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+         call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+2, &
                              p_domdcomp%lxi, p_domdcomp%let)
-         call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+         call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                              p_domdcomp%lze, p_domdcomp%ijk, 2)
-         call mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+         call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+3, &
                              p_domdcomp%lxi, p_domdcomp%let)
-         call filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+         call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                              p_domdcomp%lze, p_domdcomp%ijk, 3)
       end do
       qo(:,:)=qa(:,:)
@@ -260,21 +260,21 @@ program canard
             end if
          end if
 
-         call calc_viscous_shear_stress(p_domdcomp)
+         call calc_viscous_shear_stress(p_domdcomp, p_numerics)
 
-         call calc_fluxes(p_domdcomp)
+         call calc_fluxes(p_domdcomp, p_numerics)
 
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup(p_domdcomp)
+         call gcbc_setup(p_domdcomp, p_numerics)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
-         call gcbc_comm(p_domdcomp)
+         call gcbc_comm(p_domdcomp, p_numerics)
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, nkrk, dt)
+         call gcbc_update(p_domdcomp, p_numerics, nkrk, dt)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -309,7 +309,7 @@ program canard
 
 !----- INTERFACE SURFACE AVERAGING
 
-         call average_surface(p_domdcomp)
+         call average_surface(p_domdcomp, p_numerics)
 
 !-------------------------------
 !----- END OF RUNGE-KUTTA STAGES

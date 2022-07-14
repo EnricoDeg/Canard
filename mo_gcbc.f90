@@ -13,7 +13,7 @@ MODULE mo_gcbc
                            & srefp1dre, tyy, srefoo, nrecs, &
                            & cnnode, cdata, hv2, aoi,  &
                            & de, dudtmf, varr
-   use mo_numerics,   ONLY : drva1, drva2, drva3, drva
+   use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
@@ -135,22 +135,24 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_init
 
-   SUBROUTINE gcbc_setup(p_domdcomp)
+   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_numerics), intent(INOUT) :: p_numerics
       integer(kind=ni) :: nn, np, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: ra0, ra1
       real(kind=nr), dimension(:,:,:), pointer :: cm
+      real(kind=nr), dimension(:,:,:), pointer :: drva
 
       do nn=1,3
          select case(nn)
          case(1)
-            drva => drva1
+            drva => p_numerics%drva1
             cm   => cm1
          case(2)
-            drva => drva2
+            drva => p_numerics%drva2
             cm   => cm2
          case(3)
-            drva => drva3
+            drva => p_numerics%drva3
             cm   => cm3
          end select
          do ip=0,1
@@ -176,22 +178,24 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_setup
 
-   SUBROUTINE gcbc_comm(p_domdcomp)
+   SUBROUTINE gcbc_comm(p_domdcomp, p_numerics)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_numerics), intent(inout) :: p_numerics
       integer(kind=ni) :: nn, np, ip, iq, itag
+      real(kind=nr), dimension(:,:,:), pointer :: drva
 
       call p_null_req
       itag = 30
       do nn=1,3
          select case(nn)
          case(1)
-            drva => drva1
+            drva => p_numerics%drva1
             drvb => drvb1
          case(2)
-            drva => drva2
+            drva => p_numerics%drva2
             drvb => drvb2
          case(3)
-            drva => drva3
+            drva => p_numerics%drva3
             drvb => drvb3
          end select
          do ip=0,1
@@ -209,28 +213,30 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_comm
 
-   SUBROUTINE gcbc_update(p_domdcomp, nkrk, dt)
+   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, nkrk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_numerics), intent(inout) :: p_numerics
       integer(kind=ni), intent(in) :: nkrk
       real(kind=nr),    intent(in) :: dt
       integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k
       integer(kind=ni) :: jk, kp
       real(kind=nr)    :: ra0, dtwi
       real(kind=nr), dimension(:,:,:), pointer :: cm
+      real(kind=nr), dimension(:,:,:), pointer :: drva
 
       ll = -1
       do nn=1,3
          select case(nn)
          case(1)
-            drva => drva1
+            drva => p_numerics%drva1
             drvb => drvb1
             cm   => cm1
          case(2)
-            drva => drva2
+            drva => p_numerics%drva2
             drvb => drvb2
             cm   => cm2
          case(3)
-            drva => drva3
+            drva => p_numerics%drva3
             drvb => drvb3
             cm   => cm3
          end select
@@ -321,23 +327,25 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_update
 
-   SUBROUTINE average_surface(p_domdcomp)
+   SUBROUTINE average_surface(p_domdcomp, p_numerics)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_numerics), intent(inout) :: p_numerics
       integer(kind=ni) :: nn, np, l, ip, iq, i, j, k, jk, kp
       integer(kind=ni) :: itag
+      real(kind=nr), dimension(:,:,:), pointer :: drva
 
       call p_null_req
       itag = 30
       do nn=1,3
          select case(nn)
          case(1)
-            drva => drva1
+            drva => p_numerics%drva1
             drvb => drvb1
          case(2)
-            drva => drva2
+            drva => p_numerics%drva2
             drvb => drvb2
          case(3)
-            drva => drva3
+            drva => p_numerics%drva3
             drvb => drvb3
          end select
          do ip=0,1

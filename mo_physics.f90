@@ -13,7 +13,7 @@ MODULE mo_physics
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_numerics,   ONLY : mpigo, deriv
+   use mo_numerics,   ONLY : t_numerics
    implicit none
    public
 
@@ -107,22 +107,23 @@ MODULE mo_physics
 
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
 
-   subroutine calc_viscous_shear_stress(p_domdcomp)
+   subroutine calc_viscous_shear_stress(p_domdcomp, p_numerics)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_numerics), intent(inout) :: p_numerics
       integer(kind=ni) :: m
 #ifdef VISCOUS
       de(:,1) = ss(:,1)
 
       rr(:,1) = de(:,2)
       m = 2
-      call mpigo(rr(:,1), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+      call p_numerics%mpigo(rr(:,1), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                           p_domdcomp%mcd, p_domdcomp%nbsize, 0, n45no, m, &
                           p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr(:,1), rr(:,3), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+      call p_numerics%deriv(rr(:,1), rr(:,3), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 3, m)
-      call deriv(rr(:,1), rr(:,2), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+      call p_numerics%deriv(rr(:,1), rr(:,2), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 2, m)
-      call deriv(rr(:,1), rr(:,1), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+      call p_numerics%deriv(rr(:,1), rr(:,1), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 1, m)
       txx(:) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
       hzz(:) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
@@ -130,14 +131,14 @@ MODULE mo_physics
 
       rr(:,1) = de(:,3)
       m = 3
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
                      p_domdcomp%ijk, 2, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       txy(:) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
       tyy(:) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
@@ -145,14 +146,14 @@ MODULE mo_physics
 
       rr(:,1) = de(:,4)
       m = 4
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       hyy(:) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
       tyz(:) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
@@ -160,14 +161,14 @@ MODULE mo_physics
 
       rr(:,1) = de(:,5)
       m = 5
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, & 
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       ss(:,1) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
       ss(:,2) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
@@ -192,8 +193,9 @@ MODULE mo_physics
 
 !===== CALCULATION OF FLUX DERIVATIVES
 
-   subroutine calc_fluxes(p_domdcomp)
+   subroutine calc_fluxes(p_domdcomp, p_numerics)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_numerics), intent(inout) :: p_numerics
       integer(kind=ni) :: m
 
       rr(:,1) = de(:,2) + umf(1)
@@ -207,14 +209,14 @@ MODULE mo_physics
       rr(:,2) = qa(:,1) * ss(:,2)
       rr(:,3) = qa(:,1) * ss(:,3)
       m = 1
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 2, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
@@ -227,14 +229,14 @@ MODULE mo_physics
       rr(:,3) = rr(:,3) - zem(:,1) * txx(:) - zem(:,2) * txy(:) - zem(:,3) * tzx(:)
 #endif
       m = 2
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 2, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
@@ -247,14 +249,14 @@ MODULE mo_physics
       rr(:,3) = rr(:,3) - zem(:,1) * txy(:) - zem(:,2) * tyy(:) - zem(:,3) * tyz(:)
 #endif
       m = 3
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 2, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
@@ -267,14 +269,14 @@ MODULE mo_physics
       rr(:,3) = rr(:,3) - zem(:,1) * tzx(:) - zem(:,2) * tyz(:) - zem(:,3) * tzz(:)
 #endif
       m = 4
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 2, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
@@ -291,14 +293,14 @@ MODULE mo_physics
       rr(:,3) = rr(:,3) - zem(:,1) * hxx(:) - zem(:,2) * hyy(:) - zem(:,3) * hzz(:)
 #endif
       m = 5
-      call mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
                      p_domdcomp%lxi, p_domdcomp%let)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 2, m)
-      call deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
