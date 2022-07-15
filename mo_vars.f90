@@ -10,13 +10,11 @@ module mo_vars
 !===== ALLOCATABLE MAIN ARRAYS
    integer(kind=ni),dimension(:),allocatable :: lpos
 
-   real(kind=nr),dimension(:,:),allocatable :: qa,de
-   real(kind=nr),dimension(:),allocatable :: txx,tyy,tzz,txy,tyz,tzx
-   real(kind=nr),dimension(:),allocatable :: hxx,hyy,hzz
+   real(kind=nr),dimension(:,:),allocatable :: qa, de
 
    real(kind=nr),dimension(:),allocatable :: p
 
-   real(kind=nr),dimension(:,:),allocatable :: rr,ss
+   real(kind=nr),dimension(:,:),allocatable :: rr, ss
 
    real(kind=ieee32),dimension(:),allocatable :: varr
 
@@ -41,12 +39,6 @@ module mo_vars
       allocate(qa(0:lmx,5),de(0:lmx,5))
       allocate(rr(0:lmx,3),ss(0:lmx,3))
       allocate(p(0:lmx),varr(0:lmx))
-
-#ifdef VISCOUS
-         allocate(txx(0:lmx), tyy(0:lmx), tzz(0:lmx))
-         allocate(txy(0:lmx), tyz(0:lmx), tzx(0:lmx))
-         allocate(hxx(0:lmx), hyy(0:lmx), hzz(0:lmx))
-#endif
 
    END SUBROUTINE allocate_memory
 

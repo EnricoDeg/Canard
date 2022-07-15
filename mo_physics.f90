@@ -6,8 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr, txx, hzz, tzx,          &
-                           & txy, tyy, hxx, hyy, tzz, tyz,         &
+   use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr,           &
                            & p,       &
                            & ao, bo, hv2, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
@@ -17,13 +16,37 @@ MODULE mo_physics
    implicit none
    public
 
-   real(kind=nr) :: reoo,tempoo,amach1,amach2,amach3
+   real(kind=nr) :: reoo, tempoo, amach1, amach2, amach3
    real(kind=nr) :: amachoo
    real(kind=nr) :: timf
    integer(kind=ni), private :: nsmf
    real(kind=nr), dimension(3) :: uoo
 
+   real(kind=nr), dimension(:), allocatable :: txx, tyy, tzz, txy, tyz, tzx
+   real(kind=nr), dimension(:), allocatable :: hxx, hyy, hzz
+
    contains
+
+   subroutine allocate_physics_memory(lmx)
+      integer(kind=ni), intent(IN) :: lmx
+
+#ifdef VISCOUS
+      allocate(txx(0:lmx), tyy(0:lmx), tzz(0:lmx))
+      allocate(txy(0:lmx), tyz(0:lmx), tzx(0:lmx))
+      allocate(hxx(0:lmx), hyy(0:lmx), hzz(0:lmx))
+#endif
+
+   end subroutine allocate_physics_memory
+
+
+
+   subroutine deallocate_physics_memory
+
+#ifdef VISCOUS
+      deallocate(txx, tyy, tzz, txy, tyz, tzx, hxx, hyy, hzz)
+#endif
+
+   end subroutine deallocate_physics_memory
 
 !===== INITIALIZE PHYSICS
 

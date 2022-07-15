@@ -9,8 +9,7 @@ program canard
                            & nrecs, nrecd,                  &
                            & mbk,     &
                            & cdata, varr,             &
-                           & txx, tyy, tzz, txy, tyz, tzx, hxx,       &
-                           & hyy, hzz, qa, de,    &
+                           & qa, de,    &
                            & rr, umf, p, srefoo, srefp1dre,             &
                            & lpos
    use mo_grid,       ONLY : yaco, xim, etm, zem
@@ -29,7 +28,8 @@ program canard
                            & read_input_gcbc
    use mo_numerics,   ONLY : t_numerics
    use mo_physics,    ONLY : init_physics, initialo, movef,                        &
-                           & calc_viscous_shear_stress, calc_fluxes
+                           & calc_viscous_shear_stress, calc_fluxes,               &
+                           & allocate_physics_memory, deallocate_physics_memory
    implicit none
 
    integer(kind=ni)    :: m, nn, ll, nsigi, nout, lis, lie, l, ndati
@@ -98,6 +98,7 @@ program canard
 !===== ALLOCATION OF MAIN ARRAYS
 
    call allocate_memory(p_domdcomp%lmx, p_domdcomp%nbsize)
+   call allocate_physics_memory(p_domdcomp%lmx)
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
@@ -386,9 +387,9 @@ program canard
       end if
    else
       deallocate(qo,qa,qb,de,xim,etm,zem,rr,ss,p,yaco)
-#ifdef VISCOUS
-         deallocate(txx,tyy,tzz,txy,tyz,tzx,hxx,hyy,hzz)
-#endif
+
+      call deallocate_physics_memory
+
       if(tmax>=tsam) then
          nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
          ll=5*(p_domdcomp%lmx+1)-1
