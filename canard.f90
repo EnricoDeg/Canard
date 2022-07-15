@@ -10,8 +10,7 @@ program canard
                            & mbk,     &
                            & cdata, varr,             &
                            & qa, de,    &
-                           & rr, p, srefoo, srefp1dre,             &
-                           & lpos
+                           & rr, p, srefoo, srefp1dre
    use mo_physics,    ONLY : umf
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_vars,       ONLY : allocate_memory
@@ -19,7 +18,8 @@ program canard
                            & p_max
    use mo_io,         ONLY : read_inputo, allocate_io_memory, read_inputp,         &
                            & output_init, vminmax, read_restart_file,              &
-                           & write_restart_file, write_output_file
+                           & write_restart_file, write_output_file,                &
+                           & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid
    use mo_gridgen,    ONLY : nthick
@@ -61,8 +61,6 @@ program canard
 !===== PREPARATION FOR PARALLEL COMPUTING
 
    CALL p_start
-
-   allocate(lpos(0:mpro))
 
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
    inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
@@ -115,7 +113,8 @@ program canard
 !===== GRID INPUT & CALCULATION OF GRID METRICS
 
    call allocate_grid(p_domdcomp)
-   call calc_grid(p_domdcomp, ss)
+   call calc_grid(p_domdcomp)
+   call read_grid_parallel(p_domdcomp, ss)
    call calc_grid_metrics(p_domdcomp, p_numerics, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC

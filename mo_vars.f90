@@ -8,7 +8,6 @@ module mo_vars
    PUBLIC
 
 !===== ALLOCATABLE MAIN ARRAYS
-   integer(kind=ni),dimension(:),allocatable :: lpos
 
    real(kind=nr),dimension(:,:),allocatable :: qa, de
 

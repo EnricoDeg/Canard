@@ -6,7 +6,7 @@ MODULE mo_grid
    use mo_mpi,        ONLY : myid, p_barrier
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : n45go, n45no, nrone, one, three
-   use mo_vars,       ONLY : cgrid, mbk, nrecd, lpos
+   use mo_vars,       ONLY : cgrid, mbk, nrecd
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
    use mo_utils,      ONLY : indx3
@@ -35,10 +35,9 @@ MODULE mo_grid
 
    END SUBROUTINE allocate_grid
 
-   SUBROUTINE calc_grid(p_domdcomp, ssk)
+   SUBROUTINE calc_grid(p_domdcomp)
       type(t_domdcomp), intent(IN) :: p_domdcomp
-      real(kind=nr), intent(out) :: ssk(0:p_domdcomp%lmx,3)
-      integer(kind=ni) :: i, j, k, l, jk, kp, lq, jp, lp
+      integer(kind=ni) :: j, k, kp, jp
 
       do k=0,p_domdcomp%lze
          kp = k * ( p_domdcomp%leto + 1 ) * ( p_domdcomp%lxio + 1 )
@@ -49,24 +48,6 @@ MODULE mo_grid
       end do
       call makegrid(p_domdcomp%mb, p_domdcomp%lxio, p_domdcomp%leto, p_domdcomp%mo, mbk)
       call p_barrier
-
-      open(9,file=cgrid,access='direct',form='unformatted',recl=3*nrecd,status='old')
-      lp = lpos(myid)
-      do k=0,p_domdcomp%lze
-         do j=0,p_domdcomp%let
-            lq = lp + lio(j,k)
-            do i=0,p_domdcomp%lxi
-               l = indx3(i, j, k, 1, p_domdcomp%lxi, p_domdcomp%let)
-               read(9,rec=lq+i+1) ssk(l,:)
-            end do
-         end do
-      end do
-      close(9)
-      call p_barrier
-      if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
-         open(9,file=cgrid,status='old')
-         close(9,status='delete')
-      end if
 
    END SUBROUTINE calc_grid
 

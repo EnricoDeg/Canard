@@ -5,8 +5,7 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : lpos,             &
-                           & mbk,   &
+   use mo_vars,       ONLY : mbk,   &
                            & cnnode, cgrid, cdata,                    &
                            & nrecd, &
                            & nrecs,              &
@@ -35,7 +34,9 @@ MODULE mo_io
    integer(kind=ni),    private, dimension(0:4)              :: no
    real(kind=nr),       private, dimension(5)                :: cha, dha
    character(19),       private                              :: crestart
-   character(4),        private, dimension(:),allocatable    :: czonet
+   character(4),        private, dimension(:), allocatable   :: czonet
+
+   integer(kind=ni),    private, dimension(:), allocatable   :: lpos
 
    CONTAINS
 
@@ -92,6 +93,7 @@ MODULE mo_io
                ctecplt(-1:ndata),varm(0:1,0:mpro),  &
                varmin(ll),varmax(ll),cthead(0:mbk), &
                czonet(0:mbk),lhmb(0:mbk))
+      allocate(lpos(0:mpro))
    END SUBROUTINE allocate_io_memory
 
    SUBROUTINE output_init(p_domdcomp, ndata)
@@ -159,6 +161,31 @@ MODULE mo_io
       end do
 
    END SUBROUTINE output_init
+
+   SUBROUTINE read_grid_parallel(p_domdcomp, ssk)
+      type(t_domdcomp), intent(IN)  :: p_domdcomp
+      real(kind=nr),    intent(out) :: ssk(0:p_domdcomp%lmx,3)
+      integer(kind=ni) :: i, j, k, l, lq, lp
+
+      open(9,file=cgrid,access='direct',form='unformatted',recl=3*nrecd,status='old')
+      lp = lpos(myid)
+      do k=0,p_domdcomp%lze
+         do j=0,p_domdcomp%let
+            lq = lp + lio(j,k)
+            do i=0,p_domdcomp%lxi
+               l = indx3(i, j, k, 1, p_domdcomp%lxi, p_domdcomp%let)
+               read(9,rec=lq+i+1) ssk(l,:)
+            end do
+         end do
+      end do
+      close(9)
+      call p_barrier
+      if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
+         open(9,file=cgrid,status='old')
+         close(9,status='delete')
+      end if
+
+   END SUBROUTINE read_grid_parallel
 
    SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
