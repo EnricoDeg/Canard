@@ -7,11 +7,11 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : umf, p, qa, rr, ss, ao,   &
+   use mo_vars,       ONLY : p, qa, rr, ss, ao,   &
                            & srefp1dre, srefoo, nrecs, &
                            & cnnode, cdata, hv2, aoi,  &
-                           & de, dudtmf, varr
-   use mo_physics,    ONLY : txx, txy, tyy
+                           & de, varr
+   use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp

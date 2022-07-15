@@ -10,8 +10,9 @@ program canard
                            & mbk,     &
                            & cdata, varr,             &
                            & qa, de,    &
-                           & rr, umf, p, srefoo, srefp1dre,             &
+                           & rr, p, srefoo, srefp1dre,             &
                            & lpos
+   use mo_physics,    ONLY : umf
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &

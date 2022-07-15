@@ -6,7 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : qa, umf, dudtmf, de, ss, rr,           &
+   use mo_vars,       ONLY : qa, de, ss, rr,           &
                            & p,       &
                            & ao, bo, hv2, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
@@ -21,6 +21,7 @@ MODULE mo_physics
    real(kind=nr) :: timf
    integer(kind=ni), private :: nsmf
    real(kind=nr), dimension(3) :: uoo
+   real(kind=nr), dimension(3) :: umf, dudtmf
 
    real(kind=nr), dimension(:), allocatable :: txx, tyy, tzz, txy, tyz, tzx
    real(kind=nr), dimension(:), allocatable :: hxx, hyy, hzz
