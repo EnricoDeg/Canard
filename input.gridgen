@@ -1,7 +1,7 @@
 lxi0-1-2        100,100,100
 let0            100
 lze0            16
-nbody-nthick    1,0
+nthick          0
 smg-vr          0.0003e0,0.2e0
 doml0-l1-h      0.5e0,1.0e0,0.5e0
 span            0.1e0

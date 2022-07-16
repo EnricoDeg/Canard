@@ -16,13 +16,13 @@ program canard
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
-   use mo_io,         ONLY : read_inputo, allocate_io_memory, read_inputp,         &
+   use mo_io,         ONLY : read_inputo, allocate_io_memory,                      &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_file,                &
                            & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid
-   use mo_gridgen,    ONLY : nthick
+   use mo_gridgen,    ONLY : nthick, read_input_gridgen
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
                            & extracon, wall_condition_update, average_surface,     &
@@ -68,7 +68,7 @@ program canard
 !===== INPUT PARAMETERS
 
    call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
-                    dto, tsam, tmax, nkrk)
+                    dto, tsam, tmax, nkrk, nbody)
    call p_numerics%read()
    call read_input_gcbc
     
@@ -79,7 +79,7 @@ program canard
 
    call p_domdcomp%allocate(mbk,mpro)
 
-   call read_inputp(nbody)
+   call read_input_gridgen
    call read_input_sponge
 
    call p_domdcomp%read()

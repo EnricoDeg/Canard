@@ -15,14 +15,10 @@ MODULE mo_io
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
-   use mo_gridgen,    ONLY : domh, doml0, doml1, let0, lxi0, lxi1,          &
-                           & lxi2, lze0, nthick, skew, smg,         &
-                           & smgvr, span, spx, szth0, szth1, wlea,          &
-                           & wlew
+
    IMPLICIT NONE
    PUBLIC
 
-   integer(kind=ni),    private, dimension(:),   allocatable :: idsgnl, lsgnl
    integer(kind=int64), private, dimension(:),   allocatable :: lhmb
    real(kind=ieee32),   private, dimension(:,:), allocatable :: varm
    real(kind=ieee32),   private, dimension(:),   allocatable :: varmin, varmax
@@ -41,12 +37,13 @@ MODULE mo_io
    CONTAINS
 
    SUBROUTINE read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
-                          cfl, dto, tsam, tmax, nkrk)
+                          cfl, dto, tsam, tmax, nkrk, nbody)
       integer(kind=ni), intent(out) :: nts, nscrn, ndata, ndatafl, ndataav
       integer(kind=ni), intent(out) :: nrestart
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
       integer(kind=ni), intent(out) :: nkrk
+      integer(kind=ni), intent(out) :: nbody
       character(16) :: cinput
 
       open(9,file='inputo.dat',status='old')
@@ -59,30 +56,10 @@ MODULE mo_io
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,tsam
       read(9,*) cinput,dto
+      read(9,*) cinput,nbody
       close(9)
 
    END SUBROUTINE read_inputo
-
-   SUBROUTINE read_inputp(nbody)
-      integer(kind=ni), intent(out) :: nbody
-      character(16) :: cinput
-
-      open(9,file='inputp.dat',status='old')
-      read(9,*) cinput,lxi0,lxi1,lxi2
-      read(9,*) cinput,let0
-      read(9,*) cinput,lze0
-      read(9,*) cinput,nbody,nthick
-      read(9,*) cinput,smg,smgvr
-      read(9,*) cinput,doml0,doml1,domh
-      read(9,*) cinput,span
-      read(9,*) cinput,wlew,wlea
-      read(9,*) cinput,szth0,szth1
-      read(9,*) cinput,skew,spx
-      close(9)
-
-      allocate(idsgnl(0:lze0),lsgnl(0:lze0))
-
-   END SUBROUTINE read_inputp
 
    SUBROUTINE allocate_io_memory(ndata)
       integer(kind=ni), intent(in) :: ndata

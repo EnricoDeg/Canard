@@ -37,6 +37,26 @@ module mo_gridgen
 
    CONTAINS
 
+   SUBROUTINE read_input_gridgen
+      
+      character(16) :: cinput
+
+      open(9,file='input.gridgen',status='old')
+      read(9,*) cinput,lxi0,lxi1,lxi2
+      read(9,*) cinput,let0
+      read(9,*) cinput,lze0
+      read(9,*) cinput,nthick
+      read(9,*) cinput,smg,smgvr
+      read(9,*) cinput,doml0,doml1,domh
+      read(9,*) cinput,span
+      read(9,*) cinput,wlew,wlea
+      read(9,*) cinput,szth0,szth1
+      read(9,*) cinput,skew,spx
+      close(9)
+
+
+   END SUBROUTINE read_input_gridgen
+
 !===== GRID GENERATION
 
    subroutine makegrid(mb, lxio, leto, mo, nblocks)
