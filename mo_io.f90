@@ -5,11 +5,8 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : mbk,   &
-                           & cnnode, cgrid, cdata,                    &
-                           & nrecd, &
-                           & nrecs,              &
-                           & qa
+   use mo_vars,       ONLY : mbk, nrecd, nrecs, &
+                           & cnnode, cgrid, cdata
    use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
@@ -164,8 +161,9 @@ MODULE mo_io
 
    END SUBROUTINE read_grid_parallel
 
-   SUBROUTINE read_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt)
+   SUBROUTINE read_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
+      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
       real(kind=nr), intent(INOUT)    :: dts, dte
       real(kind=nr), intent(inout)    :: timo
       integer(kind=ni), intent(inout) :: ndt
@@ -196,8 +194,9 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt)
+   SUBROUTINE write_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
+      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
       real(kind=nr), intent(INOUT)    :: dts, dte
       real(kind=nr), intent(inout)    :: timo
       integer(kind=ni), intent(inout) :: ndt

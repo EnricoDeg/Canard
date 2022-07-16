@@ -9,7 +9,7 @@ program canard
                            & nrecs, nrecd,                  &
                            & mbk,     &
                            & cdata,             &
-                           & qa, de,    &
+                           & de,    &
                            & rr, p, srefoo, srefp1dre
    use mo_physics,    ONLY : umf
    use mo_grid,       ONLY : yaco, xim, etm, zem
@@ -55,6 +55,7 @@ program canard
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:,:), allocatable   :: qo
    real(kind=nr), dimension(:,:), allocatable   :: qb
+   real(kind=nr), dimension(:,:), allocatable   :: qa
    real(kind=ieee32), dimension(:), allocatable :: vmean
    real(kind=ieee32), dimension(:), allocatable :: vart
    real(kind=ieee32), dimension(:), allocatable :: varr
@@ -72,7 +73,7 @@ program canard
                     dto, tsam, tmax, nkrk, nbody)
    call p_numerics%read()
    call read_input_gcbc
-    
+
    call init_physics
 
    call allocate_io_memory(ndata)
@@ -102,6 +103,7 @@ program canard
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
+   allocate(qa(0:p_domdcomp%lmx,5))
    allocate(varr(0:p_domdcomp%lmx))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
@@ -156,9 +158,9 @@ program canard
       dts=zero
       dte=zero
       timo=zero
-      call initialo(p_domdcomp%lmx) ! use ss which contains grid data
+      call initialo(p_domdcomp%lmx, qa) ! use ss which contains grid data
    else
-      call read_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt) ! ss is not used
+      call read_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -265,11 +267,11 @@ program canard
 
          call calc_viscous_shear_stress(p_domdcomp, p_numerics)
 
-         call calc_fluxes(p_domdcomp, p_numerics)
+         call calc_fluxes(p_domdcomp, p_numerics, qa)
 
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup(p_domdcomp, p_numerics)
+         call gcbc_setup(p_domdcomp, p_numerics, qa)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
@@ -277,11 +279,11 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, p_numerics, nkrk, dt)
+         call gcbc_update(p_domdcomp, p_numerics, qa, nkrk, dt)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
-         call spongego
+         call spongego(p_domdcomp%lmx, qa)
 
 !----- UPDATING CONSERVATIVE VARIABLES
 
@@ -296,11 +298,11 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, varr, tmax, nkrk, timo, nk, dt)
+         call extracon(p_domdcomp, varr, qa, tmax, nkrk, timo, nk, dt)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
-         call wall_condition_update(p_domdcomp)
+         call wall_condition_update(p_domdcomp, qa)
 
 !----- POINT JUNCTION AVERAGING
 
@@ -312,7 +314,7 @@ program canard
 
 !----- INTERFACE SURFACE AVERAGING
 
-         call average_surface(p_domdcomp, p_numerics)
+         call average_surface(p_domdcomp, p_numerics, qa)
 
 !-------------------------------
 !----- END OF RUNGE-KUTTA STAGES
@@ -378,7 +380,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file(p_domdcomp, dts, dte, timo, ndt, n, dt)
+      call write_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE

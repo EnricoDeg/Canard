@@ -5,7 +5,7 @@
 MODULE mo_sponge
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : two, zero, pi, sml, one, half, hamhamm1
-   use mo_vars,       ONLY : de, ss, qa
+   use mo_vars,       ONLY : de, ss
    use mo_grid,       ONLY : yaco
    use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh
 
@@ -66,7 +66,9 @@ MODULE mo_sponge
 
  !===== SPONGE IMPLEMENTATION
 
-   subroutine spongego
+   subroutine spongego(lmx, qa)
+      integer(kind=ni), intent(in) :: lmx
+      real(kind=nr), dimension(0:lmx,5), intent(in) :: qa
       integer(kind=ni) :: l, ll
 
       do ll=0,lsz

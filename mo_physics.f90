@@ -6,7 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : qa, de, ss, rr,           &
+   use mo_vars,       ONLY : de, ss, rr,           &
                            & p,       &
                            & ao, bo, hv2, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
@@ -78,8 +78,9 @@ MODULE mo_physics
 
 !===== INITIAL CONDITIONS
 
-   subroutine initialo(lmx)
+   subroutine initialo(lmx, qa)
       integer(kind=ni), intent(in) :: lmx
+      real(kind=nr), dimension(0:lmx,5), intent(inout) :: qa
       real(kind=nr),dimension(3) :: vee
       real(kind=nr) :: radv, k1, k2
       integer(kind=ni) :: l
@@ -217,9 +218,10 @@ MODULE mo_physics
 
 !===== CALCULATION OF FLUX DERIVATIVES
 
-   subroutine calc_fluxes(p_domdcomp, p_numerics)
+   subroutine calc_fluxes(p_domdcomp, p_numerics, qa)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
+      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       integer(kind=ni) :: m
 
       rr(:,1) = de(:,2) + umf(1)
