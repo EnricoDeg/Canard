@@ -19,8 +19,7 @@ module mo_vars
    integer(kind=ni) :: nrecs,nrecd
    integer(kind=ni) :: mbk
 
-   real(kind=nr) :: aoo,srefoo,srefp1dre
-   real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
+   real(kind=nr) :: srefoo,srefp1dre
 
    CONTAINS
 

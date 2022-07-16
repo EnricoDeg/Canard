@@ -8,7 +8,6 @@ MODULE mo_physics
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
    use mo_vars,       ONLY : de, ss, rr,           &
                            & p,       &
-                           & ao, bo, hv2, sqrtrema, sqrtremai,       &
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -20,6 +19,7 @@ MODULE mo_physics
    real(kind=nr) :: amachoo
    real(kind=nr) :: timf
    integer(kind=ni), private :: nsmf
+   real(kind=nr), private :: sqrtrema, sqrtremai
    real(kind=nr), dimension(3) :: uoo
    real(kind=nr), dimension(3) :: umf, dudtmf
 
@@ -82,7 +82,7 @@ MODULE mo_physics
       integer(kind=ni), intent(in) :: lmx
       real(kind=nr), dimension(0:lmx,5), intent(inout) :: qa
       real(kind=nr),dimension(3) :: vee
-      real(kind=nr) :: radv, k1, k2
+      real(kind=nr) :: radv, k1, k2, bo, hv2, ao
       integer(kind=ni) :: l
 
       radv = 1.0

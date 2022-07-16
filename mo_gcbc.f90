@@ -7,10 +7,8 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : p, rr, ss, ao,   &
-                           & srefp1dre, srefoo, nrecs, &
-                           & hv2, aoi,  &
-                           & de
+   use mo_vars,       ONLY : p, rr, ss, &
+                           & srefp1dre, srefoo, nrecs, de
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf
    use mo_numerics,   ONLY : t_numerics
@@ -35,6 +33,7 @@ MODULE mo_gcbc
    integer(kind=ni), private  :: nextgcic
    real(kind=nr),    private, dimension(5,5) :: xt
    real(kind=nr),    private, dimension(5) :: cha, dha
+   real(kind=nr),    private :: aoi, hv2, ao
 
    private :: eleme, xtq2r, xtr2q
 
