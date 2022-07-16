@@ -5,9 +5,7 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : mbk, nrecd, nrecs, &
-                           & cnnode, cgrid, cdata
-   use mo_grid,       ONLY : lio
+   use mo_vars,       ONLY : mbk, nrecd, nrecs
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
@@ -28,8 +26,11 @@ MODULE mo_io
    real(kind=nr),       private, dimension(5)                :: cha, dha
    character(19),       private                              :: crestart
    character(4),        private, dimension(:), allocatable   :: czonet
-
    integer(kind=ni),    private, dimension(:), allocatable   :: lpos
+
+   character(5),  public :: cnnode
+   character(16), public :: cgrid
+   character(18), public :: cdata
 
    CONTAINS
 
@@ -136,9 +137,10 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
-   SUBROUTINE read_grid_parallel(p_domdcomp, ssk)
+   SUBROUTINE read_grid_parallel(p_domdcomp, ssk, lio)
       type(t_domdcomp), intent(IN)  :: p_domdcomp
       real(kind=nr),    intent(out) :: ssk(0:p_domdcomp%lmx,3)
+      integer(kind=ni), dimension(0:p_domdcomp%let,0:p_domdcomp%lze), intent(in) :: lio
       integer(kind=ni) :: i, j, k, l, lq, lp
 
       open(9,file=cgrid,access='direct',form='unformatted',recl=3*nrecd,status='old')
@@ -161,9 +163,10 @@ MODULE mo_io
 
    END SUBROUTINE read_grid_parallel
 
-   SUBROUTINE read_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt)
+   SUBROUTINE read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
+      integer(kind=ni), dimension(0:p_domdcomp%let,0:p_domdcomp%lze), intent(in) :: lio
       real(kind=nr), intent(INOUT)    :: dts, dte
       real(kind=nr), intent(inout)    :: timo
       integer(kind=ni), intent(inout) :: ndt
@@ -194,9 +197,10 @@ MODULE mo_io
 
    END SUBROUTINE read_restart_file
 
-   SUBROUTINE write_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt)
+   SUBROUTINE write_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
+      integer(kind=ni), dimension(0:p_domdcomp%let,0:p_domdcomp%lze), intent(in) :: lio
       real(kind=nr), intent(INOUT)    :: dts, dte
       real(kind=nr), intent(inout)    :: timo
       integer(kind=ni), intent(inout) :: ndt

@@ -6,7 +6,8 @@ MODULE mo_grid
    use mo_mpi,        ONLY : myid, p_barrier
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : n45go, n45no, nrone, one, three
-   use mo_vars,       ONLY : cgrid, mbk, nrecd
+   use mo_vars,       ONLY : mbk, nrecd
+   use mo_io,         ONLY : cgrid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
    use mo_utils,      ONLY : indx3
@@ -15,10 +16,9 @@ MODULE mo_grid
    IMPLICIT NONE
    PUBLIC
 
-   integer(kind=ni), public, dimension(:,:),   allocatable          :: lio
-   real(kind=nr),    public, dimension(:),     allocatable          :: yaco
-   real(kind=nr),    public, dimension(:,:),   allocatable          :: xim, etm, zem
-   real(kind=nr),    public, dimension(:,:,:), pointer  :: cm1, cm2, cm3
+   real(kind=nr),    public, dimension(:),     allocatable :: yaco
+   real(kind=nr),    public, dimension(:,:),   allocatable :: xim, etm, zem
+   real(kind=nr),    public, dimension(:,:,:), pointer     :: cm1, cm2, cm3
 
    CONTAINS
 
@@ -29,7 +29,7 @@ MODULE mo_grid
       ii = p_domdcomp%nbsize(1)-1
       jj = p_domdcomp%nbsize(2)-1
       kk = p_domdcomp%nbsize(3)-1
-      allocate(lio(0:p_domdcomp%let,0:p_domdcomp%lze), yaco(0:p_domdcomp%lmx))
+      allocate(yaco(0:p_domdcomp%lmx))
       allocate(cm1(0:ii,3,0:1), cm2(0:jj,3,0:1), cm3(0:kk,3,0:1))
       allocate(xim(0:p_domdcomp%lmx,3), etm(0:p_domdcomp%lmx,3), zem(0:p_domdcomp%lmx,3))
 
@@ -37,15 +37,7 @@ MODULE mo_grid
 
    SUBROUTINE calc_grid(p_domdcomp)
       type(t_domdcomp), intent(IN) :: p_domdcomp
-      integer(kind=ni) :: j, k, kp, jp
 
-      do k=0,p_domdcomp%lze
-         kp = k * ( p_domdcomp%leto + 1 ) * ( p_domdcomp%lxio + 1 )
-         do j=0,p_domdcomp%let
-            jp = j * ( p_domdcomp%lxio + 1 )
-            lio(j,k) = jp + kp
-         end do
-      end do
       call makegrid(p_domdcomp%mb, p_domdcomp%lxio, p_domdcomp%leto, p_domdcomp%mo, mbk)
       call p_barrier
 

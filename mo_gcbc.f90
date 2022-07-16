@@ -9,8 +9,9 @@ MODULE mo_gcbc
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : p, rr, ss, ao,   &
                            & srefp1dre, srefoo, nrecs, &
-                           & cnnode, cdata, hv2, aoi,  &
+                           & hv2, aoi,  &
                            & de
+   use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem

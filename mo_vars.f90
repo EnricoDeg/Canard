@@ -22,10 +22,6 @@ module mo_vars
    real(kind=nr) :: aoo,srefoo,srefp1dre
    real(kind=nr) :: hv2,ao,bo,aoi,sqrtrema,sqrtremai
 
-   character(5) :: cnnode
-   character(16) :: cgrid
-   character(18) :: cdata
-
    CONTAINS
 
    SUBROUTINE allocate_memory(lmx, nbsize)

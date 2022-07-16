@@ -8,9 +8,9 @@ program canard
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
                            & mbk,     &
-                           & cdata,             &
                            & de,    &
                            & rr, p, srefoo, srefp1dre
+   use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_vars,       ONLY : allocate_memory
@@ -52,6 +52,7 @@ program canard
    integer(kind=ni)    :: lim
    integer(kind=ni)    :: n
    real(kind=nr)       :: dt
+   integer(kind=ni)    :: j, k, kp, jp
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:,:), allocatable   :: qo
    real(kind=nr), dimension(:,:), allocatable   :: qb
@@ -59,6 +60,7 @@ program canard
    real(kind=ieee32), dimension(:), allocatable :: vmean
    real(kind=ieee32), dimension(:), allocatable :: vart
    real(kind=ieee32), dimension(:), allocatable :: varr
+   integer(kind=ni), dimension(:,:),   allocatable :: lio
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -115,10 +117,20 @@ program canard
    call p_numerics%init(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
 !===== GRID INPUT & CALCULATION OF GRID METRICS
-
+    
+   allocate(lio(0:p_domdcomp%let,0:p_domdcomp%lze))
    call allocate_grid(p_domdcomp)
+
+   do k=0,p_domdcomp%lze
+      kp = k * ( p_domdcomp%leto + 1 ) * ( p_domdcomp%lxio + 1 )
+      do j=0,p_domdcomp%let
+         jp = j * ( p_domdcomp%lxio + 1 )
+         lio(j,k) = jp + kp
+      end do
+   end do
+
    call calc_grid(p_domdcomp)
-   call read_grid_parallel(p_domdcomp, ss)
+   call read_grid_parallel(p_domdcomp, ss, lio)
    call calc_grid_metrics(p_domdcomp, p_numerics, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC
@@ -160,7 +172,7 @@ program canard
       timo=zero
       call initialo(p_domdcomp%lmx, qa) ! use ss which contains grid data
    else
-      call read_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt) ! ss is not used
+      call read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt) ! ss is not used
    end if
    qb(:,:)=zero
 
@@ -380,7 +392,7 @@ program canard
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
-      call write_restart_file(p_domdcomp, qa, dts, dte, timo, ndt, n, dt)
+      call write_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
    end if
 
 !===== POST-PROCESSING & GENERATING TECPLOT DATA FILE
