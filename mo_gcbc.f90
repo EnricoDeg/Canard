@@ -3,7 +3,7 @@
 !*****
 
 MODULE mo_gcbc
-   use mo_kind,       ONLY : ni, nr
+   use mo_kind,       ONLY : ni, nr, ieee32
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
