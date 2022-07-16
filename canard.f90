@@ -8,7 +8,7 @@ program canard
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
                            & mbk,     &
-                           & cdata, varr,             &
+                           & cdata,             &
                            & qa, de,    &
                            & rr, p, srefoo, srefp1dre
    use mo_physics,    ONLY : umf
@@ -56,7 +56,8 @@ program canard
    real(kind=nr), dimension(:,:), allocatable   :: qo
    real(kind=nr), dimension(:,:), allocatable   :: qb
    real(kind=ieee32), dimension(:), allocatable :: vmean
-   real(kind=ieee32),dimension(:),allocatable   :: vart
+   real(kind=ieee32), dimension(:), allocatable :: vart
+   real(kind=ieee32), dimension(:), allocatable :: varr
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -101,6 +102,7 @@ program canard
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
+   allocate(varr(0:p_domdcomp%lmx))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
@@ -137,7 +139,7 @@ program canard
    do nn=1,3
       varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
       write(0,rec=nn) varr(:)
-      call vminmax(p_domdcomp, nn)
+      call vminmax(p_domdcomp, varr, nn)
    end do
    close(0)
 
@@ -294,7 +296,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, tmax, nkrk, timo, nk, dt)
+         call extracon(p_domdcomp, varr, tmax, nkrk, timo, nk, dt)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
@@ -353,7 +355,7 @@ program canard
                end select
                nn=3+5*ndati+m
                write(0,rec=nn) varr(:)
-               call vminmax(p_domdcomp, nn)
+               call vminmax(p_domdcomp, varr, nn)
             end do
             close(0)
             dtsum=zero
@@ -422,7 +424,7 @@ program canard
                   nn=3+5*n+m
                   l=lis+(m-1)*(p_domdcomp%lmx+1)
                   varr(:)=vart(l:l+p_domdcomp%lmx)
-                  call vminmax(p_domdcomp, nn)
+                  call vminmax(p_domdcomp, varr, nn)
                end do
             end do
          end if

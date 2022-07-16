@@ -10,7 +10,7 @@ MODULE mo_gcbc
    use mo_vars,       ONLY : p, qa, rr, ss, ao,   &
                            & srefp1dre, srefoo, nrecs, &
                            & cnnode, cdata, hv2, aoi,  &
-                           & de, varr
+                           & de
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
@@ -438,8 +438,9 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, tmax, nkrk, timo, nk, dt)
+   subroutine extracon(p_domdcomp, varr, tmax, nkrk, timo, nk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      real(kind=ieee32), dimension(0:p_domdcomp%lmx), intent(inout) :: varr
       real(kind=nr), intent(in)    :: tmax
       integer(kind=ni), intent(in) :: nkrk
       real(kind=nr), intent(in)    :: timo

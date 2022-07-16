@@ -15,8 +15,6 @@ module mo_vars
 
    real(kind=nr),dimension(:,:),allocatable :: rr, ss
 
-   real(kind=ieee32),dimension(:),allocatable :: varr
-
 !===== CONSTANT-SIZED MAIN VARIABLES
    integer(kind=ni) :: nrecs,nrecd
    integer(kind=ni) :: mbk
@@ -36,7 +34,7 @@ module mo_vars
 
       allocate(qa(0:lmx,5),de(0:lmx,5))
       allocate(rr(0:lmx,3),ss(0:lmx,3))
-      allocate(p(0:lmx),varr(0:lmx))
+      allocate(p(0:lmx))
 
    END SUBROUTINE allocate_memory
 

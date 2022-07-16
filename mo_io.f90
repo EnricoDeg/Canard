@@ -9,7 +9,7 @@ MODULE mo_io
                            & cnnode, cgrid, cdata,                    &
                            & nrecd, &
                            & nrecs,              &
-                           & varr, qa
+                           & qa
    use mo_grid,       ONLY : lio
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
@@ -447,8 +447,9 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR FINDING VARIABLE MIN/MAX VALUES FOR TECPLOT DATA FILE
 
-   subroutine vminmax(p_domdcomp, nn)
+   subroutine vminmax(p_domdcomp, varr, nn)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      real(kind=ieee32), dimension(0:p_domdcomp%lmx), intent(in) :: varr
       integer(kind=ni),intent(in) :: nn
       integer(kind=ni) :: mp, mps, mpe, itag
 
