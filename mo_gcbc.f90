@@ -8,9 +8,9 @@ MODULE mo_gcbc
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : rr, ss, &
-                           & srefp1dre, srefoo, nrecs, de
+                           & nrecs, de
    use mo_io,         ONLY : cnnode, cdata
-   use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf
+   use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf, srefoo, srefp1dre
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp

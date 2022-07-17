@@ -6,8 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : de, ss, rr, &
-                           & srefoo, srefp1dre
+   use mo_vars,       ONLY : de, ss, rr
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
@@ -17,6 +16,7 @@ MODULE mo_physics
    real(kind=nr) :: reoo, tempoo, amach1, amach2, amach3
    real(kind=nr) :: amachoo
    real(kind=nr) :: timf
+   real(kind=nr) :: srefoo, srefp1dre
    integer(kind=ni), private :: nsmf
    real(kind=nr), private :: sqrtrema, sqrtremai
    real(kind=nr), dimension(3) :: uoo

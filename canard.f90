@@ -9,9 +9,9 @@ program canard
                            & nrecs, nrecd,                  &
                            & mbk,     &
                            & de,    &
-                           & rr, srefoo, srefp1dre
+                           & rr
    use mo_io,         ONLY : cdata
-   use mo_physics,    ONLY : umf
+   use mo_physics,    ONLY : umf, srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &

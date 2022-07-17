@@ -17,8 +17,6 @@ module mo_vars
    integer(kind=ni) :: nrecs,nrecd
    integer(kind=ni) :: mbk
 
-   real(kind=nr) :: srefoo,srefp1dre
-
    CONTAINS
 
    SUBROUTINE allocate_memory(lmx, nbsize)
