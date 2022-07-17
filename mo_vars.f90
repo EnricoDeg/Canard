@@ -8,9 +8,6 @@ module mo_vars
    PUBLIC
 
 !===== ALLOCATABLE MAIN ARRAYS
-
-   real(kind=nr),dimension(:,:),allocatable :: de
-
    real(kind=nr),dimension(:,:),allocatable :: rr, ss
 
 !===== CONSTANT-SIZED MAIN VARIABLES
@@ -23,7 +20,6 @@ module mo_vars
       integer(kind=ni), intent(IN)               :: lmx
       integer(kind=ni), dimension(3), intent(IN) :: nbsize
 
-      allocate(de(0:lmx,5))
       allocate(rr(0:lmx,3),ss(0:lmx,3))
 
    END SUBROUTINE allocate_memory

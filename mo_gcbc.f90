@@ -8,7 +8,7 @@ MODULE mo_gcbc
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : rr, ss, &
-                           & nrecs, de
+                           & nrecs
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf, srefoo, srefp1dre
    use mo_numerics,   ONLY : t_numerics
@@ -134,11 +134,12 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_init
 
-   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics, qa, p)
+   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics, qa, p, de)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_numerics), intent(INOUT) :: p_numerics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
+      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: de
       integer(kind=ni) :: nn, np, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: ra0, ra1
       real(kind=nr), dimension(:,:,:), pointer :: cm
@@ -214,11 +215,12 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_comm
 
-   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, qa, p, nkrk, dt)
+   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, qa, p, de, nkrk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
+      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       integer(kind=ni), intent(in) :: nkrk
       real(kind=nr),    intent(in) :: dt
       integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k

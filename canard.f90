@@ -8,7 +8,6 @@ program canard
    use mo_vars,       ONLY : ss,                           &
                            & nrecs, nrecd,                  &
                            & mbk,     &
-                           & de,    &
                            & rr
    use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf, srefoo, srefp1dre
@@ -58,6 +57,7 @@ program canard
    real(kind=nr), dimension(:,:), allocatable   :: qo
    real(kind=nr), dimension(:,:), allocatable   :: qb
    real(kind=nr), dimension(:,:), allocatable   :: qa
+   real(kind=nr), dimension(:,:), allocatable   :: de
    real(kind=ieee32), dimension(:), allocatable :: vmean
    real(kind=ieee32), dimension(:), allocatable :: vart
    real(kind=ieee32), dimension(:), allocatable :: varr
@@ -107,6 +107,7 @@ program canard
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
    allocate(qa(0:p_domdcomp%lmx,5))
+   allocate(de(0:p_domdcomp%lmx,5))
    allocate(varr(0:p_domdcomp%lmx))
    allocate(p(0:p_domdcomp%lmx))
 
@@ -161,7 +162,7 @@ program canard
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   call spongeup(p_domdcomp%lmx) ! use ss which contains grid data
+   call spongeup(p_domdcomp%lmx, de) ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
 
@@ -279,13 +280,13 @@ program canard
             end if
          end if
 
-         call calc_viscous_shear_stress(p_domdcomp, p_numerics)
+         call calc_viscous_shear_stress(p_domdcomp, p_numerics, de)
 
-         call calc_fluxes(p_domdcomp, p_numerics, qa, p)
+         call calc_fluxes(p_domdcomp, p_numerics, qa, p, de)
 
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup(p_domdcomp, p_numerics, qa, p)
+         call gcbc_setup(p_domdcomp, p_numerics, qa, p, de)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
@@ -293,11 +294,11 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, p_numerics, qa, p, nkrk, dt)
+         call gcbc_update(p_domdcomp, p_numerics, qa, p, de, nkrk, dt)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
-         call spongego(p_domdcomp%lmx, qa)
+         call spongego(p_domdcomp%lmx, qa, de)
 
 !----- UPDATING CONSERVATIVE VARIABLES
 
