@@ -11,8 +11,6 @@ module mo_vars
 
    real(kind=nr),dimension(:,:),allocatable :: de
 
-   real(kind=nr),dimension(:),allocatable :: p
-
    real(kind=nr),dimension(:,:),allocatable :: rr, ss
 
 !===== CONSTANT-SIZED MAIN VARIABLES
@@ -29,7 +27,6 @@ module mo_vars
 
       allocate(de(0:lmx,5))
       allocate(rr(0:lmx,3),ss(0:lmx,3))
-      allocate(p(0:lmx))
 
    END SUBROUTINE allocate_memory
 

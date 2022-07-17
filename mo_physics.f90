@@ -6,8 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : de, ss, rr,           &
-                           & p,       &
+   use mo_vars,       ONLY : de, ss, rr, &
                            & srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -218,10 +217,11 @@ MODULE mo_physics
 
 !===== CALCULATION OF FLUX DERIVATIVES
 
-   subroutine calc_fluxes(p_domdcomp, p_numerics, qa)
+   subroutine calc_fluxes(p_domdcomp, p_numerics, qa, p)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
+      real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       integer(kind=ni) :: m
 
       rr(:,1) = de(:,2) + umf(1)

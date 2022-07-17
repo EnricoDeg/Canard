@@ -9,7 +9,7 @@ program canard
                            & nrecs, nrecd,                  &
                            & mbk,     &
                            & de,    &
-                           & rr, p, srefoo, srefp1dre
+                           & rr, srefoo, srefp1dre
    use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf
    use mo_grid,       ONLY : yaco, xim, etm, zem
@@ -54,6 +54,7 @@ program canard
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
    real(kind=nr), dimension(:), allocatable     :: times
+   real(kind=nr), dimension(:), allocatable     :: p
    real(kind=nr), dimension(:,:), allocatable   :: qo
    real(kind=nr), dimension(:,:), allocatable   :: qb
    real(kind=nr), dimension(:,:), allocatable   :: qa
@@ -107,6 +108,7 @@ program canard
    allocate(qb(0:p_domdcomp%lmx,5))
    allocate(qa(0:p_domdcomp%lmx,5))
    allocate(varr(0:p_domdcomp%lmx))
+   allocate(p(0:p_domdcomp%lmx))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
 
@@ -279,11 +281,11 @@ program canard
 
          call calc_viscous_shear_stress(p_domdcomp, p_numerics)
 
-         call calc_fluxes(p_domdcomp, p_numerics, qa)
+         call calc_fluxes(p_domdcomp, p_numerics, qa, p)
 
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup(p_domdcomp, p_numerics, qa)
+         call gcbc_setup(p_domdcomp, p_numerics, qa, p)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
@@ -291,7 +293,7 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, p_numerics, qa, nkrk, dt)
+         call gcbc_update(p_domdcomp, p_numerics, qa, p, nkrk, dt)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -310,7 +312,7 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, varr, qa, tmax, nkrk, timo, nk, dt)
+         call extracon(p_domdcomp, varr, qa, p, tmax, nkrk, timo, nk, dt)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
