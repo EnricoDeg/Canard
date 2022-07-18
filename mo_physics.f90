@@ -6,7 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : ss, rr
+   use mo_vars,       ONLY : rr
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
@@ -77,9 +77,10 @@ MODULE mo_physics
 
 !===== INITIAL CONDITIONS
 
-   subroutine initialo(lmx, qa)
+   subroutine initialo(lmx, qa, ss)
       integer(kind=ni), intent(in) :: lmx
       real(kind=nr), dimension(0:lmx,5), intent(inout) :: qa
+      real(kind=nr), dimension(0:lmx,3), intent(in)    :: ss
       real(kind=nr),dimension(3) :: vee
       real(kind=nr) :: radv, k1, k2, bo, hv2, ao
       integer(kind=ni) :: l
@@ -131,13 +132,16 @@ MODULE mo_physics
 
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
 
-   subroutine calc_viscous_shear_stress(p_domdcomp, p_numerics, de)
+   subroutine calc_viscous_shear_stress(p_domdcomp, p_numerics, de, ssk)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
+      real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in)    :: ssk
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
+
       integer(kind=ni) :: m
 #ifdef VISCOUS
-      de(:,1) = ss(:,1)
+      de(:,1) = ssk(:)
 
       rr(:,1) = de(:,2)
       m = 2
@@ -224,6 +228,7 @@ MODULE mo_physics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       integer(kind=ni) :: m
 
       rr(:,1) = de(:,2) + umf(1)

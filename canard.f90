@@ -173,7 +173,7 @@ program canard
       dts=zero
       dte=zero
       timo=zero
-      call initialo(p_domdcomp%lmx, qa) ! use ss which contains grid data
+      call initialo(p_domdcomp%lmx, qa, ss) ! use ss which contains grid data
    else
       call read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt) ! ss is not used
    end if
@@ -280,7 +280,7 @@ program canard
             end if
          end if
 
-         call calc_viscous_shear_stress(p_domdcomp, p_numerics, de)
+         call calc_viscous_shear_stress(p_domdcomp, p_numerics, de, ss(:,1))
 
          call calc_fluxes(p_domdcomp, p_numerics, qa, p, de)
 
