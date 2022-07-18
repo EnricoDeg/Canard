@@ -162,7 +162,7 @@ program canard
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   call spongeup(p_domdcomp%lmx, de) ! use ss which contains grid data
+   call spongeup(p_domdcomp%lmx, de, ss) ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
 
