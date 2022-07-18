@@ -7,7 +7,7 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : rr, ss, &
+   use mo_vars,       ONLY : rr, &
                            & nrecs
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf, srefoo, srefp1dre
@@ -456,6 +456,8 @@ MODULE mo_gcbc
       real(kind=nr), intent(in)    :: timo
       integer(kind=ni), intent(in) :: nk
       real(kind=nr), intent(in)    :: dt
+
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       real(kind=nr),dimension(3) :: vee
       integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3
