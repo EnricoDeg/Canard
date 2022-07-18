@@ -6,7 +6,6 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_vars,       ONLY : rr
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
@@ -138,6 +137,7 @@ MODULE mo_physics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in)    :: ssk
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
 
       integer(kind=ni) :: m
 #ifdef VISCOUS
@@ -229,6 +229,7 @@ MODULE mo_physics
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
       integer(kind=ni) :: m
 
       rr(:,1) = de(:,2) + umf(1)
