@@ -11,7 +11,7 @@ program canard
    use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
-   use mo_io,         ONLY : read_inputo, allocate_io_memory,                      &
+   use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_file,                &
                            & read_grid_parallel
@@ -71,7 +71,7 @@ program canard
 
 !===== INPUT PARAMETERS
 
-   call read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
+   call read_input_main(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
                     dto, tsam, tmax, nkrk, nbody)
    call p_numerics%read()
    call read_input_gcbc

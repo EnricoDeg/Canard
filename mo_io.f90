@@ -34,7 +34,7 @@ MODULE mo_io
 
    CONTAINS
 
-   SUBROUTINE read_inputo(nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
+   SUBROUTINE read_input_main(nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
                           cfl, dto, tsam, tmax, nkrk, nbody)
       integer(kind=ni), intent(out) :: nts, nscrn, ndata, ndatafl, ndataav
       integer(kind=ni), intent(out) :: nrestart
@@ -44,7 +44,7 @@ MODULE mo_io
       integer(kind=ni), intent(out) :: nbody
       character(16) :: cinput
 
-      open(9,file='inputo.dat',status='old')
+      open(9,file='input.main',status='old')
       read(9,*) cinput,mbk
       read(9,*) cinput,nts
       read(9,*) cinput,nscrn
@@ -57,7 +57,7 @@ MODULE mo_io
       read(9,*) cinput,nbody
       close(9)
 
-   END SUBROUTINE read_inputo
+   END SUBROUTINE read_input_main
 
    SUBROUTINE allocate_io_memory(ndata)
       integer(kind=ni), intent(in) :: ndata
