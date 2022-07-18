@@ -7,8 +7,7 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : rr, &
-                           & nrecs
+   use mo_vars,       ONLY : nrecs
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf, srefoo, srefp1dre
    use mo_numerics,   ONLY : t_numerics
@@ -51,6 +50,8 @@ MODULE mo_gcbc
 
    SUBROUTINE gcbc_init(p_domdcomp)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
       integer(kind=ni) :: ii, jj, kk, nn, np, lq, ll, l, ip, iq
       integer(kind=ni) :: i, j, k
       real(kind=nr)    :: res, fctr
@@ -336,9 +337,11 @@ MODULE mo_gcbc
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
+
       integer(kind=ni) :: nn, np, l, ip, iq, i, j, k, jk, kp
       integer(kind=ni) :: itag
       real(kind=nr), dimension(:,:,:), pointer :: drva
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
 
       call p_null_req
       itag = 30
