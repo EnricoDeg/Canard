@@ -5,9 +5,7 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : ss,                           &
-                           & nrecs, nrecd,                  &
-                           & mbk,     &
+   use mo_vars,       ONLY : nrecs, nrecd, mbk, &
                            & rr
    use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf, srefoo, srefp1dre
@@ -58,6 +56,7 @@ program canard
    real(kind=nr), dimension(:,:), allocatable   :: qb
    real(kind=nr), dimension(:,:), allocatable   :: qa
    real(kind=nr), dimension(:,:), allocatable   :: de
+   real(kind=nr), dimension(:,:), allocatable   :: ss
    real(kind=ieee32), dimension(:), allocatable :: vmean
    real(kind=ieee32), dimension(:), allocatable :: vart
    real(kind=ieee32), dimension(:), allocatable :: varr
@@ -108,6 +107,7 @@ program canard
    allocate(qb(0:p_domdcomp%lmx,5))
    allocate(qa(0:p_domdcomp%lmx,5))
    allocate(de(0:p_domdcomp%lmx,5))
+   allocate(ss(0:p_domdcomp%lmx,3))
    allocate(varr(0:p_domdcomp%lmx))
    allocate(p(0:p_domdcomp%lmx))
 
