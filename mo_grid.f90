@@ -35,6 +35,12 @@ MODULE mo_grid
 
    END SUBROUTINE allocate_grid
 
+   SUBROUTINE deallocate_grid_memory
+
+      deallocate(xim,etm,zem,yaco)
+
+   END SUBROUTINE deallocate_grid_memory
+
    SUBROUTINE calc_grid(p_domdcomp)
       type(t_domdcomp), intent(IN) :: p_domdcomp
 

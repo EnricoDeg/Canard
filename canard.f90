@@ -18,7 +18,8 @@ program canard
                            & write_restart_file, write_output_file,                &
                            & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid
+   use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid,          &
+                           & deallocate_grid_memory
    use mo_gridgen,    ONLY : nthick, read_input_gridgen
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
@@ -405,8 +406,8 @@ program canard
          write(*,*) "Overflow."
       end if
    else
-      deallocate(qo,qa,qb,de,xim,etm,zem,rr,ss,p,yaco)
-
+      deallocate(qo,qa,qb,de,rr,ss,p)
+      call deallocate_grid_memory
       call deallocate_physics_memory
 
       if(tmax>=tsam) then
