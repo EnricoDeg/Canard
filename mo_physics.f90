@@ -49,7 +49,7 @@ MODULE mo_physics
 
 !===== INITIALIZE PHYSICS
 
-   subroutine init_physics
+   subroutine read_input_physics
       character(16) :: cinput
 
       open(9,file='input.physics',status='old')
@@ -72,7 +72,7 @@ MODULE mo_physics
       sqrtremai = one / max( sqrtrema, sml )
       uoo(:)    = (/ amach1, amach2, amach3 /)
 
-   end subroutine init_physics
+   end subroutine read_input_physics
 
 !===== INITIAL CONDITIONS
 

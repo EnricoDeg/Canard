@@ -24,12 +24,12 @@ program canard
                            & extracon, wall_condition_update, average_surface,     &
                            & read_input_gcbc
    use mo_numerics,   ONLY : t_numerics
-   use mo_physics,    ONLY : init_physics, initialo, movef,                        &
+   use mo_physics,    ONLY : read_input_physics, initialo, movef,                  &
                            & calc_viscous_shear_stress, calc_fluxes,               &
                            & allocate_physics_memory, deallocate_physics_memory
    implicit none
 
-   integer(kind=ni)    :: m, nn, ll, nsigi, nout, lis, lie, l, ndati
+   integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
    integer(kind=int64) :: nlmx
    type(t_domdcomp)    :: p_domdcomp
@@ -73,35 +73,37 @@ program canard
 
    call read_input_main(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
                     dto, tsam, tmax, nkrk, nbody)
+
    call p_numerics%read()
+
    call read_input_gcbc
 
-   call init_physics
-
-   call allocate_io_memory(ndata)
-   allocate(times(0:ndata))
-
-   call p_domdcomp%allocate(mbk,mpro)
+   call read_input_physics
 
    call read_input_gridgen
+   
    call read_input_sponge
 
+   call p_domdcomp%allocate(mbk,mpro)
    call p_domdcomp%read()
 
-!===== DOMAIN DECOMPOSITION / BOUNDARY INFORMATION / SUBDOMAIN SIZES
+!===== DOMAIN DECOMPOSITION INITIALIZATION
 
    call p_domdcomp%init(mbk, nthick, nbody)
-
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
+   call allocate_io_memory(ndata)
    call output_init(p_domdcomp, ndata)
 
 !===== ALLOCATION OF MAIN ARRAYS
 
    call allocate_physics_memory(p_domdcomp%lmx)
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
+
+   ! main program local arrays
+   allocate(times(0:ndata))
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
    allocate(qa(0:p_domdcomp%lmx,5))
@@ -111,15 +113,15 @@ program canard
    allocate(varr(0:p_domdcomp%lmx))
    allocate(p(0:p_domdcomp%lmx))
 
-!===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES
+!===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES INITIALIZATION
 
    call p_numerics%init_extra
 
-!===== PENTADIAGONAL MATRICES FOR DIFFERENCING & FILETERING
+!===== PENTADIAGONAL MATRICES INITIALIZATION
 
    call p_numerics%init(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
-!===== GRID INPUT & CALCULATION OF GRID METRICS
+!===== GRID GENERATION & CALCULATION OF GRID METRICS
     
    allocate(lio(0:p_domdcomp%let,0:p_domdcomp%lze))
    call allocate_grid(p_domdcomp)
@@ -136,7 +138,7 @@ program canard
    call read_grid_parallel(p_domdcomp, ss, lio)
    call calc_grid_metrics(p_domdcomp, p_numerics, ss)
 
-!===== EXTRA COEFFICIENTS FOR GCBC/GCIC
+!===== EXTRA COEFFICIENTS FOR GCBC/GCIC INITIALIZATION
 
    call gcbc_init(p_domdcomp)
 
@@ -183,14 +185,9 @@ program canard
 !===== BEGINNING OF TIME MARCHING IN SOLUTION
 !============================================
 
-   if(myid==0) then
-      open(1,file='signal.dat',access='direct',form='formatted',recl=16,status='replace')
-      close(1)
-   end if
    call p_barrier
 
    ndati=-1
-   nsigi=-1
    dtsum=zero
    
    do while(timo<tmax.and.(dt/=zero.or.n<=2))
