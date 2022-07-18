@@ -5,12 +5,10 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : nrecs, nrecd, mbk, &
-                           & rr
+   use mo_vars,       ONLY : nrecs, nrecd, mbk
    use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf, srefoo, srefp1dre
    use mo_grid,       ONLY : yaco, xim, etm, zem
-   use mo_vars,       ONLY : allocate_memory
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
    use mo_io,         ONLY : read_inputo, allocate_io_memory,                      &
@@ -58,6 +56,7 @@ program canard
    real(kind=nr), dimension(:,:), allocatable   :: qa
    real(kind=nr), dimension(:,:), allocatable   :: de
    real(kind=nr), dimension(:,:), allocatable   :: ss
+   real(kind=nr), dimension(:,:), allocatable   :: rr
    real(kind=ieee32), dimension(:), allocatable :: vmean
    real(kind=ieee32), dimension(:), allocatable :: vart
    real(kind=ieee32), dimension(:), allocatable :: varr
@@ -101,7 +100,6 @@ program canard
 
 !===== ALLOCATION OF MAIN ARRAYS
 
-   call allocate_memory(p_domdcomp%lmx, p_domdcomp%nbsize)
    call allocate_physics_memory(p_domdcomp%lmx)
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
    allocate(qo(0:p_domdcomp%lmx,5))
@@ -109,6 +107,7 @@ program canard
    allocate(qa(0:p_domdcomp%lmx,5))
    allocate(de(0:p_domdcomp%lmx,5))
    allocate(ss(0:p_domdcomp%lmx,3))
+   allocate(rr(0:p_domdcomp%lmx,3))
    allocate(varr(0:p_domdcomp%lmx))
    allocate(p(0:p_domdcomp%lmx))
 
