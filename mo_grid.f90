@@ -11,7 +11,6 @@ MODULE mo_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
    use mo_utils,      ONLY : indx3
-   use mo_gridgen,    ONLY : makegrid
    
    IMPLICIT NONE
    PUBLIC
@@ -40,14 +39,6 @@ MODULE mo_grid
       deallocate(xim,etm,zem,yaco)
 
    END SUBROUTINE deallocate_grid_memory
-
-   SUBROUTINE calc_grid(p_domdcomp)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
-
-      call makegrid(p_domdcomp%mb, p_domdcomp%lxio, p_domdcomp%leto, p_domdcomp%mo, mbk)
-      call p_barrier
-
-   END SUBROUTINE calc_grid
 
    SUBROUTINE calc_grid_metrics(p_domdcomp, p_numerics, ssk)
       type(t_domdcomp), intent(IN) :: p_domdcomp

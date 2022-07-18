@@ -16,9 +16,9 @@ program canard
                            & write_restart_file, write_output_file,                &
                            & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_grid,       ONLY : calc_grid, calc_grid_metrics, allocate_grid,          &
+   use mo_grid,       ONLY : calc_grid_metrics, allocate_grid,                     &
                            & deallocate_grid_memory
-   use mo_gridgen,    ONLY : nthick, read_input_gridgen
+   use mo_gridgen,    ONLY : nthick, read_input_gridgen, makegrid
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
                            & extracon, wall_condition_update, average_surface,     &
@@ -134,7 +134,8 @@ program canard
       end do
    end do
 
-   call calc_grid(p_domdcomp)
+   call makegrid(p_domdcomp%mb, p_domdcomp%lxio, p_domdcomp%leto, p_domdcomp%mo, mbk)
+   call p_barrier
    call read_grid_parallel(p_domdcomp, ss, lio)
    call calc_grid_metrics(p_domdcomp, p_numerics, ss)
 
