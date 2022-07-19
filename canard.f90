@@ -5,7 +5,7 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : nrecs, nrecd, mbk
+   use mo_vars,       ONLY : nrecs, nrecd
    use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf, srefoo, srefp1dre
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
@@ -33,6 +33,7 @@ program canard
    type(t_domdcomp)    :: p_domdcomp
    type(t_numerics)    :: p_numerics
    type(t_grid)        :: p_grid
+   integer(kind=ni)    :: mbk
    integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
@@ -70,7 +71,7 @@ program canard
 
 !===== INPUT PARAMETERS
 
-   call read_input_main(nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
+   call read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
                     dto, tsam, tmax, nkrk, nbody)
 
    call p_numerics%read()
@@ -93,8 +94,8 @@ program canard
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
-   call allocate_io_memory(ndata)
-   call output_init(p_domdcomp, ndata)
+   call allocate_io_memory(mbk, ndata)
+   call output_init(p_domdcomp, mbk, ndata)
 
 !===== ALLOCATION OF MAIN ARRAYS
 
@@ -450,7 +451,7 @@ program canard
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
 
-         call write_output_file(p_domdcomp, ndata, times, nlmx, vart)
+         call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart)
 
 !-----
       end if

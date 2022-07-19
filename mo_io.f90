@@ -5,7 +5,7 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : mbk, nrecd, nrecs
+   use mo_vars,       ONLY : nrecd, nrecs
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
@@ -34,9 +34,9 @@ MODULE mo_io
 
    CONTAINS
 
-   SUBROUTINE read_input_main(nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
+   SUBROUTINE read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
                           cfl, dto, tsam, tmax, nkrk, nbody)
-      integer(kind=ni), intent(out) :: nts, nscrn, ndata, ndatafl, ndataav
+      integer(kind=ni), intent(out) :: mbk, nts, nscrn, ndata, ndatafl, ndataav
       integer(kind=ni), intent(out) :: nrestart
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
@@ -59,7 +59,8 @@ MODULE mo_io
 
    END SUBROUTINE read_input_main
 
-   SUBROUTINE allocate_io_memory(ndata)
+   SUBROUTINE allocate_io_memory(mbk, ndata)
+      integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: ll
       
@@ -71,8 +72,9 @@ MODULE mo_io
       allocate(lpos(0:mpro))
    END SUBROUTINE allocate_io_memory
 
-   SUBROUTINE output_init(p_domdcomp, ndata)
+   SUBROUTINE output_init(p_domdcomp, mbk, ndata)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, kp, jp, i, j, k
@@ -232,8 +234,9 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file(p_domdcomp, ndata, times, nlmx, vart)
+   SUBROUTINE write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
       integer(kind=int64), intent(in) :: nlmx
@@ -285,7 +288,7 @@ MODULE mo_io
                end do
             end do
             open(9,file=cthead(p_domdcomp%mb),access='stream',form='unformatted',status='replace')
-            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq, ndata, times)
+            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq, mbk, ndata, times)
             deallocate(vara)
             allocate(vara(0:lh+llmb))
             read(9,pos=1) vara(0:lh-1)
@@ -334,11 +337,12 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR GENERATING TECPLOT DATA FILE
 
-   subroutine techead(p_domdcomp, nf, n, mb, lh, mq, ndata, times)
+   subroutine techead(p_domdcomp, nf, n, mb, lh, mq, mbk, ndata, times)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       integer(kind=ni), intent(in)    :: nf,n,mb
       integer(kind=ni), intent(inout) :: lh
       integer(kind=ni), intent(in)    :: mq
+      integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
       integer(kind=ni)                :: mm, m, nn

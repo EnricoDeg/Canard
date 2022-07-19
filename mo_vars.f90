@@ -9,6 +9,5 @@ module mo_vars
 
 !===== CONSTANT-SIZED MAIN VARIABLES
    integer(kind=ni) :: nrecs,nrecd
-   integer(kind=ni) :: mbk
 
 end module mo_vars
