@@ -6,7 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
-   use mo_grid,       ONLY : yaco, xim, etm, zem
+   use mo_grid,       ONLY : t_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
    implicit none
@@ -131,9 +131,10 @@ MODULE mo_physics
 
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
 
-   subroutine calc_viscous_shear_stress(p_domdcomp, p_numerics, de, ssk)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
+   subroutine calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ssk)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
+      type(t_grid),     intent(in)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in)    :: ssk
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
@@ -154,9 +155,9 @@ MODULE mo_physics
                                    p_domdcomp%lze, p_domdcomp%ijk, 2, m)
       call p_numerics%deriv(rr(:,1), rr(:,1), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 1, m)
-      txx(:) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
-      hzz(:) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
-      tzx(:) = xim(:,3) * rr(:,1) + etm(:,3) * rr(:,2) + zem(:,3) * rr(:,3)
+      txx(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      hzz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      tzx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = de(:,3)
       m = 3
@@ -169,9 +170,9 @@ MODULE mo_physics
                      p_domdcomp%ijk, 2, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      txy(:) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
-      tyy(:) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
-      hxx(:) = xim(:,3) * rr(:,1) + etm(:,3) * rr(:,2) + zem(:,3) * rr(:,3)
+      txy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      tyy(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      hxx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = de(:,4)
       m = 4
@@ -184,9 +185,9 @@ MODULE mo_physics
                      p_domdcomp%ijk, 2, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      hyy(:) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
-      tyz(:) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
-      tzz(:) = xim(:,3) * rr(:,1) + etm(:,3) * rr(:,2) + zem(:,3) * rr(:,3)
+      hyy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      tyz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      tzz(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = de(:,5)
       m = 5
@@ -199,11 +200,11 @@ MODULE mo_physics
                      p_domdcomp%ijk, 2, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      ss(:,1) = xim(:,1) * rr(:,1) + etm(:,1) * rr(:,2) + zem(:,1) * rr(:,3)
-      ss(:,2) = xim(:,2) * rr(:,1) + etm(:,2) * rr(:,2) + zem(:,2) * rr(:,3)
-      ss(:,3) = xim(:,3) * rr(:,1) + etm(:,3) * rr(:,2) + zem(:,3) * rr(:,3)
+      ss(:,1) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      ss(:,2) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      ss(:,3) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
-      rr(:,1) = de(:,1) * yaco(:)
+      rr(:,1) = de(:,1) * p_grid%yaco(:)
       rr(:,2) = gamm1prndtli * rr(:,1)
       de(:,5) = twothirds * ( txx(:) + tyy(:) + tzz(:) )
 
@@ -222,12 +223,14 @@ MODULE mo_physics
 
 !===== CALCULATION OF FLUX DERIVATIVES
 
-   subroutine calc_fluxes(p_domdcomp, p_numerics, qa, p, de)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
+   subroutine calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
+      type(t_grid),     intent(in)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
+
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
       integer(kind=ni) :: m
@@ -235,9 +238,9 @@ MODULE mo_physics
       rr(:,1) = de(:,2) + umf(1)
       rr(:,2) = de(:,3) + umf(2)
       rr(:,3) = de(:,4) + umf(3)
-      ss(:,1) = xim(:,1) * rr(:,1) + xim(:,2) * rr(:,2) + xim(:,3) * rr(:,3)
-      ss(:,2) = etm(:,1) * rr(:,1) + etm(:,2) * rr(:,2) + etm(:,3) * rr(:,3)
-      ss(:,3) = zem(:,1) * rr(:,1) + zem(:,2) * rr(:,2) + zem(:,3) * rr(:,3)
+      ss(:,1) = p_grid%xim(:,1) * rr(:,1) + p_grid%xim(:,2) * rr(:,2) + p_grid%xim(:,3) * rr(:,3)
+      ss(:,2) = p_grid%etm(:,1) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%etm(:,3) * rr(:,3)
+      ss(:,3) = p_grid%zem(:,1) * rr(:,1) + p_grid%zem(:,2) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = qa(:,1) * ss(:,1)
       rr(:,2) = qa(:,1) * ss(:,2)
@@ -254,13 +257,13 @@ MODULE mo_physics
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
-      rr(:,1) = qa(:,2) * ss(:,1) + xim(:,1) * p(:)
-      rr(:,2) = qa(:,2) * ss(:,2) + etm(:,1) * p(:)
-      rr(:,3) = qa(:,2) * ss(:,3) + zem(:,1) * p(:)
+      rr(:,1) = qa(:,2) * ss(:,1) + p_grid%xim(:,1) * p(:)
+      rr(:,2) = qa(:,2) * ss(:,2) + p_grid%etm(:,1) * p(:)
+      rr(:,3) = qa(:,2) * ss(:,3) + p_grid%zem(:,1) * p(:)
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - xim(:,1) * txx(:) - xim(:,2) * txy(:) - xim(:,3) * tzx(:)
-      rr(:,2) = rr(:,2) - etm(:,1) * txx(:) - etm(:,2) * txy(:) - etm(:,3) * tzx(:)
-      rr(:,3) = rr(:,3) - zem(:,1) * txx(:) - zem(:,2) * txy(:) - zem(:,3) * tzx(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * txx(:) - p_grid%xim(:,2) * txy(:) - p_grid%xim(:,3) * tzx(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * txx(:) - p_grid%etm(:,2) * txy(:) - p_grid%etm(:,3) * tzx(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * txx(:) - p_grid%zem(:,2) * txy(:) - p_grid%zem(:,3) * tzx(:)
 #endif
       m = 2
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
@@ -274,13 +277,13 @@ MODULE mo_physics
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
-      rr(:,1) = qa(:,3) * ss(:,1) + xim(:,2) * p(:)
-      rr(:,2) = qa(:,3) * ss(:,2) + etm(:,2) * p(:)
-      rr(:,3) = qa(:,3) * ss(:,3) + zem(:,2) * p(:)
+      rr(:,1) = qa(:,3) * ss(:,1) + p_grid%xim(:,2) * p(:)
+      rr(:,2) = qa(:,3) * ss(:,2) + p_grid%etm(:,2) * p(:)
+      rr(:,3) = qa(:,3) * ss(:,3) + p_grid%zem(:,2) * p(:)
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - xim(:,1) * txy(:) - xim(:,2) * tyy(:) - xim(:,3) * tyz(:)
-      rr(:,2) = rr(:,2) - etm(:,1) * txy(:) - etm(:,2) * tyy(:) - etm(:,3) * tyz(:)
-      rr(:,3) = rr(:,3) - zem(:,1) * txy(:) - zem(:,2) * tyy(:) - zem(:,3) * tyz(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * txy(:) - p_grid%xim(:,2) * tyy(:) - p_grid%xim(:,3) * tyz(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * txy(:) - p_grid%etm(:,2) * tyy(:) - p_grid%etm(:,3) * tyz(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * txy(:) - p_grid%zem(:,2) * tyy(:) - p_grid%zem(:,3) * tyz(:)
 #endif
       m = 3
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
@@ -294,13 +297,13 @@ MODULE mo_physics
                      p_domdcomp%ijk, 3, 3, m)
       de(:,m) = rr(:,1) + rr(:,2) + rr(:,3)
 
-      rr(:,1) = qa(:,4) * ss(:,1) + xim(:,3) * p(:)
-      rr(:,2) = qa(:,4) * ss(:,2) + etm(:,3) * p(:)
-      rr(:,3) = qa(:,4) * ss(:,3) + zem(:,3) * p(:)
+      rr(:,1) = qa(:,4) * ss(:,1) + p_grid%xim(:,3) * p(:)
+      rr(:,2) = qa(:,4) * ss(:,2) + p_grid%etm(:,3) * p(:)
+      rr(:,3) = qa(:,4) * ss(:,3) + p_grid%zem(:,3) * p(:)
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - xim(:,1) * tzx(:) - xim(:,2) * tyz(:) - xim(:,3) * tzz(:)
-      rr(:,2) = rr(:,2) - etm(:,1) * tzx(:) - etm(:,2) * tyz(:) - etm(:,3) * tzz(:)
-      rr(:,3) = rr(:,3) - zem(:,1) * tzx(:) - zem(:,2) * tyz(:) - zem(:,3) * tzz(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * tzx(:) - p_grid%xim(:,2) * tyz(:) - p_grid%xim(:,3) * tzz(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * tzx(:) - p_grid%etm(:,2) * tyz(:) - p_grid%etm(:,3) * tzz(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * tzx(:) - p_grid%zem(:,2) * tyz(:) - p_grid%zem(:,3) * tzz(:)
 #endif
       m = 4
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
@@ -316,15 +319,15 @@ MODULE mo_physics
 
       de(:,5) = qa(:,5) + p(:)
       rr(:,1) = de(:,5) * ss(:,1) - p(:) * &
-              ( umf(1) * xim(:,1) + umf(2) * xim(:,2) + umf(3) * xim(:,3) )
+              ( umf(1) * p_grid%xim(:,1) + umf(2) * p_grid%xim(:,2) + umf(3) * p_grid%xim(:,3) )
       rr(:,2) = de(:,5) * ss(:,2) - p(:) * &
-              ( umf(1) * etm(:,1) + umf(2) * etm(:,2) + umf(3) * etm(:,3) )
+              ( umf(1) * p_grid%etm(:,1) + umf(2) * p_grid%etm(:,2) + umf(3) * p_grid%etm(:,3) )
       rr(:,3) = de(:,5) * ss(:,3) - p(:) * &
-              ( umf(1) * zem(:,1) + umf(2) * zem(:,2) + umf(3) * zem(:,3) )
+              ( umf(1) * p_grid%zem(:,1) + umf(2) * p_grid%zem(:,2) + umf(3) * p_grid%zem(:,3) )
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - xim(:,1) * hxx(:) - xim(:,2) * hyy(:) - xim(:,3) * hzz(:)
-      rr(:,2) = rr(:,2) - etm(:,1) * hxx(:) - etm(:,2) * hyy(:) - etm(:,3) * hzz(:)
-      rr(:,3) = rr(:,3) - zem(:,1) * hxx(:) - zem(:,2) * hyy(:) - zem(:,3) * hzz(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * hxx(:) - p_grid%xim(:,2) * hyy(:) - p_grid%xim(:,3) * hzz(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * hxx(:) - p_grid%etm(:,2) * hyy(:) - p_grid%etm(:,3) * hzz(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * hxx(:) - p_grid%zem(:,2) * hyy(:) - p_grid%zem(:,3) * hzz(:)
 #endif
       m = 5
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &

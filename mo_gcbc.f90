@@ -11,7 +11,7 @@ MODULE mo_gcbc
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf, srefoo, srefp1dre
    use mo_numerics,   ONLY : t_numerics
-   use mo_grid,       ONLY : yaco, cm1, cm2, cm3, xim, etm, zem
+   use mo_grid,       ONLY : t_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
    use mo_utils,      ONLY : indx3, mtrxi
@@ -48,8 +48,9 @@ MODULE mo_gcbc
      
    END SUBROUTINE read_input_gcbc
 
-   SUBROUTINE gcbc_init(p_domdcomp)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
+   SUBROUTINE gcbc_init(p_domdcomp, yaco)
+      type(t_domdcomp),                              intent(IN) :: p_domdcomp
+      real(kind=nr),    dimension(0:p_domdcomp%lmx), intent(in) :: yaco
 
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
       integer(kind=ni) :: ii, jj, kk, nn, np, lq, ll, l, ip, iq
@@ -135,9 +136,10 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_init
 
-   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics, qa, p, de)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
+   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(INOUT) :: p_numerics
+      type(t_grid),     intent(IN)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: de
@@ -150,13 +152,13 @@ MODULE mo_gcbc
          select case(nn)
          case(1)
             drva => p_numerics%drva1
-            cm   => cm1
+            cm   => p_grid%cm1
          case(2)
             drva => p_numerics%drva2
-            cm   => cm2
+            cm   => p_grid%cm2
          case(3)
             drva => p_numerics%drva3
-            cm   => cm3
+            cm   => p_grid%cm3
          end select
          do ip=0,1
             np = p_domdcomp%nbc(nn,ip)
@@ -172,7 +174,7 @@ MODULE mo_gcbc
                      call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l))
                      call xtq2r(cm(jk,:,ip))
                      cha(:) = ra0 * drva(jk,:,ip) + ra1 * de(l,:)
-                     drva(jk,:,ip) = matmul(xt(:,:),yaco(l)*cha(:))
+                     drva(jk,:,ip) = matmul( xt(:,:), p_grid%yaco(l) * cha(:) )
                   end do
                end do
             end if
@@ -216,9 +218,10 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_comm
 
-   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, qa, p, de, nkrk, dt)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
+   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt)
+      type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
+      type(t_grid),     intent(IN)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
@@ -236,15 +239,15 @@ MODULE mo_gcbc
          case(1)
             drva => p_numerics%drva1
             drvb => drvb1
-            cm   => cm1
+            cm   => p_grid%cm1
          case(2)
             drva => p_numerics%drva2
             drvb => drvb2
-            cm   => cm2
+            cm   => p_grid%cm2
          case(3)
             drva => p_numerics%drva3
             drvb => drvb3
-            cm   => cm3
+            cm   => p_grid%cm3
          end select
          do ip=0,1
             np  = p_domdcomp%nbc(nn,ip)
@@ -449,8 +452,9 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, varr, qa, p, tmax, nkrk, timo, nk, dt)
+   subroutine extracon(p_domdcomp, p_grid, varr, qa, p, tmax, nkrk, timo, nk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
+      type(t_grid),     intent(IN) :: p_grid
       real(kind=ieee32), dimension(0:p_domdcomp%lmx), intent(inout) :: varr
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
@@ -486,16 +490,18 @@ MODULE mo_gcbc
                do j=0,p_domdcomp%ijk(2,nn)
                   jk     = kp + j
                   l      = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
-                  ra0    = two * acos(cm2(jk,1,ip))
+                  ra0    = two * acos(p_grid%cm2(jk,1,ip))
                   ra1    = abs( half * sin(ra0) * ( tyy(l) - txx(l) ) + cos(ra0) * txy(l) )
                   ra2    = gam * p(l) / qa(l,1)
                   ra3    = sqrt( ra1 * qa(l,1) ) * ( ra2 + srefoo ) / ( srefp1dre * ra2**1.5_nr )
-                  vee(1) = sqrt( ( etm(l,2) * zem(l,3) - zem(l,2) * etm(l,3) )**two + &
-                                 ( etm(l,3) * zem(l,1) - zem(l,3) * etm(l,1) )**two )
-                  vee(2) = cm2(jk,1,ip) * ( zem(l,2) * xim(l,3) - xim(l,2) * zem(l,3) ) + &
-                           cm2(jk,2,ip) * ( zem(l,3) * xim(l,1) - xim(l,3) * zem(l,1) )
-                  vee(3) = xim(l,1) * etm(l,2) - etm(l,1) * xim(l,2)
-                  rv(:)  = rv(:) + ra3 * abs( vee(:) * yaco(l) )
+                  vee(1) = sqrt( ( p_grid%etm(l,2) * p_grid%zem(l,3) - p_grid%zem(l,2) * p_grid%etm(l,3) )**two + &
+                                 ( p_grid%etm(l,3) * p_grid%zem(l,1) - p_grid%zem(l,3) * p_grid%etm(l,1) )**two )
+                  vee(2) = p_grid%cm2(jk,1,ip) * ( p_grid%zem(l,2) * p_grid%xim(l,3)   - &
+                                                   p_grid%xim(l,2) * p_grid%zem(l,3) ) + &
+                           p_grid%cm2(jk,2,ip) * ( p_grid%zem(l,3) * p_grid%xim(l,1)   - &
+                                                   p_grid%xim(l,3) * p_grid%zem(l,1) )
+                  vee(3) = p_grid%xim(l,1) * p_grid%etm(l,2) - p_grid%etm(l,1) * p_grid%xim(l,2)
+                  rv(:)  = rv(:) + ra3 * abs( vee(:) * p_grid%yaco(l) )
                end do
                write(2,'(2e16.8)') ss(l,1),fctr*rv(:)
             end do

@@ -8,7 +8,6 @@ program canard
    use mo_vars,       ONLY : nrecs, nrecd, mbk
    use mo_io,         ONLY : cdata
    use mo_physics,    ONLY : umf, srefoo, srefp1dre
-   use mo_grid,       ONLY : yaco, xim, etm, zem
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
@@ -16,8 +15,7 @@ program canard
                            & write_restart_file, write_output_file,                &
                            & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_grid,       ONLY : calc_grid_metrics, allocate_grid,                     &
-                           & deallocate_grid_memory
+   use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : nthick, read_input_gridgen, makegrid
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
@@ -34,6 +32,7 @@ program canard
    integer(kind=int64) :: nlmx
    type(t_domdcomp)    :: p_domdcomp
    type(t_numerics)    :: p_numerics
+   type(t_grid)        :: p_grid
    integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
@@ -124,7 +123,7 @@ program canard
 !===== GRID GENERATION & CALCULATION OF GRID METRICS
     
    allocate(lio(0:p_domdcomp%let,0:p_domdcomp%lze))
-   call allocate_grid(p_domdcomp)
+   call p_grid%allocate(p_domdcomp)
 
    do k=0,p_domdcomp%lze
       kp = k * ( p_domdcomp%leto + 1 ) * ( p_domdcomp%lxio + 1 )
@@ -137,11 +136,11 @@ program canard
    call makegrid(p_domdcomp%mb, p_domdcomp%lxio, p_domdcomp%leto, p_domdcomp%mo, mbk)
    call p_barrier
    call read_grid_parallel(p_domdcomp, ss, lio)
-   call calc_grid_metrics(p_domdcomp, p_numerics, ss)
+   call p_grid%grid_metrics(p_domdcomp, p_numerics, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC INITIALIZATION
 
-   call gcbc_init(p_domdcomp)
+   call gcbc_init(p_domdcomp, p_grid%yaco)
 
 !===== POINT JUNCTION SEARCH
 
@@ -165,7 +164,7 @@ program canard
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   call spongeup(p_domdcomp%lmx, de, ss) ! use ss which contains grid data
+   call spongeup(p_domdcomp%lmx, p_grid%yaco, de, ss) ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
 
@@ -247,25 +246,30 @@ program canard
                ndt=n
                dts=dte
                if(dto<zero) then
-                  rr(:,1)=xim(:,1)*xim(:,1)+xim(:,2)*xim(:,2)+xim(:,3)*xim(:,3)&
-                         +etm(:,1)*etm(:,1)+etm(:,2)*etm(:,2)+etm(:,3)*etm(:,3)&
-                         +zem(:,1)*zem(:,1)+zem(:,2)*zem(:,2)+zem(:,3)*zem(:,3)
-                  rr(:,2)=abs(xim(:,1)*(de(:,2)+umf(1))+xim(:,2)*(de(:,3)+umf(2))+xim(:,3)*(de(:,4)+umf(3)))&
-                         +abs(etm(:,1)*(de(:,2)+umf(1))+etm(:,2)*(de(:,3)+umf(2))+etm(:,3)*(de(:,4)+umf(3)))&
-                         +abs(zem(:,1)*(de(:,2)+umf(1))+zem(:,2)*(de(:,3)+umf(2))+zem(:,3)*(de(:,4)+umf(3)))
-                  ss(:,2)=abs(yaco(:))
-                  res=maxval((sqrt(de(:,5)*rr(:,1))+rr(:,2))*ss(:,2))
+                  rr(:,1) = p_grid%xim(:,1) * p_grid%xim(:,1) + p_grid%xim(:,2) * p_grid%xim(:,2) + &
+                            p_grid%xim(:,3) * p_grid%xim(:,3) + p_grid%etm(:,1) * p_grid%etm(:,1) + &
+                            p_grid%etm(:,2) * p_grid%etm(:,2) + p_grid%etm(:,3) * p_grid%etm(:,3) + &
+                            p_grid%zem(:,1) * p_grid%zem(:,1) + p_grid%zem(:,2) * p_grid%zem(:,2) + &
+                            p_grid%zem(:,3) * p_grid%zem(:,3)
+                  rr(:,2) = abs( p_grid%xim(:,1) * ( de(:,2) + umf(1) ) + p_grid%xim(:,2) * ( de(:,3) + umf(2) ) + &
+                                 p_grid%xim(:,3) * ( de(:,4) + umf(3) ) ) + &
+                            abs( p_grid%etm(:,1) * ( de(:,2) + umf(1) ) + p_grid%etm(:,2) * ( de(:,3) + umf(2) ) + & 
+                                 p_grid%etm(:,3) * ( de(:,4) + umf(3) ) ) + &
+                            abs( p_grid%zem(:,1) * ( de(:,2) + umf(1) ) + p_grid%zem(:,2) * ( de(:,3) + umf(2) ) + &
+                                 p_grid%zem(:,3) * ( de(:,4) + umf(3) ) )
+                  ss(:,2) = abs( p_grid%yaco(:) )
+                  res     = maxval( ( sqrt( de(:,5) * rr(:,1) ) + rr(:,2) ) * ss(:,2) )
                   call p_max(res, fctr)
-                  ra0=cfl/fctr
-                  ra1=ra0
+                  ra0 = cfl / fctr
+                  ra1 = ra0
 #ifdef VISCOUS
-                     res=maxval(de(:,1)*ss(:,1)*rr(:,1)*ss(:,2)*ss(:,2))
-                     call p_max(res, fctr)
-                     ra1=half/fctr
+                  res = maxval( de(:,1) * ss(:,1) * rr(:,1) * ss(:,2) * ss(:,2) )
+                  call p_max(res, fctr)
+                  ra1 = half / fctr
 #endif
-                  dte=min(ra0,ra1)
+                  dte = min(ra0, ra1)
                else
-                  dte=dto
+                  dte = dto
                end if
             end if
             dt=dts+(dte-dts)*sin(0.05_nr*pi*(n-ndt))**two
@@ -278,13 +282,13 @@ program canard
             end if
          end if
 
-         call calc_viscous_shear_stress(p_domdcomp, p_numerics, de, ss(:,1))
+         call calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ss(:,1))
 
-         call calc_fluxes(p_domdcomp, p_numerics, qa, p, de)
+         call calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
 
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup(p_domdcomp, p_numerics, qa, p, de)
+         call gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
@@ -292,7 +296,7 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, p_numerics, qa, p, de, nkrk, dt)
+         call gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -304,14 +308,14 @@ program canard
          dtk=dt/(nkrk-nk+1)
          call movef(dtko, dtk, timo)
 
-         rr(:,1)=dtk*yaco(:)
+         rr(:,1)=dtk*p_grid%yaco(:)
          qa(:,1)=qo(:,1)-rr(:,1)*de(:,1)
          qa(:,2)=qo(:,2)-rr(:,1)*de(:,2)
          qa(:,3)=qo(:,3)-rr(:,1)*de(:,3)
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, varr, qa, p, tmax, nkrk, timo, nk, dt)
+         call extracon(p_domdcomp, p_grid, varr, qa, p, tmax, nkrk, timo, nk, dt)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
@@ -404,7 +408,7 @@ program canard
       end if
    else
       deallocate(qo,qa,qb,de,rr,ss,p)
-      call deallocate_grid_memory
+      call p_grid%deallocate
       call deallocate_physics_memory
 
       if(tmax>=tsam) then
