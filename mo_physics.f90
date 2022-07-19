@@ -12,17 +12,21 @@ MODULE mo_physics
    implicit none
    public
 
-   real(kind=nr) :: reoo, tempoo, amach1, amach2, amach3
-   real(kind=nr) :: amachoo
-   real(kind=nr) :: timf
-   real(kind=nr) :: srefoo, srefp1dre
-   integer(kind=ni), private :: nsmf
-   real(kind=nr), private :: sqrtrema, sqrtremai
-   real(kind=nr), dimension(3) :: uoo
-   real(kind=nr), dimension(3) :: umf, dudtmf
+   ! private variables
+   real(kind=nr),    private               :: reoo
+   real(kind=nr),    private               :: tempoo
+   real(kind=nr),    private               :: amach1, amach2, amach3
+   real(kind=nr),    private               :: amachoo
+   real(kind=nr),    private               :: timf
+   integer(kind=ni), private               :: nsmf
+   real(kind=nr),    private               :: sqrtrema, sqrtremai
+   real(kind=nr),    private, dimension(3) :: uoo
 
-   real(kind=nr), dimension(:), allocatable :: txx, tyy, tzz, txy, tyz, tzx
-   real(kind=nr), dimension(:), allocatable :: hxx, hyy, hzz
+   ! public variables
+   real(kind=nr),    public                            :: srefoo, srefp1dre
+   real(kind=nr),    public, dimension(3)              :: umf, dudtmf
+   real(kind=nr),    public, dimension(:), allocatable :: txx, tyy, tzz, txy, tyz, tzx
+   real(kind=nr),    public, dimension(:), allocatable :: hxx, hyy, hzz
 
    contains
 
