@@ -12,75 +12,96 @@ MODULE mo_physics
    implicit none
    public
 
-   ! private variables
-   real(kind=nr),    private               :: reoo
-   real(kind=nr),    private               :: tempoo
-   real(kind=nr),    private               :: amach1, amach2, amach3
-   real(kind=nr),    private               :: amachoo
-   real(kind=nr),    private               :: timf
-   integer(kind=ni), private               :: nsmf
-   real(kind=nr),    private               :: sqrtrema, sqrtremai
-   real(kind=nr),    private, dimension(3) :: uoo
+   type, public :: t_physics
+      ! private variables
+      real(kind=nr),    private               :: reoo
+      real(kind=nr),    private               :: tempoo
+      real(kind=nr),    private               :: amach1, amach2, amach3
+      real(kind=nr),    private               :: amachoo
+      real(kind=nr),    private               :: timf
+      integer(kind=ni), private               :: nsmf
+      real(kind=nr),    private               :: sqrtrema, sqrtremai
+      real(kind=nr),    private, dimension(3) :: uoo
 
-   ! public variables
-   real(kind=nr),    public                            :: srefoo, srefp1dre
-   real(kind=nr),    public, dimension(3)              :: umf, dudtmf
-   real(kind=nr),    public, dimension(:), allocatable :: txx, tyy, tzz, txy, tyz, tzx
-   real(kind=nr),    public, dimension(:), allocatable :: hxx, hyy, hzz
+      ! public variables
+      real(kind=nr),    public                            :: srefoo, srefp1dre
+      real(kind=nr),    public, dimension(3)              :: umf, dudtmf
+      real(kind=nr),    public, dimension(:), allocatable :: txx, tyy, tzz, txy, tyz, tzx
+      real(kind=nr),    public, dimension(:), allocatable :: hxx, hyy, hzz
 
    contains
 
-   subroutine allocate_physics_memory(lmx)
+      procedure, public :: allocate => allocate_physics_memory
+      procedure, public :: deallocate => deallocate_physics_memory
+      procedure, public :: read => read_input_physics
+      procedure, public :: init => initialo
+      procedure, public :: movef
+      procedure, public :: calc_viscous_shear_stress
+      procedure, public :: calc_fluxes
+
+   end type t_physics
+
+   contains
+
+   subroutine allocate_physics_memory(this, lmx)
+      class(t_physics), INTENT(INOUT) :: this
       integer(kind=ni), intent(IN) :: lmx
 
 #ifdef VISCOUS
-      allocate(txx(0:lmx), tyy(0:lmx), tzz(0:lmx))
-      allocate(txy(0:lmx), tyz(0:lmx), tzx(0:lmx))
-      allocate(hxx(0:lmx), hyy(0:lmx), hzz(0:lmx))
+      allocate(this%txx(0:lmx), this%tyy(0:lmx), this%tzz(0:lmx))
+      allocate(this%txy(0:lmx), this%tyz(0:lmx), this%tzx(0:lmx))
+      allocate(this%hxx(0:lmx), this%hyy(0:lmx), this%hzz(0:lmx))
 #endif
 
    end subroutine allocate_physics_memory
 
 
 
-   subroutine deallocate_physics_memory
+   subroutine deallocate_physics_memory(this)
+      class(t_physics), INTENT(INOUT) :: this
 
 #ifdef VISCOUS
-      deallocate(txx, tyy, tzz, txy, tyz, tzx, hxx, hyy, hzz)
+      deallocate(this%txx, this%tyy, this%tzz)
+      deallocate(this%txy, this%tyz, this%tzx)
+      deallocate(this%hxx, this%hyy, this%hzz)
 #endif
 
    end subroutine deallocate_physics_memory
 
 !===== INITIALIZE PHYSICS
 
-   subroutine read_input_physics
+   subroutine read_input_physics(this)
+      class(t_physics), INTENT(INOUT) :: this
       character(16) :: cinput
 
       open(9,file='input.physics',status='old')
-      read(9,*) cinput,reoo
-      read(9,*) cinput,tempoo
-      read(9,*) cinput,amach1
-      read(9,*) cinput,amach2
-      read(9,*) cinput,amach3
-      read(9,*) cinput,timf
-      read(9,*) cinput,nsmf
+      read(9,*) cinput, this%reoo
+      read(9,*) cinput, this%tempoo
+      read(9,*) cinput, this%amach1
+      read(9,*) cinput, this%amach2
+      read(9,*) cinput, this%amach3
+      read(9,*) cinput, this%timf
+      read(9,*) cinput, this%nsmf
       close(9)
 
-      amachoo = sqrt( amach1 * amach1 + amach2 * amach2 + amach3 * amach3 )
-      if ( amachoo > sml ) then
-         reoo = reoo / amachoo
+      this%amachoo = sqrt( this%amach1 * this%amach1 + &
+                           this%amach2 * this%amach2 + &
+                           this%amach3 * this%amach3 )
+      if ( this%amachoo > sml ) then
+         this%reoo = this%reoo / this%amachoo
       end if
-      srefoo    = 111 / tempoo
-      srefp1dre = ( srefoo + one ) / reoo
-      sqrtrema  = sqrt( reoo * amachoo )
-      sqrtremai = one / max( sqrtrema, sml )
-      uoo(:)    = (/ amach1, amach2, amach3 /)
+      this%srefoo    = 111 / this%tempoo
+      this%srefp1dre = ( this%srefoo + one ) / this%reoo
+      this%sqrtrema  = sqrt( this%reoo * this%amachoo )
+      this%sqrtremai = one / max( this%sqrtrema, sml )
+      this%uoo(:)    = (/ this%amach1, this%amach2, this%amach3 /)
 
    end subroutine read_input_physics
 
 !===== INITIAL CONDITIONS
 
-   subroutine initialo(lmx, qa, ss)
+   subroutine initialo(this, lmx, qa, ss)
+      class(t_physics), INTENT(INOUT) :: this
       integer(kind=ni), intent(in) :: lmx
       real(kind=nr), dimension(0:lmx,5), intent(inout) :: qa
       real(kind=nr), dimension(0:lmx,3), intent(in)    :: ss
@@ -106,28 +127,29 @@ MODULE mo_physics
 
 !===== SUBROUTINE FOR MOVING FRAME VELOCITIES
 
-   subroutine movef(dtko, dtk, timo)
+   subroutine movef(this, dtko, dtk, timo)
+      class(t_physics), INTENT(INOUT) :: this
       real(kind=nr), intent(in) :: dtko, dtk
       real(kind=nr), intent(in) :: timo
       real(kind=nr) :: ra0, ra1, ra2, dfdt, fctr, progmf
 
-      if ( nsmf == 0 ) then
-         ra0 = pi / timf
-         ra1 = ra0 * min( timo, timf )
-         ra2 = ra0 * min( timo+dtko, timf )
+      if ( this%nsmf == 0 ) then
+         ra0 = pi / this%timf
+         ra1 = ra0 * min( timo, this%timf )
+         ra2 = ra0 * min( timo+dtko, this%timf )
 
          fctr   = one - cos(ra1)
          dfdt   = ra0 * sin(ra2)
          progmf = half * ( fctr + dtk * dfdt )
-         umf(:) = progmf * uoo(:)
+         this%umf(:) = progmf * this%uoo(:)
 
          fctr      = sin(ra1)
          dfdt      = ra0 * cos(ra2)
          progmf    = half * ra0 * ( fctr + dtk * dfdt )
-         dudtmf(:) = progmf * uoo(:)
+         this%dudtmf(:) = progmf * this%uoo(:)
       else
-         umf(:)    = uoo(:)
-         dudtmf(:) = zero
+         this%umf(:)    = this%uoo(:)
+         this%dudtmf(:) = zero
       end if
 
    end subroutine movef
@@ -135,7 +157,8 @@ MODULE mo_physics
 
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
 
-   subroutine calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ssk)
+   subroutine calc_viscous_shear_stress(this, p_domdcomp, p_numerics, p_grid, de, ssk)
+      class(t_physics), INTENT(INOUT) :: this
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       type(t_grid),     intent(in)    :: p_grid
@@ -159,9 +182,9 @@ MODULE mo_physics
                                    p_domdcomp%lze, p_domdcomp%ijk, 2, m)
       call p_numerics%deriv(rr(:,1), rr(:,1), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 1, m)
-      txx(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      hzz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      tzx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      this%txx(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      this%hzz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      this%tzx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = de(:,3)
       m = 3
@@ -174,9 +197,9 @@ MODULE mo_physics
                      p_domdcomp%ijk, 2, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      txy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      tyy(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      hxx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      this%txy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      this%tyy(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      this%hxx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = de(:,4)
       m = 4
@@ -189,9 +212,9 @@ MODULE mo_physics
                      p_domdcomp%ijk, 2, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      hyy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      tyz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      tzz(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      this%hyy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
+      this%tyz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
+      this%tzz(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
 
       rr(:,1) = de(:,5)
       m = 5
@@ -210,24 +233,30 @@ MODULE mo_physics
 
       rr(:,1) = de(:,1) * p_grid%yaco(:)
       rr(:,2) = gamm1prndtli * rr(:,1)
-      de(:,5) = twothirds * ( txx(:) + tyy(:) + tzz(:) )
+      de(:,5) = twothirds * ( this%txx(:) + this%tyy(:) + this%tzz(:) )
 
-      txx(:) = rr(:,1) * ( txx(:) + txx(:) - de(:,5) )
-      tyy(:) = rr(:,1) * ( tyy(:) + tyy(:) - de(:,5) )
-      tzz(:) = rr(:,1) * ( tzz(:) + tzz(:) - de(:,5) )
-      txy(:) = rr(:,1) * ( txy(:) + hzz(:) )
-      tyz(:) = rr(:,1) * ( tyz(:) + hxx(:) )
-      tzx(:) = rr(:,1) * ( tzx(:) + hyy(:) )
-      hxx(:) = rr(:,2) * ss(:,1) + de(:,2) * txx(:) + de(:,3) * txy(:) + de(:,4) * tzx(:)
-      hyy(:) = rr(:,2) * ss(:,2) + de(:,2) * txy(:) + de(:,3) * tyy(:) + de(:,4) * tyz(:)
-      hzz(:) = rr(:,2) * ss(:,3) + de(:,2) * tzx(:) + de(:,3) * tyz(:) + de(:,4) * tzz(:)
+      this%txx(:) = rr(:,1) * ( this%txx(:) + this%txx(:) - de(:,5) )
+      this%tyy(:) = rr(:,1) * ( this%tyy(:) + this%tyy(:) - de(:,5) )
+      this%tzz(:) = rr(:,1) * ( this%tzz(:) + this%tzz(:) - de(:,5) )
+
+      this%txy(:) = rr(:,1) * ( this%txy(:) + this%hzz(:) )
+      this%tyz(:) = rr(:,1) * ( this%tyz(:) + this%hxx(:) )
+      this%tzx(:) = rr(:,1) * ( this%tzx(:) + this%hyy(:) )
+
+      this%hxx(:) = rr(:,2) * ss(:,1) + de(:,2) * this%txx(:) + &
+                    de(:,3) * this%txy(:) + de(:,4) * this%tzx(:)
+      this%hyy(:) = rr(:,2) * ss(:,2) + de(:,2) * this%txy(:) + &
+                    de(:,3) * this%tyy(:) + de(:,4) * this%tyz(:)
+      this%hzz(:) = rr(:,2) * ss(:,3) + de(:,2) * this%tzx(:) + &
+                    de(:,3) * this%tyz(:) + de(:,4) * this%tzz(:)
 #endif
    end subroutine calc_viscous_shear_stress
 
 
 !===== CALCULATION OF FLUX DERIVATIVES
 
-   subroutine calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
+   subroutine calc_fluxes(this, p_domdcomp, p_numerics, p_grid, qa, p, de)
+      class(t_physics), INTENT(INOUT) :: this
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       type(t_grid),     intent(in)    :: p_grid
@@ -239,9 +268,10 @@ MODULE mo_physics
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
       integer(kind=ni) :: m
 
-      rr(:,1) = de(:,2) + umf(1)
-      rr(:,2) = de(:,3) + umf(2)
-      rr(:,3) = de(:,4) + umf(3)
+      rr(:,1) = de(:,2) + this%umf(1)
+      rr(:,2) = de(:,3) + this%umf(2)
+      rr(:,3) = de(:,4) + this%umf(3)
+
       ss(:,1) = p_grid%xim(:,1) * rr(:,1) + p_grid%xim(:,2) * rr(:,2) + p_grid%xim(:,3) * rr(:,3)
       ss(:,2) = p_grid%etm(:,1) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%etm(:,3) * rr(:,3)
       ss(:,3) = p_grid%zem(:,1) * rr(:,1) + p_grid%zem(:,2) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
@@ -265,9 +295,12 @@ MODULE mo_physics
       rr(:,2) = qa(:,2) * ss(:,2) + p_grid%etm(:,1) * p(:)
       rr(:,3) = qa(:,2) * ss(:,3) + p_grid%zem(:,1) * p(:)
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * txx(:) - p_grid%xim(:,2) * txy(:) - p_grid%xim(:,3) * tzx(:)
-      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * txx(:) - p_grid%etm(:,2) * txy(:) - p_grid%etm(:,3) * tzx(:)
-      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * txx(:) - p_grid%zem(:,2) * txy(:) - p_grid%zem(:,3) * tzx(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * this%txx(:) - &
+                          p_grid%xim(:,2) * this%txy(:) - p_grid%xim(:,3) * this%tzx(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * this%txx(:) - &
+                          p_grid%etm(:,2) * this%txy(:) - p_grid%etm(:,3) * this%tzx(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * this%txx(:) - &
+                          p_grid%zem(:,2) * this%txy(:) - p_grid%zem(:,3) * this%tzx(:)
 #endif
       m = 2
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
@@ -285,9 +318,12 @@ MODULE mo_physics
       rr(:,2) = qa(:,3) * ss(:,2) + p_grid%etm(:,2) * p(:)
       rr(:,3) = qa(:,3) * ss(:,3) + p_grid%zem(:,2) * p(:)
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * txy(:) - p_grid%xim(:,2) * tyy(:) - p_grid%xim(:,3) * tyz(:)
-      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * txy(:) - p_grid%etm(:,2) * tyy(:) - p_grid%etm(:,3) * tyz(:)
-      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * txy(:) - p_grid%zem(:,2) * tyy(:) - p_grid%zem(:,3) * tyz(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * this%txy(:) - &
+                          p_grid%xim(:,2) * this%tyy(:) - p_grid%xim(:,3) * this%tyz(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * this%txy(:) - &
+                          p_grid%etm(:,2) * this%tyy(:) - p_grid%etm(:,3) * this%tyz(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * this%txy(:) - &
+                          p_grid%zem(:,2) * this%tyy(:) - p_grid%zem(:,3) * this%tyz(:)
 #endif
       m = 3
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
@@ -305,9 +341,12 @@ MODULE mo_physics
       rr(:,2) = qa(:,4) * ss(:,2) + p_grid%etm(:,3) * p(:)
       rr(:,3) = qa(:,4) * ss(:,3) + p_grid%zem(:,3) * p(:)
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * tzx(:) - p_grid%xim(:,2) * tyz(:) - p_grid%xim(:,3) * tzz(:)
-      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * tzx(:) - p_grid%etm(:,2) * tyz(:) - p_grid%etm(:,3) * tzz(:)
-      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * tzx(:) - p_grid%zem(:,2) * tyz(:) - p_grid%zem(:,3) * tzz(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * this%tzx(:) - &
+                          p_grid%xim(:,2) * this%tyz(:) - p_grid%xim(:,3) * this%tzz(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * this%tzx(:) - &
+                          p_grid%etm(:,2) * this%tyz(:) - p_grid%etm(:,3) * this%tzz(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * this%tzx(:) - &
+                          p_grid%zem(:,2) * this%tyz(:) - p_grid%zem(:,3) * this%tzz(:)
 #endif
       m = 4
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
@@ -323,15 +362,15 @@ MODULE mo_physics
 
       de(:,5) = qa(:,5) + p(:)
       rr(:,1) = de(:,5) * ss(:,1) - p(:) * &
-              ( umf(1) * p_grid%xim(:,1) + umf(2) * p_grid%xim(:,2) + umf(3) * p_grid%xim(:,3) )
+              ( this%umf(1) * p_grid%xim(:,1) + this%umf(2) * p_grid%xim(:,2) + this%umf(3) * p_grid%xim(:,3) )
       rr(:,2) = de(:,5) * ss(:,2) - p(:) * &
-              ( umf(1) * p_grid%etm(:,1) + umf(2) * p_grid%etm(:,2) + umf(3) * p_grid%etm(:,3) )
+              ( this%umf(1) * p_grid%etm(:,1) + this%umf(2) * p_grid%etm(:,2) + this%umf(3) * p_grid%etm(:,3) )
       rr(:,3) = de(:,5) * ss(:,3) - p(:) * &
-              ( umf(1) * p_grid%zem(:,1) + umf(2) * p_grid%zem(:,2) + umf(3) * p_grid%zem(:,3) )
+              ( this%umf(1) * p_grid%zem(:,1) + this%umf(2) * p_grid%zem(:,2) + this%umf(3) * p_grid%zem(:,3) )
 #ifdef VISCOUS
-      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * hxx(:) - p_grid%xim(:,2) * hyy(:) - p_grid%xim(:,3) * hzz(:)
-      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * hxx(:) - p_grid%etm(:,2) * hyy(:) - p_grid%etm(:,3) * hzz(:)
-      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * hxx(:) - p_grid%zem(:,2) * hyy(:) - p_grid%zem(:,3) * hzz(:)
+      rr(:,1) = rr(:,1) - p_grid%xim(:,1) * this%hxx(:) - p_grid%xim(:,2) * this%hyy(:) - p_grid%xim(:,3) * this%hzz(:)
+      rr(:,2) = rr(:,2) - p_grid%etm(:,1) * this%hxx(:) - p_grid%etm(:,2) * this%hyy(:) - p_grid%etm(:,3) * this%hzz(:)
+      rr(:,3) = rr(:,3) - p_grid%zem(:,1) * this%hxx(:) - p_grid%zem(:,2) * this%hyy(:) - p_grid%zem(:,3) * this%hzz(:)
 #endif
       m = 5
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &

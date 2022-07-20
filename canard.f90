@@ -7,7 +7,6 @@ program canard
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_vars,       ONLY : nrecs, nrecd
    use mo_io,         ONLY : cdata
-   use mo_physics,    ONLY : umf, srefoo, srefp1dre
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
@@ -23,9 +22,7 @@ program canard
                            & extracon, wall_condition_update, average_surface,     &
                            & read_input_gcbc
    use mo_numerics,   ONLY : t_numerics
-   use mo_physics,    ONLY : read_input_physics, initialo, movef,                  &
-                           & calc_viscous_shear_stress, calc_fluxes,               &
-                           & allocate_physics_memory, deallocate_physics_memory
+   use mo_physics,    ONLY : t_physics
    implicit none
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
@@ -35,6 +32,7 @@ program canard
    type(t_numerics)    :: p_numerics
    type(t_grid)        :: p_grid
    type(t_grid_geom)   :: p_grid_geom
+   type(t_physics)     :: p_physics
    integer(kind=ni)    :: mbk
    integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
    integer(kind=ni)    :: nrestart
@@ -80,7 +78,7 @@ program canard
 
    call read_input_gcbc
 
-   call read_input_physics
+   call p_physics%read()
 
    call read_input_gridgen
    
@@ -102,7 +100,7 @@ program canard
 
 !===== ALLOCATION OF MAIN ARRAYS
 
-   call allocate_physics_memory(p_domdcomp%lmx)
+   call p_physics%allocate(p_domdcomp%lmx)
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
 
    ! main program local arrays
@@ -179,7 +177,7 @@ program canard
       dts=zero
       dte=zero
       timo=zero
-      call initialo(p_domdcomp%lmx, qa, ss) ! use ss which contains grid data
+      call p_physics%init(p_domdcomp%lmx, qa, ss) ! use ss which contains grid data
    else
       call read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt) ! ss is not used
    end if
@@ -228,20 +226,21 @@ program canard
 
 !----- MOVING FRAME VELOCITY & ACCELERATION BEFORE TIME ADVANCING
 
-         dtko=dt*min(max(nk-2,0),1)/(nkrk-nk+3)
-         dtk=dt*min(nk-1,1)/(nkrk-nk+2)
-         call movef(dtko, dtk, timo)
+         dtko = dt * min( max( nk-2, 0 ),1 ) / ( nkrk - nk + 3 )
+         dtk  = dt * min( nk-1, 1 ) / ( nkrk - nk + 2 )
+         call p_physics%movef(dtko, dtk, timo)
 
 !----- TEMPORARY STORAGE OF PRIMITIVE VARIABLES & PRESSURE
 
-         de(:,1)=one/qa(:,1)
-         de(:,2)=qa(:,2)*de(:,1)
-         de(:,3)=qa(:,3)*de(:,1)
-         de(:,4)=qa(:,4)*de(:,1)
+         de(:,1) = one / qa(:,1)
+         de(:,2) = qa(:,2) * de(:,1)
+         de(:,3) = qa(:,3) * de(:,1)
+         de(:,4) = qa(:,4) * de(:,1)
 
-         p(:)=gamm1*(qa(:,5)-half*(qa(:,2)*de(:,2)+qa(:,3)*de(:,3)+qa(:,4)*de(:,4)))
-         de(:,5)=gam*p(:)*de(:,1)
-         ss(:,1)=srefp1dre*de(:,5)**1.5_nr/(de(:,5)+srefoo)
+         p(:)    = gamm1 * ( qa(:,5) - half * &
+                           ( qa(:,2) * de(:,2) + qa(:,3) * de(:,3) + qa(:,4) * de(:,4) ) )
+         de(:,5) = gam*p(:) * de(:,1)
+         ss(:,1) = p_physics%srefp1dre * de(:,5)**1.5_nr / ( de(:,5) + p_physics%srefoo )
 
 !----- DETERMINATION OF TIME STEP SIZE & OUTPUT TIME
 
@@ -255,12 +254,15 @@ program canard
                             p_grid%etm(:,2) * p_grid%etm(:,2) + p_grid%etm(:,3) * p_grid%etm(:,3) + &
                             p_grid%zem(:,1) * p_grid%zem(:,1) + p_grid%zem(:,2) * p_grid%zem(:,2) + &
                             p_grid%zem(:,3) * p_grid%zem(:,3)
-                  rr(:,2) = abs( p_grid%xim(:,1) * ( de(:,2) + umf(1) ) + p_grid%xim(:,2) * ( de(:,3) + umf(2) ) + &
-                                 p_grid%xim(:,3) * ( de(:,4) + umf(3) ) ) + &
-                            abs( p_grid%etm(:,1) * ( de(:,2) + umf(1) ) + p_grid%etm(:,2) * ( de(:,3) + umf(2) ) + & 
-                                 p_grid%etm(:,3) * ( de(:,4) + umf(3) ) ) + &
-                            abs( p_grid%zem(:,1) * ( de(:,2) + umf(1) ) + p_grid%zem(:,2) * ( de(:,3) + umf(2) ) + &
-                                 p_grid%zem(:,3) * ( de(:,4) + umf(3) ) )
+                  rr(:,2) = abs( p_grid%xim(:,1) * ( de(:,2) + p_physics%umf(1) )   + &
+                                 p_grid%xim(:,2) * ( de(:,3) + p_physics%umf(2) )   + &
+                                 p_grid%xim(:,3) * ( de(:,4) + p_physics%umf(3) ) ) + &
+                            abs( p_grid%etm(:,1) * ( de(:,2) + p_physics%umf(1) )   + &
+                                 p_grid%etm(:,2) * ( de(:,3) + p_physics%umf(2) )   + & 
+                                 p_grid%etm(:,3) * ( de(:,4) + p_physics%umf(3) ) ) + &
+                            abs( p_grid%zem(:,1) * ( de(:,2) + p_physics%umf(1) )   + &
+                                 p_grid%zem(:,2) * ( de(:,3) + p_physics%umf(2) )   + &
+                                 p_grid%zem(:,3) * ( de(:,4) + p_physics%umf(3) ) )
                   ss(:,2) = abs( p_grid%yaco(:) )
                   res     = maxval( ( sqrt( de(:,5) * rr(:,1) ) + rr(:,2) ) * ss(:,2) )
                   call p_max(res, fctr)
@@ -286,13 +288,13 @@ program canard
             end if
          end if
 
-         call calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ss(:,1))
+         call p_physics%calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ss(:,1))
 
-         call calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
+         call p_physics%calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
 
 !----- PREPARATION FOR GCBC & GCIC
 
-         call gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de)
+         call gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de, p_physics%umf)
 
 !----- INTERNODE COMMNICATION FOR GCIC
 
@@ -300,7 +302,7 @@ program canard
 
 !----- IMPLEMENTATION OF GCBC & GCIC
 
-         call gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt)
+         call gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt, p_physics%umf, p_physics%dudtmf)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -310,7 +312,7 @@ program canard
 
          dtko=dt*min(nk-1,1)/(nkrk-nk+2)
          dtk=dt/(nkrk-nk+1)
-         call movef(dtko, dtk, timo)
+         call p_physics%movef(dtko, dtk, timo)
 
          rr(:,1)=dtk*p_grid%yaco(:)
          qa(:,1)=qo(:,1)-rr(:,1)*de(:,1)
@@ -319,11 +321,11 @@ program canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, p_grid, varr, qa, p, tmax, nkrk, timo, nk, dt)
+         call extracon(p_domdcomp, p_grid, p_physics, varr, qa, p, tmax, nkrk, timo, nk, dt)
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
-         call wall_condition_update(p_domdcomp, qa)
+         call wall_condition_update(p_domdcomp, qa, p_physics%umf)
 
 !----- POINT JUNCTION AVERAGING
 
@@ -372,7 +374,7 @@ program canard
                case(1)
                   varr(:)=qb(:,m)
                case(2:4)
-                  varr(:)=rr(:,1)*qb(:,m)+umf(m-1)
+                  varr(:)=rr(:,1)*qb(:,m)+p_physics%umf(m-1)
                case(5)
                   varr(:)=gamm1*(qb(:,m)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4)))
                end select
@@ -413,7 +415,7 @@ program canard
    else
       deallocate(qo,qa,qb,de,rr,ss,p)
       call p_grid%deallocate
-      call deallocate_physics_memory
+      call p_physics%deallocate
 
       if(tmax>=tsam) then
          nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1

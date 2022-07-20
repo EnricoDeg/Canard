@@ -9,7 +9,7 @@ MODULE mo_gcbc
                            & quarter, hamhamm1, gam, gamm1, hamm1
    use mo_vars,       ONLY : nrecs
    use mo_io,         ONLY : cnnode, cdata
-   use mo_physics,    ONLY : txx, txy, tyy, umf, dudtmf, srefoo, srefp1dre
+   use mo_physics,    ONLY : t_physics
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : t_grid
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -136,13 +136,14 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_init
 
-   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de)
+   SUBROUTINE gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de, umf)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(INOUT) :: p_numerics
       type(t_grid),     intent(IN)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: de
+      real(kind=nr), dimension(3), intent(in) :: umf
       integer(kind=ni) :: nn, np, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: ra0, ra1
       real(kind=nr), dimension(:,:,:), pointer :: cm
@@ -171,7 +172,7 @@ MODULE mo_gcbc
                   do j=0,p_domdcomp%ijk(2,nn)
                      jk = kp + j
                      l  = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
-                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l))
+                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l), umf)
                      call xtq2r(cm(jk,:,ip))
                      cha(:) = ra0 * drva(jk,:,ip) + ra1 * de(l,:)
                      drva(jk,:,ip) = matmul( xt(:,:), p_grid%yaco(l) * cha(:) )
@@ -218,7 +219,7 @@ MODULE mo_gcbc
 
    END SUBROUTINE gcbc_comm
 
-   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt)
+   SUBROUTINE gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt, umf, dudtmf)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
       type(t_grid),     intent(IN)    :: p_grid
@@ -227,6 +228,8 @@ MODULE mo_gcbc
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       integer(kind=ni), intent(in) :: nkrk
       real(kind=nr),    intent(in) :: dt
+      real(kind=nr), dimension(3), intent(in) :: umf
+      real(kind=nr), dimension(3), intent(in) :: dudtmf
       integer(kind=ni) :: ii, nn, np, ll, l, ip, iq, i, j, k
       integer(kind=ni) :: jk, kp
       real(kind=nr)    :: ra0, dtwi
@@ -261,7 +264,7 @@ MODULE mo_gcbc
                   do j=0,p_domdcomp%ijk(2,nn)
                      jk = kp + j
                      l  = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
-                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l))
+                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l), umf)
                      cha(:) = drva(jk,:,ip)
                      dha(:) = drvb(jk,:,ip)
                      if ( ra0 * ( vn + vs + ao ) > zero ) then
@@ -286,7 +289,7 @@ MODULE mo_gcbc
                   do j=0,p_domdcomp%ijk(2,nn)
                      jk = kp + j
                      l  = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
-                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l))
+                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l), umf)
                      cha(:) = drva(jk,:,ip)
                      dha(:) = drvb(jk,:,ip)
                      select case(npex(l))
@@ -309,7 +312,7 @@ MODULE mo_gcbc
                   do j=0,p_domdcomp%ijk(2,nn)
                      jk = kp + j
                      l  = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
-                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l))
+                     call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l), umf)
                      cha(:) = drva(jk,:,ip)
                      dha(:) = drvb(jk,:,ip)
                      if ( ra0 * ( vn + vs ) > zero ) then
@@ -414,9 +417,10 @@ MODULE mo_gcbc
 
    END SUBROUTINE average_surface
 
-   SUBROUTINE wall_condition_update(p_domdcomp, qa)
+   SUBROUTINE wall_condition_update(p_domdcomp, qa, umf)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
+      real(kind=nr), dimension(3), intent(in) :: umf
       integer(kind=ni) :: nn, np, l, ip, i, j, k
       real(kind=nr)    :: fctr, ra0
 
@@ -452,9 +456,10 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, p_grid, varr, qa, p, tmax, nkrk, timo, nk, dt)
+   subroutine extracon(p_domdcomp, p_grid, p_physics, varr, qa, p, tmax, nkrk, timo, nk, dt)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_grid),     intent(IN) :: p_grid
+      type(t_physics),     intent(IN) :: p_physics
       real(kind=ieee32), dimension(0:p_domdcomp%lmx), intent(inout) :: varr
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
@@ -491,9 +496,9 @@ MODULE mo_gcbc
                   jk     = kp + j
                   l      = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
                   ra0    = two * acos(p_grid%cm2(jk,1,ip))
-                  ra1    = abs( half * sin(ra0) * ( tyy(l) - txx(l) ) + cos(ra0) * txy(l) )
+                  ra1    = abs( half * sin(ra0) * ( p_physics%tyy(l) - p_physics%txx(l) ) + cos(ra0) * p_physics%txy(l) )
                   ra2    = gam * p(l) / qa(l,1)
-                  ra3    = sqrt( ra1 * qa(l,1) ) * ( ra2 + srefoo ) / ( srefp1dre * ra2**1.5_nr )
+                  ra3    = sqrt( ra1 * qa(l,1) ) * ( ra2 + p_physics%srefoo ) / ( p_physics%srefp1dre * ra2**1.5_nr )
                   vee(1) = sqrt( ( p_grid%etm(l,2) * p_grid%zem(l,3) - p_grid%zem(l,2) * p_grid%etm(l,3) )**two + &
                                  ( p_grid%etm(l,3) * p_grid%zem(l,1) - p_grid%zem(l,3) * p_grid%etm(l,1) )**two )
                   vee(2) = p_grid%cm2(jk,1,ip) * ( p_grid%zem(l,2) * p_grid%xim(l,3)   - &
@@ -602,11 +607,12 @@ MODULE mo_gcbc
 
 !===== SUBROUTINE FOR ELEMENTARY VARIABLES IN GCBC/GCIC
 
-   subroutine eleme(cm, qa1, qa24, pp)
+   subroutine eleme(cm, qa1, qa24, pp, umf)
       real(kind=nr), dimension(3), intent(in) :: cm
       real(kind=nr),               intent(in) :: qa1
       real(kind=nr), dimension(3), intent(in) :: qa24
       real(kind=nr),               intent(in) :: pp
+      real(kind=nr), dimension(3), intent(in) :: umf
       real(kind=nr) :: rhoi
 
       rhoi  = one / qa1
