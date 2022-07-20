@@ -12,6 +12,16 @@ module mo_gridgen
    implicit none
    public
 
+   type, public :: t_grid_geom
+      integer(kind=ni) :: nthick
+      real(kind=nr)    :: szth0
+      real(kind=nr)    :: szth1
+      real(kind=nr)    :: skew
+      real(kind=nr)    :: doml0
+      real(kind=nr)    :: doml1
+      real(kind=nr)    :: domh
+   end type t_grid_geom 
+
    integer(kind=ni), private, parameter :: lnaca=90
    integer(kind=ni) :: lxi0,lxi1,lxi2,let0,lze0 ! input vars
 
@@ -30,8 +40,8 @@ module mo_gridgen
    real(kind=nr), private :: xa,xb,xc,xd,xe,xo,ya,yb,yc,yd,yo,sho,pp,qq
    real(kind=nr), private :: am,tmp,tmpa,tmpb,gf
 
-   integer(kind=ni) :: nthick ! input vars
-   real(kind=nr) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx ! input vars
+   integer(kind=ni), private :: nthick ! input vars
+   real(kind=nr),    private :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx ! input vars
 
    real(kind=nr), private, dimension(5,5) :: xt
 
@@ -57,6 +67,19 @@ module mo_gridgen
 
 
    END SUBROUTINE read_input_gridgen
+
+   SUBROUTINE get_grid_geometry(p_grid_geom)
+      type(t_grid_geom), intent(out) :: p_grid_geom
+   
+      p_grid_geom%nthick = nthick
+      p_grid_geom%szth0  = szth0
+      p_grid_geom%szth1  = szth1
+      p_grid_geom%skew   = skew
+      p_grid_geom%doml0  = doml0
+      p_grid_geom%doml1  = doml1
+      p_grid_geom%domh   = domh
+
+   END SUBROUTINE get_grid_geometry
 
 !===== GRID GENERATION
 

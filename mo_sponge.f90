@@ -5,7 +5,7 @@
 MODULE mo_sponge
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : two, zero, pi, sml, one, half, hamhamm1
-   use mo_gridgen,    ONLY : szth0, szth1, skew, doml0, doml1, domh
+   use mo_gridgen,    ONLY : t_grid_geom
 
    IMPLICIT NONE
    PUBLIC
@@ -28,7 +28,8 @@ MODULE mo_sponge
 
    !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   subroutine spongeup(lmx, yaco, de, ss)
+   subroutine spongeup(p_grid_geom, lmx, yaco, de, ss)
+      type(t_grid_geom), intent(in) :: p_grid_geom
       integer(kind=ni), INTENT(IN) :: lmx
       real(kind=nr), dimension(0:lmx),   intent(in)    :: yaco
       real(kind=nr), dimension(0:lmx,5), intent(inout) :: de
@@ -37,23 +38,24 @@ MODULE mo_sponge
       real(kind=nr) :: ra0, ra1, ra2, ra3
       real(kind=nr) :: tmpa, tmpb
 
-      ll=-1
-      ra2=skew/domh
-      tmpa=pi/szth0
-      tmpb=pi/szth1
+      ll   = -1
+      ra2  = p_grid_geom%skew / p_grid_geom%domh
+      tmpa = pi / p_grid_geom%szth0
+      tmpb = pi / p_grid_geom%szth1
       do l=0,lmx
-         ra3=ra2*ss(l,2)
-         ra0=tmpa*(ss(l,1)-(ra3-doml0+szth0))
-         ra1=tmpb*(ra3+doml1-szth1-ss(l,1))
-         de(l,1)=szco*half*(two+cos(max(min(ra0,pi),zero))+cos(max(min(ra1,pi),zero)))
-         de(l,2)=szco*half*(one+cos(max(min(ra0,pi),zero)))
-         if(de(l,1)>sml) then
-            ll=ll+1
-            de(ll,5)=l+sml
+         ra3 = ra2 * ss(l,2)
+         ra0 = tmpa * ( ss(l,1) - ( ra3 - p_grid_geom%doml0 + p_grid_geom%szth0 ) )
+         ra1 = tmpb * ( ra3 + p_grid_geom%doml1 - p_grid_geom%szth1 - ss(l,1) )
+         de(l,1) = szco * half * ( two + cos( max( min( ra0, pi ), zero ) ) + &
+                                         cos( max( min( ra1, pi ), zero ) ) )
+         de(l,2) = szco * half * ( one + cos( max( min( ra0, pi ), zero ) ) )
+         if ( de(l,1) > sml ) then
+            ll = ll + 1
+            de(ll,5) = l + sml
          end if
       end do
-      lsz=ll
-      if(lsz/=-1) then
+      lsz = ll
+      if ( lsz /= -1 ) then
          allocate(lcsz(0:lsz),asz(0:lsz),bsz(0:lsz))
          do ll=0,lsz
             l=de(ll,5)

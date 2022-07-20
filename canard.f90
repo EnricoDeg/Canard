@@ -16,7 +16,8 @@ program canard
                            & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
-   use mo_gridgen,    ONLY : nthick, read_input_gridgen, makegrid
+   use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
+                           & get_grid_geometry
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
                            & extracon, wall_condition_update, average_surface,     &
@@ -33,6 +34,7 @@ program canard
    type(t_domdcomp)    :: p_domdcomp
    type(t_numerics)    :: p_numerics
    type(t_grid)        :: p_grid
+   type(t_grid_geom)   :: p_grid_geom
    integer(kind=ni)    :: mbk
    integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
    integer(kind=ni)    :: nrestart
@@ -86,10 +88,11 @@ program canard
 
    call p_domdcomp%allocate(mbk,mpro)
    call p_domdcomp%read()
+   call get_grid_geometry(p_grid_geom)
 
 !===== DOMAIN DECOMPOSITION INITIALIZATION
 
-   call p_domdcomp%init(mbk, nthick, nbody)
+   call p_domdcomp%init(mbk, p_grid_geom%nthick, nbody)
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
@@ -165,7 +168,7 @@ program canard
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
-   call spongeup(p_domdcomp%lmx, p_grid%yaco, de, ss) ! use ss which contains grid data
+   call spongeup(p_grid_geom, p_domdcomp%lmx, p_grid%yaco, de, ss) ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
 
