@@ -23,6 +23,8 @@ program canard
                            & read_input_gcbc
    use mo_numerics,   ONLY : t_numerics
    use mo_physics,    ONLY : t_physics
+   use mo_timer,      ONLY : timer_init, timer_start, timer_stop, timer_print,     &
+                             timer_filter
    implicit none
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
@@ -92,6 +94,9 @@ program canard
 
    call p_domdcomp%init(mbk, p_grid_geom%nthick, nbody)
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
+
+!===== TIMERS INITIALIZATION
+   call timer_init()
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
@@ -199,7 +204,7 @@ program canard
       end if
 
 !----- FILTERING & RE-INITIALISING
-
+      call timer_start(timer_filter)
       do m=1,5
          call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+1, &
@@ -217,6 +222,7 @@ program canard
          call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                              p_domdcomp%lze, p_domdcomp%ijk, 3)
       end do
+      call timer_stop(timer_filter)
       qo(:,:)=qa(:,:)
 
 !-------------------------------------
@@ -437,6 +443,9 @@ program canard
 !-----
       end if
    end if
+
+!===== TIMERS PRINT
+   call timer_print()
 
 !===== END OF JOB
 
