@@ -249,31 +249,7 @@ program canard
                ndt=n
                dts=dte
                if(dto<zero) then
-                  rr(:,1) = p_grid%xim(:,1) * p_grid%xim(:,1) + p_grid%xim(:,2) * p_grid%xim(:,2) + &
-                            p_grid%xim(:,3) * p_grid%xim(:,3) + p_grid%etm(:,1) * p_grid%etm(:,1) + &
-                            p_grid%etm(:,2) * p_grid%etm(:,2) + p_grid%etm(:,3) * p_grid%etm(:,3) + &
-                            p_grid%zem(:,1) * p_grid%zem(:,1) + p_grid%zem(:,2) * p_grid%zem(:,2) + &
-                            p_grid%zem(:,3) * p_grid%zem(:,3)
-                  rr(:,2) = abs( p_grid%xim(:,1) * ( de(:,2) + p_physics%umf(1) )   + &
-                                 p_grid%xim(:,2) * ( de(:,3) + p_physics%umf(2) )   + &
-                                 p_grid%xim(:,3) * ( de(:,4) + p_physics%umf(3) ) ) + &
-                            abs( p_grid%etm(:,1) * ( de(:,2) + p_physics%umf(1) )   + &
-                                 p_grid%etm(:,2) * ( de(:,3) + p_physics%umf(2) )   + & 
-                                 p_grid%etm(:,3) * ( de(:,4) + p_physics%umf(3) ) ) + &
-                            abs( p_grid%zem(:,1) * ( de(:,2) + p_physics%umf(1) )   + &
-                                 p_grid%zem(:,2) * ( de(:,3) + p_physics%umf(2) )   + &
-                                 p_grid%zem(:,3) * ( de(:,4) + p_physics%umf(3) ) )
-                  ss(:,2) = abs( p_grid%yaco(:) )
-                  res     = maxval( ( sqrt( de(:,5) * rr(:,1) ) + rr(:,2) ) * ss(:,2) )
-                  call p_max(res, fctr)
-                  ra0 = cfl / fctr
-                  ra1 = ra0
-#ifdef VISCOUS
-                  res = maxval( de(:,1) * ss(:,1) * rr(:,1) * ss(:,2) * ss(:,2) )
-                  call p_max(res, fctr)
-                  ra1 = half / fctr
-#endif
-                  dte = min(ra0, ra1)
+                  call p_physics%calc_time_step(p_domdcomp%lmx, p_grid, de, ss(:,1), cfl, dte)
                else
                   dte = dto
                end if

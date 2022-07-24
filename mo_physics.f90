@@ -6,6 +6,7 @@ MODULE mo_physics
    use mo_kind,       ONLY : nr, ni
    use mo_parameters, ONLY : sml, zero, one, pi, hamm1, hamhamm1, half, gam,      &
                            & gamm1, n45no, nrall, gamm1prndtli, nrone, twothirds
+   use mo_mpi,        ONLY : p_max
    use mo_grid,       ONLY : t_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_numerics,   ONLY : t_numerics
@@ -38,6 +39,7 @@ MODULE mo_physics
       procedure, public :: movef
       procedure, public :: calc_viscous_shear_stress
       procedure, public :: calc_fluxes
+      procedure, public :: calc_time_step
 
    end type t_physics
 
@@ -153,6 +155,48 @@ MODULE mo_physics
       end if
 
    end subroutine movef
+
+   subroutine calc_time_step(this, lmx, p_grid, de, ssk, cfl, dte)
+      class(t_physics), INTENT(INOUT) :: this
+      integer(kind=ni), intent(in) :: lmx
+      type(t_grid),     intent(in) :: p_grid
+      real(kind=nr), dimension(0:lmx,5), intent(in) :: de
+      real(kind=nr), dimension(0:lmx), intent(in) :: ssk
+      real(kind=nr), intent(in) :: cfl
+      real(kind=nr), intent(out) :: dte
+
+      real(kind=nr) :: ra0, ra1, res, fctr
+      real(kind=nr), dimension(0:lmx,3) :: rr
+      real(kind=nr), dimension(0:lmx) :: ssi
+      
+
+      rr(:,1) = p_grid%xim(:,1) * p_grid%xim(:,1) + p_grid%xim(:,2) * p_grid%xim(:,2) + &
+                p_grid%xim(:,3) * p_grid%xim(:,3) + p_grid%etm(:,1) * p_grid%etm(:,1) + &
+                p_grid%etm(:,2) * p_grid%etm(:,2) + p_grid%etm(:,3) * p_grid%etm(:,3) + &
+                p_grid%zem(:,1) * p_grid%zem(:,1) + p_grid%zem(:,2) * p_grid%zem(:,2) + &
+                p_grid%zem(:,3) * p_grid%zem(:,3)
+      rr(:,2) = abs( p_grid%xim(:,1) * ( de(:,2) + this%umf(1) )   + &
+                     p_grid%xim(:,2) * ( de(:,3) + this%umf(2) )   + &
+                     p_grid%xim(:,3) * ( de(:,4) + this%umf(3) ) ) + &
+                abs( p_grid%etm(:,1) * ( de(:,2) + this%umf(1) )   + &
+                     p_grid%etm(:,2) * ( de(:,3) + this%umf(2) )   + & 
+                     p_grid%etm(:,3) * ( de(:,4) + this%umf(3) ) ) + &
+                abs( p_grid%zem(:,1) * ( de(:,2) + this%umf(1) )   + &
+                     p_grid%zem(:,2) * ( de(:,3) + this%umf(2) )   + &
+                     p_grid%zem(:,3) * ( de(:,4) + this%umf(3) ) )
+      ssi(:) = abs( p_grid%yaco(:) )
+      res     = maxval( ( sqrt( de(:,5) * rr(:,1) ) + rr(:,2) ) * ssi(:) )
+      call p_max(res, fctr)
+      ra0 = cfl / fctr
+      ra1 = ra0
+#ifdef VISCOUS
+      res = maxval( de(:,1) * ssk * rr(:,1) * ssi(:) * ssi(:) )
+      call p_max(res, fctr)
+      ra1 = half / fctr
+#endif
+      dte = min(ra0, ra1)
+      
+   end subroutine calc_time_step
 
 
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
