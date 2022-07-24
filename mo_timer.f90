@@ -81,8 +81,11 @@ MODULE mo_timer
       integer(kind=ni) :: i
 
       if (myid == 0) then
+         write(*,*) '----------'
+         write(*,*) '--TIMING--'
+         write(*,*) '----------'         
          do i = 1,current_timers
-            write(*,*) trim(timers(i)%timer_name), ' = ', timers(i)%timer_value, ' s'
+            write(*,"(a20, ' = ', f12.5, ' s')") trim(timers(i)%timer_name), timers(i)%timer_value
          end do
       end if
 
