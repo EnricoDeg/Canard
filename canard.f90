@@ -5,7 +5,6 @@
 program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
-   use mo_vars,       ONLY : nrecs, nrecd
    use mo_io,         ONLY : cdata
    use mo_mpi,        ONLY : mpro, npro, myid, p_start, p_stop, p_barrier, p_sum,  &
                            & p_max
@@ -51,6 +50,7 @@ program canard
    integer(kind=ni)    :: n
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
+   integer(kind=ni)    :: nrecs
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:), allocatable     :: p
    real(kind=nr), dimension(:,:), allocatable   :: qo
@@ -69,7 +69,6 @@ program canard
    CALL p_start
 
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
-   inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
 !===== INPUT PARAMETERS
 

@@ -7,7 +7,6 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & quarter, hamhamm1, gam, gamm1, hamm1
-   use mo_vars,       ONLY : nrecs
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : t_physics
    use mo_numerics,   ONLY : t_numerics
@@ -474,6 +473,9 @@ MODULE mo_gcbc
       integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3
       real(kind=nr),dimension(3) :: rv
+      integer(kind=ni) :: ll, nrecs
+
+      inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 
       if ( nk == nkrk .and. ( timo + quarter - tmax )**two < ( half * dt )**two ) then
          nn = 2

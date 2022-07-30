@@ -3,10 +3,9 @@
 !*****
 
 module mo_gridgen
-   use mo_kind,       ONLY : ni, nr
+   use mo_kind,       ONLY : ni, nr, ieee64
    use mo_parameters, ONLY : zero, twopi, two, three, onethird, halfpi,     &
                            & free, half, one, four, five, sml, pi, hamhamm1
-   use mo_vars,       ONLY : nrecd
    use mo_io,         ONLY : cgrid
    use mo_mpi,        ONLY : myid
    implicit none
@@ -103,6 +102,9 @@ module mo_gridgen
       integer(kind=ni)             :: lxit, lett, lxie0, lxis1, lxie1, lxis2, lete0, lets1
       real(kind=nr)                :: res, ra0, ra1, ra2, ra3, fctr
       real(kind=nr) ,dimension(5)  :: cha, dha
+      integer(kind=ni) :: nrecd
+
+      inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       lxit=lxi0+lxi1+lxi2+2
       lett=2*let0+1

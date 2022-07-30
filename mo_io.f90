@@ -5,7 +5,6 @@
 MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
-   use mo_vars,       ONLY : nrecd, nrecs
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
@@ -144,6 +143,9 @@ MODULE mo_io
       real(kind=nr),    intent(out) :: ssk(0:p_domdcomp%lmx,3)
       integer(kind=ni), dimension(0:p_domdcomp%let,0:p_domdcomp%lze), intent(in) :: lio
       integer(kind=ni) :: i, j, k, l, lq, lp
+      integer(kind=ni) :: ll, nrecd
+
+      inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       open(9,file=cgrid,access='direct',form='unformatted',recl=3*nrecd,status='old')
       lp = lpos(myid)
@@ -175,6 +177,9 @@ MODULE mo_io
       integer(kind=ni), intent(inout) :: n
       real(kind=nr), intent(inout)    :: dt
       integer(kind=ni) :: lp, i, j, k, lq, l
+      integer(kind=ni) :: ll, nrecd
+
+      inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
       read(9,rec=1) cha(:)
@@ -209,6 +214,9 @@ MODULE mo_io
       integer(kind=ni), intent(inout) :: n
       real(kind=nr), intent(inout)    :: dt
       integer(kind=ni) :: lp, i, j, k, lq, l
+      integer(kind=ni) :: ll, nrecd
+
+      inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
          open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='replace')
@@ -245,6 +253,9 @@ MODULE mo_io
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb, mq
+      integer(kind=ni) :: ll, nrecs
+
+      inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 
       ltomb = ( p_domdcomp%lxio + 1 ) * &
               ( p_domdcomp%leto + 1 ) * &
