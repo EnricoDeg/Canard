@@ -9,7 +9,7 @@ module mo_numerics
                              ab, aa, two, n45go
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
-                             p_send, myid
+                             p_send
    use mo_utils,      ONLY : indx3, mtrxi
    implicit none
    private

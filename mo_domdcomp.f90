@@ -3,11 +3,11 @@
 !*****
 
 MODULE mo_domdcomp
-   use mo_kind, ONLY : ni, nr
+   use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : one
-   use mo_mpi, ONLY : p_null_req, p_irecv, p_isend, p_waitall, &
-                      p_recv, p_send, p_bcast, mpro, myid
-   use mo_utils, ONLY : indx3
+   use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall,        &
+                           & p_recv, p_send, p_bcast, mpro, p_get_process_ID
+   use mo_utils,      ONLY : indx3
    IMPLICIT NONE
    PRIVATE
 
@@ -87,6 +87,9 @@ MODULE mo_domdcomp
       integer(kind=ni), intent(in) :: nkbody
       integer(kind=ni) :: ipk, jpk, mmk, nnk, nstart, nend
       integer(kind=ni) :: llk, mpk, lpk, mak, lk, mm, mp, itag
+      integer(kind=ni) :: myid
+
+      myid = p_get_process_ID()
 
       this%mo(0) = 0
       do mmk = 1,nblocks

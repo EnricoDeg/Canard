@@ -19,7 +19,8 @@ MODULE mo_mpi
 
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
-  PUBLIC :: mpro, npro, myid
+  PUBLIC :: p_get_process_ID
+  PUBLIC :: mpro
 
   INTERFACE p_send
     MODULE PROCEDURE p_send_int
@@ -66,6 +67,13 @@ MODULE mo_mpi
     res = MPI_Wtime()
 
   end function p_wtime
+
+  function p_get_process_ID()
+    integer(kind=ni) :: p_get_process_ID
+
+    p_get_process_ID = myid
+
+  end function p_get_process_ID
 
   SUBROUTINE p_start
     integer(kind=ni) :: ll

@@ -5,7 +5,7 @@
 MODULE mo_timer
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : zero
-   use mo_mpi,        ONLY : p_wtime, myid
+   use mo_mpi,        ONLY : p_wtime, p_get_process_ID
    IMPLICIT NONE
    PRIVATE
 
@@ -78,8 +78,9 @@ MODULE mo_timer
    end subroutine timer_init
 
    subroutine timer_print()
-      integer(kind=ni) :: i
+      integer(kind=ni) :: i, myid
 
+      myid = p_get_process_ID()
       if (myid == 0) then
          write(*,*) '----------'
          write(*,*) '--TIMING--'

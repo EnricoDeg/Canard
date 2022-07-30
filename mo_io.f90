@@ -6,7 +6,7 @@ MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_mpi,        ONLY : mpro, myid, p_barrier, p_recv, p_send,         &
+   use mo_mpi,        ONLY : mpro, p_get_process_ID, p_barrier, p_recv, p_send,         &
                              p_null_req, p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
 
@@ -77,7 +77,9 @@ MODULE mo_io
       integer(kind=ni), intent(in) :: ndata
       integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, kp, jp, i, j, k
+      integer(kind=ni) :: myid
 
+      myid = p_get_process_ID()
       cfilet(-1) = 'grid'
       do n=0,ndata
          no(2) = n / 100
@@ -144,7 +146,9 @@ MODULE mo_io
       integer(kind=ni), dimension(0:p_domdcomp%let,0:p_domdcomp%lze), intent(in) :: lio
       integer(kind=ni) :: i, j, k, l, lq, lp
       integer(kind=ni) :: ll, nrecd
+      integer(kind=ni) :: myid
 
+      myid = p_get_process_ID()
       inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       open(9,file=cgrid,access='direct',form='unformatted',recl=3*nrecd,status='old')
@@ -178,7 +182,9 @@ MODULE mo_io
       real(kind=nr), intent(inout)    :: dt
       integer(kind=ni) :: lp, i, j, k, lq, l
       integer(kind=ni) :: ll, nrecd
+      integer(kind=ni) :: myid
 
+      myid = p_get_process_ID()
       inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
@@ -215,7 +221,9 @@ MODULE mo_io
       real(kind=nr), intent(inout)    :: dt
       integer(kind=ni) :: lp, i, j, k, lq, l
       integer(kind=ni) :: ll, nrecd
+      integer(kind=ni) :: myid
 
+      myid = p_get_process_ID()
       inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
       if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then
@@ -254,7 +262,9 @@ MODULE mo_io
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb, mq
       integer(kind=ni) :: ll, nrecs
+      integer(kind=ni) :: myid
 
+      myid = p_get_process_ID()
       inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 
       ltomb = ( p_domdcomp%lxio + 1 ) * &
@@ -470,7 +480,9 @@ MODULE mo_io
       real(kind=ieee32), dimension(0:p_domdcomp%lmx), intent(in) :: varr
       integer(kind=ni),intent(in) :: nn
       integer(kind=ni) :: mp, mps, mpe, itag
+      integer(kind=ni) :: myid
 
+      myid = p_get_process_ID()
       varmin(nn)   = minval(varr)
       varmax(nn)   = maxval(varr)
       varm(:,myid) = (/varmin(nn),varmax(nn)/)
