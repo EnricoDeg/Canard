@@ -6,8 +6,8 @@ program canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_io,         ONLY : cdata
-   use mo_mpi,        ONLY : mpro, p_get_process_ID, p_start, p_stop, p_barrier,   &
-                           & p_sum, p_max
+   use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_start, p_stop, &
+                           & p_barrier, p_sum, p_max
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_file,                &
@@ -50,7 +50,7 @@ program canard
    integer(kind=ni)    :: n
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
-   integer(kind=ni)    :: nrecs, myid
+   integer(kind=ni)    :: nrecs, myid, mpro
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:), allocatable     :: p
    real(kind=nr), dimension(:,:), allocatable   :: qo
@@ -67,8 +67,9 @@ program canard
 !===== PREPARATION FOR PARALLEL COMPUTING
 
    CALL p_start
-   
+
    myid = p_get_process_ID()
+   mpro = p_get_n_processes() - 1
 
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 

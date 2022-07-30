@@ -11,7 +11,7 @@ MODULE mo_mpi
 
   integer(kind=ni),dimension(:,:),allocatable :: ista
   integer(kind=ni),dimension(:),allocatable :: ireq
-  integer(kind=ni) :: ir,mpro,npro,myid,info,icom,ierr
+  integer(kind=ni) :: ir,npro,myid,info,icom,ierr
 
   INTEGER :: p_status(MPI_STATUS_SIZE) 
 
@@ -20,7 +20,7 @@ MODULE mo_mpi
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
   PUBLIC :: p_get_process_ID
-  PUBLIC :: mpro
+  PUBLIC :: p_get_n_processes
 
   INTERFACE p_send
     MODULE PROCEDURE p_send_int
@@ -75,6 +75,13 @@ MODULE mo_mpi
 
   end function p_get_process_ID
 
+  function p_get_n_processes()
+    integer(kind=ni) :: p_get_n_processes
+
+    p_get_n_processes = npro
+
+  end function p_get_n_processes
+
   SUBROUTINE p_start
     integer(kind=ni) :: ll
 
@@ -100,7 +107,6 @@ MODULE mo_mpi
        CALL p_abort
     END IF
 
-    mpro=npro-1
     icom=MPI_COMM_WORLD
     info=MPI_INFO_NULL
 

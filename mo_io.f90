@@ -6,8 +6,9 @@ MODULE mo_io
    use mo_kind,       ONLY : ni, nr, int64, ieee32, int32, ieee64
    use mo_parameters, ONLY : zero
    use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_mpi,        ONLY : mpro, p_get_process_ID, p_barrier, p_recv, p_send,         &
-                             p_null_req, p_irecv, p_waitall
+   use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID,   &
+                           & p_barrier, p_recv, p_send, p_null_req, &
+                           & p_irecv, p_waitall
    use mo_utils,      ONLY : indx3
 
    IMPLICIT NONE
@@ -61,7 +62,9 @@ MODULE mo_io
    SUBROUTINE allocate_io_memory(mbk, ndata)
       integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
-      integer(kind=ni) :: ll
+      integer(kind=ni) :: ll, mpro
+
+      mpro = p_get_n_processes() -1
       
       ll=3+5*(ndata+1)
       allocate(cfilet(-1:ndata),     &
