@@ -75,12 +75,15 @@ MODULE mo_timer
       end if
 
       timers(timer_id)%timer2 = p_wtime()
-      timers(timer_id)%timer_value = timers(timer_id)%timer2 - &
+      timers(timer_id)%timer_value = timers(timer_id)%timer_value + &
+                                     timers(timer_id)%timer2 -      &
                                      timers(timer_id)%timer1
 
    end subroutine timer_stop
 
    subroutine timer_init()
+
+      timer_total      = add_timer('Total')
       timer_loop       = add_timer('Time Loop')
       timer_filter     = add_timer('Filters')
       timer_timestep   = add_timer('Calc Time Step')
@@ -91,7 +94,6 @@ MODULE mo_timer
       timer_recording  = add_timer('Recording')
       timer_tot_output = add_timer('Total Output')
       timer_output     = add_timer('Output')
-      timer_total      = add_timer('Total')
 
    end subroutine timer_init
 
