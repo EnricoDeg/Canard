@@ -104,12 +104,12 @@ MODULE mo_timer
          write(*,*) '----------'
          write(*,*) '--TIMING--'
          write(*,*) '----------'
-         write(*,"(a20, ' | ', a12, ' | ', a12, ' | ', a12, ' | ', a12, ' | ')") &
+         write(*,"(a20, ' | ', a12, ' | ', a12, ' | ', a12, ' | ')") &
                  "Name", "Min [s]", "Avg [s]", "Max [s]" 
-         write(*,"(a20, ' - ', a12, ' - ', a12, ' - ', a12, ' - ', a12, ' - ')") &
+         write(*,"(a20, '---', a12, '---', a12, '---', a12, '-- ')") &
                  t1, t2, t2, t2
          do i = 1,current_timers
-            write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
+            write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
                       trim(timers(i)%timer_name), timers(i)%timer_min, timers(i)%timer_avg, &
                       timers(i)%timer_max
          end do
