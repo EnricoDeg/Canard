@@ -26,7 +26,7 @@ program canard
    use mo_timer,      ONLY : timer_loop, timer_filter, timer_timestep,             &
                            & timer_VSstress, timer_fluxes, timer_GCBC,             &
                            & timer_averaging, timer_recording, timer_tot_output,   &
-                           & timer_output
+                           & timer_output, timer_total
    implicit none
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
@@ -198,6 +198,7 @@ program canard
 !============================================
 
    call p_barrier
+   call timer_start(timer_total)
    call timer_start(timer_loop)
 
    ndati=-1
@@ -459,7 +460,8 @@ program canard
          call timer_stop(timer_tot_output)
       end if
    end if
-
+   call timer_stop(timer_total)
+   
 !===== TIMERS PRINT
    call timer_print()
 

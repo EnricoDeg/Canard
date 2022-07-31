@@ -29,7 +29,8 @@ MODULE mo_timer
    integer(kind=ni), public :: timer_filter, timer_loop, timer_timestep, &
                                timer_VSstress, timer_fluxes,timer_GCBC,  &
                                timer_averaging, timer_recording,         &
-                               timer_tot_output, timer_output
+                               timer_tot_output, timer_output,           &
+                               timer_total
 
    public :: timer_start, timer_stop, timer_init, timer_print
 
@@ -90,6 +91,7 @@ MODULE mo_timer
       timer_recording  = add_timer('Recording')
       timer_tot_output = add_timer('Total Output')
       timer_output     = add_timer('Output')
+      timer_total      = add_timer('Total')
 
    end subroutine timer_init
 
@@ -122,7 +124,7 @@ MODULE mo_timer
          do i = 1,current_timers
             write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
                       trim(timers(i)%timer_name), timers(i)%timer_min, timers(i)%timer_avg, &
-                      timers(i)%timer_max, timers(i)%timer_avg / timers(timer_loop)%timer_avg * 100.0_nr
+                      timers(i)%timer_max, timers(i)%timer_avg / timers(timer_total)%timer_avg * 100.0_nr
          end do
       end if
 
