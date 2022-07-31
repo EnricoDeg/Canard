@@ -23,7 +23,10 @@ program canard
    use mo_numerics,   ONLY : t_numerics
    use mo_physics,    ONLY : t_physics
    use mo_timer,      ONLY : timer_init, timer_start, timer_stop, timer_print
-   use mo_timer,      ONLY : timer_loop, timer_filter
+   use mo_timer,      ONLY : timer_loop, timer_filter, timer_timestep,             &
+                           & timer_VSstress, timer_fluxes, timer_GCBC,             &
+                           & timer_averaging, timer_recording, timer_tot_output,   &
+                           & timer_output
    implicit none
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
@@ -252,8 +255,8 @@ program canard
          ss(:,1) = p_physics%srefp1dre * de(:,5)**1.5_nr / ( de(:,5) + p_physics%srefoo )
 
 !----- DETERMINATION OF TIME STEP SIZE & OUTPUT TIME
-
          if(nk==1) then
+            call timer_start(timer_timestep)
             if(mod(n,10)==1) then
                ndt=n
                dts=dte
@@ -271,12 +274,18 @@ program canard
                nout=1
                ndati=ndati+1
             end if
+            call timer_stop(timer_timestep)
          end if
 
+         call timer_start(timer_VSstress)
          call p_physics%calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ss(:,1))
+         call timer_stop(timer_VSstress)
 
+         call timer_start(timer_fluxes)
          call p_physics%calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
+         call timer_stop(timer_fluxes)
 
+         call timer_start(timer_GCBC)
 !----- PREPARATION FOR GCBC & GCIC
 
          call gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de, p_physics%umf)
@@ -288,6 +297,8 @@ program canard
 !----- IMPLEMENTATION OF GCBC & GCIC
 
          call gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt, p_physics%umf, p_physics%dudtmf)
+
+         call timer_stop(timer_GCBC)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -313,6 +324,7 @@ program canard
          call wall_condition_update(p_domdcomp, qa, p_physics%umf)
 
 !----- POINT JUNCTION AVERAGING
+         call timer_start(timer_averaging)
 
          call p_domdcomp%average_point(qa)
 
@@ -323,6 +335,8 @@ program canard
 !----- INTERFACE SURFACE AVERAGING
 
          call average_surface(p_domdcomp, p_numerics, qa)
+
+         call timer_stop(timer_averaging)
 
 !-------------------------------
 !----- END OF RUNGE-KUTTA STAGES
@@ -340,6 +354,7 @@ program canard
 !----- RECORDING INTERMEDIATE RESULTS
 
       if(timo>tsam-(tmax-tsam)/ndata) then
+         call timer_start(timer_recording)
          dtsum=dtsum+dt
          fctr=half*dt
          qb(:,:)=qb(:,:)+fctr*(qo(:,:)+qa(:,:))
@@ -371,6 +386,7 @@ program canard
             dtsum=zero
             qb(:,:)=zero
          end if
+         call timer_stop(timer_recording)
       end if
 
 !==========================
@@ -398,6 +414,7 @@ program canard
       call p_physics%deallocate
 
       if(tmax>=tsam) then
+         call timer_start(timer_tot_output)
          nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
          ll=5*(p_domdcomp%lmx+1)-1
          allocate(vart(0:nlmx),vmean(0:ll))
@@ -435,10 +452,11 @@ program canard
          end if
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
-
+         call timer_start(timer_output)
          call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart)
-
+         call timer_stop(timer_output)
 !-----
+         call timer_stop(timer_tot_output)
       end if
    end if
 

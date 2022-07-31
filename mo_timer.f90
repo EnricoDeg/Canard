@@ -26,7 +26,10 @@ MODULE mo_timer
    integer(kind=ni) :: current_timers = 0
    type(t_timer), dimension(1:max_timers) :: timers
 
-   integer(kind=ni), public :: timer_filter, timer_loop
+   integer(kind=ni), public :: timer_filter, timer_loop, timer_timestep, &
+                               timer_VSstress, timer_fluxes,timer_GCBC,  &
+                               timer_averaging, timer_recording,         &
+                               timer_tot_output, timer_output
 
    public :: timer_start, timer_stop, timer_init, timer_print
 
@@ -77,8 +80,16 @@ MODULE mo_timer
    end subroutine timer_stop
 
    subroutine timer_init()
-      timer_loop   = add_timer('Time Loop')
-      timer_filter = add_timer('Filters')
+      timer_loop       = add_timer('Time Loop')
+      timer_filter     = add_timer('Filters')
+      timer_timestep   = add_timer('Calc Time Step')
+      timer_VSstress   = add_timer('VS stress')
+      timer_fluxes     = add_timer('Fluxes')
+      timer_GCBC       = add_timer('GCBC')
+      timer_averaging  = add_timer('Averaging')
+      timer_recording  = add_timer('Recording')
+      timer_tot_output = add_timer('Total Output')
+      timer_output     = add_timer('Output')
 
    end subroutine timer_init
 
@@ -104,14 +115,14 @@ MODULE mo_timer
          write(*,*) '----------'
          write(*,*) '--TIMING--'
          write(*,*) '----------'
-         write(*,"(a20, ' | ', a12, ' | ', a12, ' | ', a12, ' | ')") &
-                 "Name", "Min [s]", "Avg [s]", "Max [s]" 
-         write(*,"(a20, '---', a12, '---', a12, '---', a12, '-- ')") &
-                 t1, t2, t2, t2
+         write(*,"(a20, ' | ', a12, ' | ', a12, ' | ', a12, ' | ', a12, ' | ')") &
+                 "Name", "Min [s]", "Avg [s]", "Max [s]", "%" 
+         write(*,"(a20, '---', a12, '---', a12, '---', a12, '---', a12, '-- ')") &
+                 t1, t2, t2, t2, t2
          do i = 1,current_timers
-            write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
+            write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
                       trim(timers(i)%timer_name), timers(i)%timer_min, timers(i)%timer_avg, &
-                      timers(i)%timer_max
+                      timers(i)%timer_max, timers(i)%timer_avg / timers(timer_loop)%timer_avg * 100.0_nr
          end do
       end if
 
