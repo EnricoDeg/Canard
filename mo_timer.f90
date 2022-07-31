@@ -5,7 +5,8 @@
 MODULE mo_timer
    use mo_kind,       ONLY : ni, nr
    use mo_parameters, ONLY : zero
-   use mo_mpi,        ONLY : p_wtime, p_get_process_ID
+   use mo_mpi,        ONLY : p_wtime, p_get_process_ID, p_get_n_processes, &
+                           & p_max, p_min, p_sum
    IMPLICIT NONE
    PRIVATE
 
@@ -16,13 +17,16 @@ MODULE mo_timer
       real(kind=nr)    :: timer1
       real(kind=nr)    :: timer2
       real(kind=nr)    :: timer_value
+      real(kind=nr)    :: timer_max
+      real(kind=nr)    :: timer_min
+      real(kind=nr)    :: timer_avg
    end type t_timer
 
    integer(kind=ni), parameter :: max_timers = 32
    integer(kind=ni) :: current_timers = 0
    type(t_timer), dimension(1:max_timers) :: timers
 
-   integer(kind=ni), public :: timer_filter
+   integer(kind=ni), public :: timer_filter, timer_loop
 
    public :: timer_start, timer_stop, timer_init, timer_print
 
@@ -73,20 +77,34 @@ MODULE mo_timer
    end subroutine timer_stop
 
    subroutine timer_init()
-      timer_filter = add_timer('Filters')
+      timer_loop   = add_timer('Canard: Time Loop')
+      timer_filter = add_timer('Canard: Filters')
 
    end subroutine timer_init
 
    subroutine timer_print()
-      integer(kind=ni) :: i, myid
+      integer(kind=ni) :: i, myid, npro
+
+      npro = p_get_n_processes()
+
+      do i = 1,current_timers
+         call p_max(timers(i)%timer_value, timers(i)%timer_max)
+         call p_min(timers(i)%timer_value, timers(i)%timer_min)
+         call p_sum(timers(i)%timer_value, timers(i)%timer_avg)
+         timers(i)%timer_avg = timers(i)%timer_avg / npro
+      end do
 
       myid = p_get_process_ID()
       if (myid == 0) then
          write(*,*) '----------'
          write(*,*) '--TIMING--'
-         write(*,*) '----------'         
+         write(*,*) '----------'
+         write(*,"(a20, ' | ', a12, ' | ', a12, ' | ', a12, ' | ', a12, ' | ')") &
+                 "Name", "Min [s]", "Avg [s]", "Max [s]" 
          do i = 1,current_timers
-            write(*,"(a20, ' = ', f12.5, ' s')") trim(timers(i)%timer_name), timers(i)%timer_value
+            write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
+                      trim(timers(i)%timer_name), timers(i)%timer_min, timers(i)%timer_avg, &
+                      timers(i)%timer_max
          end do
       end if
 

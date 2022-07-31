@@ -22,8 +22,8 @@ program canard
                            & read_input_gcbc
    use mo_numerics,   ONLY : t_numerics
    use mo_physics,    ONLY : t_physics
-   use mo_timer,      ONLY : timer_init, timer_start, timer_stop, timer_print,     &
-                             timer_filter
+   use mo_timer,      ONLY : timer_init, timer_start, timer_stop, timer_print
+   use mo_timer,      ONLY : timer_loop, timer_filter
    implicit none
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
@@ -195,6 +195,7 @@ program canard
 !============================================
 
    call p_barrier
+   call timer_start(timer_loop)
 
    ndati=-1
    dtsum=zero
@@ -377,6 +378,7 @@ program canard
 !==========================
 
    end do
+   call timer_stop(timer_loop)
 
    if(myid==0) then
       open(9,file='timeouts.dat',status='replace')

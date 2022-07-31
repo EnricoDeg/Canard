@@ -19,7 +19,7 @@ MODULE mo_mpi
 
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
-  PUBLIC :: p_get_process_ID
+  PUBLIC :: p_get_process_ID, p_min
   PUBLIC :: p_get_n_processes
 
   INTERFACE p_send
@@ -45,6 +45,10 @@ MODULE mo_mpi
 
   INTERFACE p_max
     MODULE PROCEDURE p_max_all_dp_0d
+  END INTERFACE
+
+  INTERFACE p_min
+    MODULE PROCEDURE p_min_all_dp_0d
   END INTERFACE
 
   INTERFACE p_isend
@@ -434,6 +438,29 @@ MODULE mo_mpi
 #endif
 
   END SUBROUTINE p_max_all_dp_0d
+
+  SUBROUTINE p_min_all_dp_0d(zfield, ssum, comm)
+
+    REAL(nr),          INTENT(out) :: ssum
+    REAL(nr),          INTENT(in)  :: zfield
+    INTEGER, OPTIONAL, INTENT(in)  :: comm
+
+#ifndef NOMPI
+    INTEGER :: p_comm
+
+    IF (PRESENT(comm)) THEN
+       p_comm = comm
+    ELSE
+       p_comm = icom
+    ENDIF
+
+    CALL MPI_ALLREDUCE (zfield, ssum, 1, MPI_REAL8, &
+         MPI_MIN, p_comm, ierr)
+#else
+    ssum = zfield
+#endif
+
+  END SUBROUTINE p_min_all_dp_0d
 
   SUBROUTINE p_isend_real_1d (buffer, p_destination, p_tag, p_count, comm)
 
