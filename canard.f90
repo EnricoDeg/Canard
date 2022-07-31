@@ -380,12 +380,6 @@ program canard
    end do
    call timer_stop(timer_loop)
 
-   if(myid==0) then
-      open(9,file='timeouts.dat',status='replace')
-      write(9,'(es15.7)') times(:)
-      close(9)
-   end if
-
 !===== GENERATING RESTART DATA FILE
 
    if(nrestart==1) then
