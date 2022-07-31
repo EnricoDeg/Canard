@@ -77,13 +77,18 @@ MODULE mo_timer
    end subroutine timer_stop
 
    subroutine timer_init()
-      timer_loop   = add_timer('Canard: Time Loop')
-      timer_filter = add_timer('Canard: Filters')
+      timer_loop   = add_timer('Time Loop')
+      timer_filter = add_timer('Filters')
 
    end subroutine timer_init
 
    subroutine timer_print()
       integer(kind=ni) :: i, myid, npro
+      character(len=20) :: t1
+      character(len=12) :: t2
+
+      t1 = '--------------------'
+      t2 = '------------'
 
       npro = p_get_n_processes()
 
@@ -101,6 +106,8 @@ MODULE mo_timer
          write(*,*) '----------'
          write(*,"(a20, ' | ', a12, ' | ', a12, ' | ', a12, ' | ', a12, ' | ')") &
                  "Name", "Min [s]", "Avg [s]", "Max [s]" 
+         write(*,"(a20, ' - ', a12, ' - ', a12, ' - ', a12, ' - ', a12, ' - ')") &
+                 t1, t2, t2, t2
          do i = 1,current_timers
             write(*,"(a20, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ', f12.5, ' | ')") &
                       trim(timers(i)%timer_name), timers(i)%timer_min, timers(i)%timer_avg, &
