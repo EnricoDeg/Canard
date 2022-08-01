@@ -1,0 +1,75 @@
+#!/bin/bash
+########
+# Help #
+########
+Help()
+{
+   # Display Help
+   echo "Install dummy component for mHM model."
+   echo
+   echo "Syntax: scriptTemplate [-h|m|l|c|v|d]"
+   echo "options:"
+   echo "h     Print this Help"
+   echo "m     Specify the machine"
+   echo "l     Get a listed of registered machines"
+   echo "f     enable viscosity"
+   echo "v     Verbose mode [default OFF]"
+   echo "d     Debug mode build type [default OFF]"
+   echo
+}
+
+List()
+{
+   echo "Registered and tested machines:"
+   echo "$(ls -1 machine)"
+}
+
+
+########
+# Main #
+########
+VERBOSE=OFF
+BTYPE=Release
+VISCOUS=OFF
+while getopts ":hm:lvdf" option; do
+   case $option in
+      h) # display Help
+         Help
+         exit;;
+      m) # define machine
+	 source machine/$OPTARG
+	 echo "Using ${OPTARG} machine"
+	 ;;
+      l)  # List machines
+	 List
+	 exit;;
+      v) # Verbose mode
+	 VERBOSE=ON
+	 ;;
+      d) # Debug mode
+	 BTYPE=Debug
+	 ;;
+      f) # Viscosity
+         VISCOUS=ON
+         ;;
+     \?) # Invalid option
+         echo "Error: Invalid option"
+         exit;;
+   esac
+done
+
+mkdir build
+cd build
+
+echo "cmake -DCMAKE_INSTALL_PREFIX=${CANARD_DIR} -DCMAKE_BUILD_TYPE=${BTYPE} -DENABLE_VISCOSITY=${VISCOUS} -DCMAKE_VERBOSE_MAKEFILE:BOOL=${VERBOSE} .."
+
+cmake -DCMAKE_INSTALL_PREFIX=${CANARD_DIR}      \
+      -DCMAKE_BUILD_TYPE=${BTYPE}              \
+      -DENABLE_VISCOSITY=${VISCOUS}                \
+      -DCMAKE_VERBOSE_MAKEFILE:BOOL=${VERBOSE} \
+      ..
+
+make install
+cd ..
+rm -r build
+
