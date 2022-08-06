@@ -1,0 +1,17 @@
+mbk             5
+nts             0
+nscrn-nsgnl     1,1
+ndata-fl-av     1,0,1
+nkrk            4
+nviscous        1
+nsmf            1
+nrestart        1
+nextrabc-gcic   0,0
+nnf1-2-3        2,3,1
+reoo-tempoo     500000.0e0,300.0e0
+amach1-2-3      0.3e0,0.0e0,0.0e0
+wtemp           1.0e0
+cfl             1.4e0
+tmax-timf-tsam  0.15e0,0.0e0,0.01e0
+fltk-rbc        0.65e0,0.9e0
+dto             -0.0001e0
