@@ -8,3 +8,4 @@ cfl             1.4e0
 tmax-tsam       0.15e0,0.01e0
 dto             -0.0001e0
 nbody           1
+ltimer          .true.

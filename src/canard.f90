@@ -54,6 +54,7 @@ program canard
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
    integer(kind=ni)    :: nrecs, myid, mpro
+   logical             :: ltimer
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:), allocatable     :: p
    real(kind=nr), dimension(:,:), allocatable   :: qo
@@ -79,7 +80,7 @@ program canard
 !===== INPUT PARAMETERS
 
    call read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
-                    dto, tsam, tmax, nkrk, nbody)
+                    dto, tsam, tmax, nkrk, nbody, ltimer)
 
    call p_numerics%read()
 
@@ -101,7 +102,7 @@ program canard
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
 
 !===== TIMERS INITIALIZATION
-   call timer_init()
+   if (ltimer) call timer_init()
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
@@ -198,8 +199,8 @@ program canard
 !============================================
 
    call p_barrier
-   call timer_start(timer_total)
-   call timer_start(timer_loop)
+   if (ltimer) call timer_start(timer_total)
+   if (ltimer) call timer_start(timer_loop)
 
    ndati=-1
    dtsum=zero
@@ -211,7 +212,7 @@ program canard
       end if
 
 !----- FILTERING & RE-INITIALISING
-      call timer_start(timer_filter)
+      if (ltimer) call timer_start(timer_filter)
       do m=1,5
          call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+1, &
@@ -229,7 +230,7 @@ program canard
          call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                              p_domdcomp%lze, p_domdcomp%ijk, 3)
       end do
-      call timer_stop(timer_filter)
+      if (ltimer) call timer_stop(timer_filter)
       qo(:,:)=qa(:,:)
 
 !-------------------------------------
@@ -257,7 +258,7 @@ program canard
 
 !----- DETERMINATION OF TIME STEP SIZE & OUTPUT TIME
          if(nk==1) then
-            call timer_start(timer_timestep)
+            if (ltimer) call timer_start(timer_timestep)
             if(mod(n,10)==1) then
                ndt=n
                dts=dte
@@ -275,18 +276,18 @@ program canard
                nout=1
                ndati=ndati+1
             end if
-            call timer_stop(timer_timestep)
+            if (ltimer) call timer_stop(timer_timestep)
          end if
 
-         call timer_start(timer_VSstress)
+         if (ltimer) call timer_start(timer_VSstress)
          call p_physics%calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ss(:,1))
-         call timer_stop(timer_VSstress)
+         if (ltimer) call timer_stop(timer_VSstress)
 
-         call timer_start(timer_fluxes)
+         if (ltimer) call timer_start(timer_fluxes)
          call p_physics%calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
-         call timer_stop(timer_fluxes)
+         if (ltimer) call timer_stop(timer_fluxes)
 
-         call timer_start(timer_GCBC)
+         if (ltimer) call timer_start(timer_GCBC)
 !----- PREPARATION FOR GCBC & GCIC
 
          call gcbc_setup(p_domdcomp, p_numerics, p_grid, qa, p, de, p_physics%umf)
@@ -299,7 +300,7 @@ program canard
 
          call gcbc_update(p_domdcomp, p_numerics, p_grid, qa, p, de, nkrk, dt, p_physics%umf, p_physics%dudtmf)
 
-         call timer_stop(timer_GCBC)
+         if (ltimer) call timer_stop(timer_GCBC)
 
 !----- IMPLEMENTATION OF SPONGE CONDITION
 
@@ -325,7 +326,7 @@ program canard
          call wall_condition_update(p_domdcomp, qa, p_physics%umf)
 
 !----- POINT JUNCTION AVERAGING
-         call timer_start(timer_averaging)
+         if (ltimer) call timer_start(timer_averaging)
 
          call p_domdcomp%average_point(qa)
 
@@ -337,7 +338,7 @@ program canard
 
          call average_surface(p_domdcomp, p_numerics, qa)
 
-         call timer_stop(timer_averaging)
+         if (ltimer) call timer_stop(timer_averaging)
 
 !-------------------------------
 !----- END OF RUNGE-KUTTA STAGES
@@ -355,7 +356,7 @@ program canard
 !----- RECORDING INTERMEDIATE RESULTS
 
       if(timo>tsam-(tmax-tsam)/ndata) then
-         call timer_start(timer_recording)
+         if (ltimer) call timer_start(timer_recording)
          dtsum=dtsum+dt
          fctr=half*dt
          qb(:,:)=qb(:,:)+fctr*(qo(:,:)+qa(:,:))
@@ -387,7 +388,7 @@ program canard
             dtsum=zero
             qb(:,:)=zero
          end if
-         call timer_stop(timer_recording)
+         if (ltimer) call timer_stop(timer_recording)
       end if
 
 !==========================
@@ -395,7 +396,7 @@ program canard
 !==========================
 
    end do
-   call timer_stop(timer_loop)
+   if (ltimer) call timer_stop(timer_loop)
 
 !===== GENERATING RESTART DATA FILE
 
@@ -415,7 +416,7 @@ program canard
       call p_physics%deallocate
 
       if(tmax>=tsam) then
-         call timer_start(timer_tot_output)
+         if (ltimer) call timer_start(timer_tot_output)
          nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
          ll=5*(p_domdcomp%lmx+1)-1
          allocate(vart(0:nlmx),vmean(0:ll))
@@ -453,17 +454,17 @@ program canard
          end if
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
-         call timer_start(timer_output)
+         if (ltimer) call timer_start(timer_output)
          call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart)
-         call timer_stop(timer_output)
+         if (ltimer) call timer_stop(timer_output)
 !-----
-         call timer_stop(timer_tot_output)
+         if (ltimer) call timer_stop(timer_tot_output)
       end if
    end if
-   call timer_stop(timer_total)
+   if (ltimer) call timer_stop(timer_total)
    
 !===== TIMERS PRINT
-   call timer_print()
+   if (ltimer) call timer_print()
 
 !===== END OF JOB
 

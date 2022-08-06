@@ -35,13 +35,14 @@ MODULE mo_io
    CONTAINS
 
    SUBROUTINE read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
-                          cfl, dto, tsam, tmax, nkrk, nbody)
+                          cfl, dto, tsam, tmax, nkrk, nbody, ltimer)
       integer(kind=ni), intent(out) :: mbk, nts, nscrn, ndata, ndatafl, ndataav
       integer(kind=ni), intent(out) :: nrestart
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
       integer(kind=ni), intent(out) :: nkrk
       integer(kind=ni), intent(out) :: nbody
+      logical,          intent(out) :: ltimer
       character(16) :: cinput
 
       open(9,file='input.main',status='old')
@@ -55,6 +56,7 @@ MODULE mo_io
       read(9,*) cinput,tmax,tsam
       read(9,*) cinput,dto
       read(9,*) cinput,nbody
+      read(9,*) cinput,ltimer
       close(9)
 
    END SUBROUTINE read_input_main
