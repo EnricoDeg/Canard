@@ -1,0 +1,9 @@
+#!/bin/bash
+module purge
+
+module add intel-oneapi-compilers/2022.0.1-gcc-11.2.0
+module add openmpi/4.1.2-intel-2021.5.0
+
+export FC=/sw/spack-levante/openmpi-4.1.2-yfwe6t/bin/mpif90
+
+export CANARD_DIR=${PWD}

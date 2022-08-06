@@ -1,0 +1,26 @@
+#!/bin/bash
+
+EXP_ID=validation
+MODEL=canard
+
+mkdir ${EXP_ID}
+cp ../input/parameters/* ${EXP_ID}/.
+cp ../bin/${MODEL} ${EXP_ID}/.
+cd ${EXP_ID}
+mkdir misc
+mkdir data
+
+cat > batch << EOF
+#! /bin/bash
+#SBATCH --job-name=canard
+#SBATCH --partition=compute
+#SBATCH --exclusive
+#SBATCH --ntasks=48
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=00:10:00
+#SBATCH --output=batch.%j.out
+#SBATCH --error=batch.%j.err
+#SBATCH --account=k20200
+
+srun --cpu-bind=cores ./${MODEL}
+EOF
