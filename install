@@ -5,14 +5,11 @@
 Help()
 {
    # Display Help
-   echo "Install dummy component for mHM model."
-   echo
-   echo "Syntax: scriptTemplate [-h|m|l|c|v|d]"
-   echo "options:"
+   echo "Canard Installation options:"
    echo "h     Print this Help"
    echo "m     Specify the machine"
    echo "l     Get a listed of registered machines"
-   echo "f     enable viscosity"
+   echo "f     enable viscosity [default OFF]"
    echo "v     Verbose mode [default OFF]"
    echo "d     Debug mode build type [default OFF]"
    echo
