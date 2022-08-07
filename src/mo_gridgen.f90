@@ -23,6 +23,7 @@ module mo_gridgen
 
    integer(kind=ni), private, parameter :: lnaca=90
    integer(kind=ni) :: lxi0,lxi1,lxi2,let0,lze0 ! input vars
+   integer(kind=ni) :: gridtype ! 0:toy, 1:aerofoil
 
    real(kind=nr), private, dimension(0:lnaca,2) :: xnaca,ynaca,xf,yf
    real(kind=nr), private, dimension(4,2) :: xcij,ycij
@@ -62,6 +63,7 @@ module mo_gridgen
       read(9,*) cinput,wlew,wlea
       read(9,*) cinput,szth0,szth1
       read(9,*) cinput,skew,spx
+      read(9,*) cinput,gridtype
       close(9)
 
 
@@ -85,8 +87,17 @@ module mo_gridgen
    subroutine makegrid(mb, lxio, leto, mo, nblocks)
       integer(kind=ni), intent(in) :: mb, lxio, leto, nblocks
       integer(kind=ni), intent(in), dimension(0:nblocks) :: mo
-      call gridaerofoil(mb, lxio, leto, mo, nblocks, &
-                        nthick, smg, smgvr, doml0, doml1, domh, span, wlew, wlea, szth0, szth1, skew, spx)
+      
+      if (gridtype == 0) then
+         call gridtoy(mb, lxio, leto, mo, nblocks, doml0, doml1, domh, span)
+      else if (gridtype == 1) then
+         call gridaerofoil(mb, lxio, leto, mo, nblocks, &
+                           nthick, smg, smgvr, doml0, doml1, domh, span, wlew, wlea, szth0, szth1, skew, spx)
+      else
+         write(*,*) 'Unknown grid type'
+         STOP 1
+      end if
+
    end subroutine makegrid
 
 !===== GRID GENERATION
@@ -488,7 +499,58 @@ module mo_gridgen
                end do
             end do
  
-            select case(mb)
+            l=-3
+            do j=js,je
+               do i=is,ie
+                  l=l+3
+                  xyzmb(l:l+2)=(/xx(i,j),yy(i,j),zs(k)/)
+               end do
+            end do
+            write(9,rec=k+1) xyzmb(:)
+         end do
+         close(9)
+
+      end if
+      deallocate(xx,yy,zz,xyzmb,xp,yp,xq,yq,pxi,qet)
+
+   end subroutine gridaerofoil
+
+
+   subroutine gridtoy(mb, lxio, leto, mo, nblocks, doml0, doml1, domh, span)
+      integer(kind=ni), intent(in) :: mb, lxio, leto, nblocks
+      integer(kind=ni), intent(in), dimension(0:nblocks) :: mo
+      real(kind=nr),    intent(in) :: doml0, doml1, domh, span
+      integer(kind=ni)             :: np, ll, k, js, je
+      integer(kind=ni)             :: l, j, i, is, ie
+      integer(kind=ni)             :: lxit, lett, lxie0, lxis1, lxie1, lxis2, lete0, lets1
+      real(kind=nr)                :: ra0, ra1, ra2, ra3
+      integer(kind=ni)             :: nrecd, myid
+
+      inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
+      myid = p_get_process_ID()
+
+      lxit=lxi0+lxi1+lxi2+2
+      lett=2*let0+1
+      lxie0=lxi0
+      lxis1=lxie0+1
+      lxie1=lxis1+lxi1
+      lxis2=lxie1+1
+      lete0=let0
+      lets1=lete0+1
+
+      np=3*(lxio+1)*(leto+1)-1
+      allocate(xx(0:lxit,0:lett),yy(0:lxit,0:lett))
+      allocate(xyzmb(0:np), zs(0:lze0))
+
+      if(myid==mo(mb)) then
+         open(9,file=cgrid,status='unknown')
+         close(9,status='delete')
+         open(9,file=cgrid,access='direct',form='unformatted',recl=nrecd*(np+1),status='new')
+
+         do k=0,lze0
+            zs(k)=span*(real(lze0-k,kind=nr)/lze0-half)
+
+         select case(mb)
             case(0,1,2)
                js=0
                je=lete0
@@ -529,9 +591,9 @@ module mo_gridgen
          close(9)
 
       end if
-      deallocate(xx,yy,zz,xyzmb,xp,yp,xq,yq,pxi,qet)
+      deallocate(xx, yy, xyzmb, zs)
 
-   end subroutine gridaerofoil
+   end subroutine gridtoy
 
 !===== AEROFOIL INTERPOLATION
 
