@@ -19,7 +19,7 @@ MODULE mo_mpi
 
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
-  PUBLIC :: p_get_process_ID, p_min
+  PUBLIC :: p_get_process_ID, p_min, p_set_work_comm
   PUBLIC :: p_get_n_processes
 
   INTERFACE p_send
@@ -118,6 +118,14 @@ MODULE mo_mpi
     allocate(ista(MPI_STATUS_SIZE,ll),ireq(ll))
 
   END SUBROUTINE p_start
+
+  SUBROUTINE p_set_work_comm(nio, lmodel_role, laio)
+    integer(kind=ni) :: nio
+    logical          :: lmodel_role
+    logical          :: laio
+
+
+  END SUBROUTINE p_set_work_comm
 
   SUBROUTINE p_null_req
     ir = 0

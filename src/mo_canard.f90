@@ -2,12 +2,12 @@
 !***** COMPRESSIBLE AERODYNAMICS & AEROACOUSTICS RESEARCH CODE (CANARD)
 !*****
 
-program canard
+module mo_canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
    use mo_io,         ONLY : cdata
-   use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_start, p_stop, &
-                           & p_barrier, p_sum, p_max
+   use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
+                           & p_sum, p_max
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_file,                &
@@ -28,6 +28,11 @@ program canard
                            & timer_averaging, timer_recording, timer_tot_output,   &
                            & timer_output, timer_total
    implicit none
+   PUBLIC
+   contains
+
+   subroutine canard_driver(laio)
+      logical, intent(in) :: laio
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
@@ -69,8 +74,6 @@ program canard
    integer(kind=ni), dimension(:,:),   allocatable :: lio
 
 !===== PREPARATION FOR PARALLEL COMPUTING
-
-   CALL p_start
 
    myid = p_get_process_ID()
    mpro = p_get_n_processes() - 1
@@ -472,8 +475,8 @@ program canard
       write(*,*) "Finished."
    end if
 
-   call p_stop
+   end subroutine canard_driver
 
- end program canard
+ end module mo_canard
 
 !*****

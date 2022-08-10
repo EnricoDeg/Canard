@@ -14,7 +14,9 @@ set(SOURCE_EXE  mo_kind.f90
                 mo_sponge.f90
                 mo_physics.f90
                 mo_gcbc.f90
-                canard.f90)
+                mo_canard.f90
+                mo_aio.f90
+                driver.f90)
 
 add_executable(canard ${SOURCE_EXE})
 if(ENABLE_VISCOSITY)

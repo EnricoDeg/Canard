@@ -45,7 +45,7 @@ MODULE mo_io
       logical,          intent(out) :: ltimer
       character(16) :: cinput
 
-      open(9,file='input.main',status='old')
+      open(9,file='input.canard',status='old')
       read(9,*) cinput,mbk
       read(9,*) cinput,nts
       read(9,*) cinput,nscrn
@@ -60,6 +60,16 @@ MODULE mo_io
       close(9)
 
    END SUBROUTINE read_input_main
+
+   SUBROUTINE read_input_driver(nio)
+      integer(kind=ni), intent(out) :: nio
+      character(16) :: cinput
+
+      open(9,file='input.driver',status='old')
+      read(9,*) cinput,nio
+      close(9)
+
+   END SUBROUTINE read_input_driver
 
    SUBROUTINE allocate_io_memory(mbk, ndata)
       integer(kind=ni), intent(in) :: mbk
