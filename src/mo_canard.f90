@@ -59,7 +59,7 @@ module mo_canard
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
    integer(kind=ni)    :: nrecs, myid, mpro
-   logical             :: ltimer
+   logical             :: ltimer, loutput = .true.
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:), allocatable     :: p
    real(kind=nr), dimension(:,:), allocatable   :: qo
@@ -84,6 +84,7 @@ module mo_canard
 
    call read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
                     dto, tsam, tmax, nkrk, nbody, ltimer)
+   if (ndata < 0) loutput = .false.
 
    call p_numerics%read()
 
@@ -357,7 +358,7 @@ module mo_canard
       timo=timo+dt
 
 !----- RECORDING INTERMEDIATE RESULTS
-
+      if (loutput) then
       if(timo>tsam-(tmax-tsam)/ndata) then
          if (ltimer) call timer_start(timer_recording)
          dtsum=dtsum+dt
@@ -393,6 +394,7 @@ module mo_canard
          end if
          if (ltimer) call timer_stop(timer_recording)
       end if
+      end if
 
 !==========================
 !===== END OF TIME MARCHING
@@ -417,7 +419,7 @@ module mo_canard
       deallocate(qo,qa,qb,de,rr,ss,p)
       call p_grid%deallocate
       call p_physics%deallocate
-
+      if (loutput) then
       if(tmax>=tsam) then
          if (ltimer) call timer_start(timer_tot_output)
          nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
@@ -462,6 +464,7 @@ module mo_canard
          if (ltimer) call timer_stop(timer_output)
 !-----
          if (ltimer) call timer_stop(timer_tot_output)
+      end if
       end if
    end if
    if (ltimer) call timer_stop(timer_total)
