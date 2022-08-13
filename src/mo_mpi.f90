@@ -120,10 +120,14 @@ MODULE mo_mpi
   END SUBROUTINE p_start
 
   SUBROUTINE p_set_work_comm(nio, lmodel_role, laio)
-    integer(kind=ni) :: nio
-    logical          :: lmodel_role
-    logical          :: laio
+    integer(kind=ni), intent(in)  :: nio
+    logical,          intent(out) :: lmodel_role
+    logical,          intent(out) :: laio
 
+    if (nio == 0) then
+        lmodel_role = .true.
+        laio = .false.
+    end if
 
   END SUBROUTINE p_set_work_comm
 
