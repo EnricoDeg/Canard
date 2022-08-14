@@ -10,7 +10,7 @@ module mo_canard
                            & p_sum, p_max
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
-                           & write_restart_file, write_output_file,                &
+                           & write_restart_file, write_output_files,               &
                            & read_grid_parallel
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
@@ -463,7 +463,7 @@ module mo_canard
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
          if (ltimer) call timer_start(timer_output)
-         call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart)
+         call write_output_files(p_domdcomp, mbk, ndata, times, nlmx, vart)
          if (ltimer) call timer_stop(timer_output)
 !-----
          if (ltimer) call timer_stop(timer_tot_output)

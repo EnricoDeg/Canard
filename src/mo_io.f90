@@ -265,7 +265,7 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart)
+   SUBROUTINE write_output_files(p_domdcomp, mbk, ndata, times, nlmx, vart)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
@@ -369,7 +369,7 @@ MODULE mo_io
          deallocate(vara,varb)
       end do
  
-   END SUBROUTINE write_output_file
+   END SUBROUTINE write_output_files
 
 !===== SUBROUTINE FOR GENERATING TECPLOT DATA FILE
 
