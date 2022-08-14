@@ -6,7 +6,7 @@ module mo_canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam, quarter
    use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
-                           & p_sum, p_max
+                           & p_sum, p_max, p_get_global_comm
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_files,               &
@@ -56,6 +56,7 @@ module mo_canard
    integer(kind=ni)    :: nk
    integer(kind=ni)    :: lim
    integer(kind=ni)    :: n
+   integer(kind=ni)    :: comm_glob
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
    integer(kind=ni)    :: nrecs, myid, mpro
@@ -77,6 +78,7 @@ module mo_canard
 
    myid = p_get_process_ID()
    mpro = p_get_n_processes() - 1
+   comm_glob = p_get_global_comm()
 
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 
@@ -439,7 +441,8 @@ module mo_canard
    if (ltimer) call timer_print()
 
 !===== END OF JOB
-
+   
+   call p_barrier(comm_glob)
    if(myid==0) then
       write(*,*) "Finished."
    end if

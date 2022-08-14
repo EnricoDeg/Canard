@@ -11,7 +11,8 @@ MODULE mo_mpi
 
   integer(kind=ni),dimension(:,:),allocatable :: ista
   integer(kind=ni),dimension(:),allocatable :: ireq
-  integer(kind=ni) :: ir,npro,myid,info,icom,ierr
+  integer(kind=ni) :: ir,npro,myid,info,icom,ierr,iintercomm
+  integer(kind=ni) :: p_global_comm = MPI_COMM_WORLD
 
   INTEGER :: p_status(MPI_STATUS_SIZE) 
 
@@ -20,7 +21,7 @@ MODULE mo_mpi
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
   PUBLIC :: p_get_process_ID, p_min, p_set_work_comm
-  PUBLIC :: p_get_n_processes
+  PUBLIC :: p_get_n_processes, p_get_global_comm
 
   INTERFACE p_send
     MODULE PROCEDURE p_send_int
@@ -86,6 +87,13 @@ MODULE mo_mpi
 
   end function p_get_n_processes
 
+  function p_get_global_comm()
+    integer(kind=ni) :: p_get_global_comm
+
+    p_get_global_comm = p_global_comm
+
+  end function p_get_global_comm
+
   SUBROUTINE p_start
     integer(kind=ni) :: ll
 
@@ -97,21 +105,21 @@ MODULE mo_mpi
       STOP 1
     END IF
 
-    call MPI_COMM_RANK(MPI_COMM_WORLD,myid,ierr)
+    call MPI_COMM_RANK(p_global_comm,myid,ierr)
     IF (ierr /= MPI_SUCCESS) THEN
        WRITE (nerr,'(a)') ' MPI_COMM_RANK failed.'
        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
        CALL p_abort
     END IF
 
-    call MPI_COMM_SIZE(MPI_COMM_WORLD,npro,ierr)
+    call MPI_COMM_SIZE(p_global_comm,npro,ierr)
     IF (ierr /= MPI_SUCCESS) THEN
        WRITE (nerr,'(a)') ' MPI_COMM_SIZE failed.'
        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
        CALL p_abort
     END IF
 
-    icom=MPI_COMM_WORLD
+    icom=p_global_comm
     info=MPI_INFO_NULL
 
     ll=max(npro,12)
@@ -123,12 +131,63 @@ MODULE mo_mpi
     integer(kind=ni), intent(in)  :: nio
     logical,          intent(out) :: lmodel_role
     logical,          intent(out) :: laio
+    integer(kind=ni) :: icolor, ilocal_root, iremote_root, ikey
+    
 
-    if (nio == 0) then
+    if (nio <= 0) then
+      lmodel_role = .true.
+      laio = .false.
+    else
+      laio = .true.
+      if (myid < npro-nio) then
         lmodel_role = .true.
-        laio = .false.
-    end if
+        icolor = 1
+        ilocal_root = 0
+        iremote_root = npro - nio
+      else
+        lmodel_role = .false.
+        icolor = 2
+        ilocal_root = 0
+        iremote_root = 0
+      end if
+      ikey = myid
 
+      CALL MPI_COMM_SPLIT(p_global_comm, icolor, ikey, icom, ierr)
+      IF (ierr /= MPI_SUCCESS) THEN
+        WRITE (nerr,'(a)') ' MPI_COMM_DUP failed.'
+        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
+        CALL p_abort
+      END IF
+      
+      call MPI_COMM_RANK(p_global_comm, myid, ierr)
+      IF (ierr /= MPI_SUCCESS) THEN
+        WRITE (nerr,'(a)') ' MPI_COMM_RANK failed.'
+        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
+        CALL p_abort
+      END IF
+
+      call MPI_COMM_SIZE(p_global_comm, npro, ierr)
+      IF (ierr /= MPI_SUCCESS) THEN
+        WRITE (nerr,'(a)') ' MPI_COMM_SIZE failed.'
+        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
+        CALL p_abort
+      END IF
+
+      CALL MPI_INTERCOMM_CREATE( &
+           & icom, & ! local_comm
+           & ilocal_root,   & ! local leader
+           & p_global_comm, & ! peer_comm
+           & iremote_root, & ! remote leader
+           & 0, & !tag
+           & iintercomm, & ! new intercomm
+           & ierr)
+      IF (ierr /= MPI_SUCCESS) THEN
+        WRITE (nerr,'(a)') 'p_init_model_communicator: MPI_COMM_CREATE failed.'
+        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
+        CALL p_abort
+      END IF
+    end if
+    
   END SUBROUTINE p_set_work_comm
 
   SUBROUTINE p_null_req
