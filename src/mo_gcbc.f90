@@ -7,7 +7,6 @@ MODULE mo_gcbc
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
                            & hamhamm1, gam, gamm1, hamm1
-   use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : t_physics
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : t_grid

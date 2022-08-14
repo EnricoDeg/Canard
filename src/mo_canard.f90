@@ -5,7 +5,6 @@
 module mo_canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam, quarter
-   use mo_io,         ONLY : cdata
    use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
                            & p_sum, p_max
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
@@ -373,7 +372,6 @@ module mo_canard
             if(nout==1) then
                if (ltimer) call timer_start(timer_tot_output)
                times(ndati)=timo-half*dtsum
-               !open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='old')
                if(n==1) then
                   qb(:,:)=qo(:,:)
                else
@@ -381,23 +379,7 @@ module mo_canard
                   ra1=one-ndataav
                   qb(:,:)=ra0*qb(:,:)+ra1*qa(:,:)
                end if
-               rr(:,1)=one/qb(:,1)
-               
-               !do m=1,5
-               !   select case(m)
-               !   case(1)
-               !      varr(:)=qb(:,m)
-               !   case(2:4)
-               !      varr(:)=rr(:,1)*qb(:,m)+p_physics%umf(m-1)
-               !   case(5)
-               !      varr(:)=gamm1*(qb(:,m)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4)))
-               !   end select
-               !   nn=3+5*ndati+m
-               !   write(0,rec=nn) varr(:)
-               !   call vminmax(p_domdcomp, varr, nn)
-               !end do
-               !close(0)
-               
+               rr(:,1)=one/qb(:,1)               
                nlmx = 5*(p_domdcomp%lmx+1)-1
                allocate(vart(0:nlmx))
                do nn=1,5
@@ -442,35 +424,15 @@ module mo_canard
       call write_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
    end if
 
-!===== POST-PROCESSING & GENERATING TECPLOT DATA FILE
+!===== FINAL CLEAN UP
 
-   if(dt==zero) then
-      if(myid==0) then
-         write(*,*) "Overflow."
-      end if
-   else
-      deallocate(qo,qa,qb,de,rr,ss,p)
-      call p_grid%deallocate
-      call p_physics%deallocate
-!      if (loutput) then
-!      if(tmax>=tsam) then
-!         if (ltimer) call timer_start(timer_tot_output)
-!         nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
-!         ll=5*(p_domdcomp%lmx+1)-1
-!         allocate(vart(0:nlmx),vmean(0:ll))
-!         open(9,file=cdata,access='direct',form='unformatted',recl=nrecs*(nlmx+1),status='old')
-!         read(9,rec=1) vart(:)
-!         close(9,status='delete')
-
-!----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
-!         if (ltimer) call timer_start(timer_output)
-!         call write_output_files(p_domdcomp, mbk, ndata, times, nlmx, vart)
-!         if (ltimer) call timer_stop(timer_output)
-!-----
-!         if (ltimer) call timer_stop(timer_tot_output)
-!      end if
-!      end if
+   deallocate(qo,qa,qb,de,rr,ss,p)
+   call p_grid%deallocate
+   call p_physics%deallocate
+   if (dt==zero .and. myid==0) then
+      write(*,*) "Overflow."
    end if
+
    if (ltimer) call timer_stop(timer_total)
    
 !===== TIMERS PRINT

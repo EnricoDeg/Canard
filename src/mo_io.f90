@@ -28,9 +28,7 @@ MODULE mo_io
    character(4),        private, dimension(:), allocatable   :: czonet
    integer(kind=ni),    private, dimension(:), allocatable   :: lpos
 
-   character(5),  public :: cnnode
    character(16), public :: cgrid
-   character(18), public :: cdata
 
    CONTAINS
 
@@ -116,15 +114,6 @@ MODULE mo_io
       end do
       cgrid    = 'misc/grid'//czonet(p_domdcomp%mb)//'.dat'
       crestart = 'misc/restart'//czonet(p_domdcomp%mb)//'.dat'
-
-      no(4) = myid / 10000
-      no(3) = mod(myid,10000) / 1000
-      no(2) = mod(myid,1000) / 100
-      no(1) = mod(myid,100) / 10
-      no(0) = mod(myid,10)
-      cno   = achar(no+48)
-      cnnode = cno(4)//cno(3)//cno(2)//cno(1)//cno(0)
-      cdata  = 'misc/data'//cnnode//'.dat'
 
       do mm=0,mbk
          lpos(p_domdcomp%mo(mm)) = 0
