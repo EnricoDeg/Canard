@@ -44,7 +44,7 @@ module mo_canard
    type(t_grid_geom)   :: p_grid_geom
    type(t_physics)     :: p_physics
    integer(kind=ni)    :: mbk
-   integer(kind=ni)    :: nts, nscrn, ndata, ndatafl, ndataav
+   integer(kind=ni)    :: nts, nscrn, ndata, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
    integer(kind=ni)    :: nbody
@@ -83,7 +83,7 @@ module mo_canard
 
 !===== INPUT PARAMETERS
 
-   call read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, cfl, &
+   call read_input_main(mbk, nts, nscrn, ndata, ndataav, nrestart, cfl, &
                     dto, tsam, tmax, nkrk, nbody, ltimer)
    if (ndata < 0) loutput = .false.
 
@@ -461,35 +461,6 @@ module mo_canard
 !         open(9,file=cdata,access='direct',form='unformatted',recl=nrecs*(nlmx+1),status='old')
 !         read(9,rec=1) vart(:)
 !         close(9,status='delete')
-
-!----- CALCULATING UNSTEADY FLUCTUATIONS
-
-!         if(ndatafl==1) then
-!            fctr=half/(times(ndata)-times(0))
-!            vmean(:)=zero
-!            do n=0,ndata
-!               lis=(3+5*n)*(p_domdcomp%lmx+1)
-!               lie=lis+ll
-!               nn=n/ndata
-!               if(n*(n-ndata)==0) then
-!                  ra0=fctr*(times(n+1-nn)-times(n-nn))
-!               else
-!                  ra0=fctr*(times(n+1)-times(n-1))
-!               end if
-!               vmean(:)=vmean(:)+ra0*vart(lis:lie)
-!            end do
-!            do n=0,ndata
-!               lis=(3+5*n)*(p_domdcomp%lmx+1)
-!               lie=lis+ll
-!               vart(lis:lie)=vart(lis:lie)-vmean(:)
-!               do m=1,5
-!                  nn=3+5*n+m
-!                  l=lis+(m-1)*(p_domdcomp%lmx+1)
-!                  varr(:)=vart(l:l+p_domdcomp%lmx)
-!                  call vminmax(p_domdcomp, varr, nn)
-!               end do
-!            end do
-!         end if
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
 !         if (ltimer) call timer_start(timer_output)

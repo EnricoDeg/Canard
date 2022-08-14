@@ -34,9 +34,9 @@ MODULE mo_io
 
    CONTAINS
 
-   SUBROUTINE read_input_main(mbk, nts, nscrn, ndata, ndatafl, ndataav, nrestart, &
+   SUBROUTINE read_input_main(mbk, nts, nscrn, ndata, ndataav, nrestart, &
                           cfl, dto, tsam, tmax, nkrk, nbody, ltimer)
-      integer(kind=ni), intent(out) :: mbk, nts, nscrn, ndata, ndatafl, ndataav
+      integer(kind=ni), intent(out) :: mbk, nts, nscrn, ndata, ndataav
       integer(kind=ni), intent(out) :: nrestart
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
@@ -49,7 +49,7 @@ MODULE mo_io
       read(9,*) cinput,mbk
       read(9,*) cinput,nts
       read(9,*) cinput,nscrn
-      read(9,*) cinput,ndata,ndatafl,ndataav
+      read(9,*) cinput,ndata,ndataav
       read(9,*) cinput,nkrk
       read(9,*) cinput,nrestart
       read(9,*) cinput,cfl
