@@ -169,17 +169,8 @@ module mo_canard
    call p_domdcomp%search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
-   !if (loutput) then
-      !open(0,file=cdata,status='unknown')
-      !close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
-      !open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
-      !do nn=1,3
-      !   varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
-      !   write(0,rec=nn) varr(:)
-      !   call vminmax(p_domdcomp, varr, nn)
-      !end do
-      !close(0)
 
+   !if (loutput) then
       nlmx=3*(p_domdcomp%lmx+1)-1      
       allocate(vart(0:nlmx))
       do nn=1,3
@@ -188,7 +179,7 @@ module mo_canard
          call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
       end do
       call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
-
+      deallocate(vart)
    !end if
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
