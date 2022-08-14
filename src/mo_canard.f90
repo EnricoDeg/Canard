@@ -11,7 +11,7 @@ module mo_canard
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_files,               &
-                           & read_grid_parallel
+                           & read_grid_parallel, write_output_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -120,6 +120,7 @@ module mo_canard
 
    ! main program local arrays
    allocate(times(0:ndata))
+   times(:) = zero
    allocate(qo(0:p_domdcomp%lmx,5))
    allocate(qb(0:p_domdcomp%lmx,5))
    allocate(qa(0:p_domdcomp%lmx,5))
@@ -168,17 +169,27 @@ module mo_canard
    call p_domdcomp%search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
-   if (loutput) then
-      open(0,file=cdata,status='unknown')
-      close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
-      open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
+   !if (loutput) then
+      !open(0,file=cdata,status='unknown')
+      !close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
+      !open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
+      !do nn=1,3
+      !   varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
+      !   write(0,rec=nn) varr(:)
+      !   call vminmax(p_domdcomp, varr, nn)
+      !end do
+      !close(0)
+
+      nlmx=3*(p_domdcomp%lmx+1)-1      
+      allocate(vart(0:nlmx))
       do nn=1,3
-         varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
-         write(0,rec=nn) varr(:)
-         call vminmax(p_domdcomp, varr, nn)
+         ! ss contains the grid data at this points from previous subroutines call
+         vart((nn-1)*p_domdcomp%lmx:nn*p_domdcomp%lmx-1) = ss(:,nn)
+         call vminmax(p_domdcomp, vart((nn-1)*p_domdcomp%lmx:nn*p_domdcomp%lmx-1), nn)
       end do
-      close(0)
-   end if
+      call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
+
+   !end if
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
