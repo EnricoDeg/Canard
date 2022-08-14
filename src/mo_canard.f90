@@ -168,7 +168,7 @@ module mo_canard
    call p_domdcomp%search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
-
+   if (loutput) then
    open(0,file=cdata,status='unknown')
    close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
    open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
@@ -178,6 +178,7 @@ module mo_canard
       call vminmax(p_domdcomp, varr, nn)
    end do
    close(0)
+   end if
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
