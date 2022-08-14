@@ -159,14 +159,14 @@ MODULE mo_mpi
         CALL p_abort
       END IF
       
-      call MPI_COMM_RANK(p_global_comm, myid, ierr)
+      call MPI_COMM_RANK(icom, myid, ierr)
       IF (ierr /= MPI_SUCCESS) THEN
         WRITE (nerr,'(a)') ' MPI_COMM_RANK failed.'
         WRITE (nerr,'(a,i4)') ' Error =  ', ierr
         CALL p_abort
       END IF
 
-      call MPI_COMM_SIZE(p_global_comm, npro, ierr)
+      call MPI_COMM_SIZE(icom, npro, ierr)
       IF (ierr /= MPI_SUCCESS) THEN
         WRITE (nerr,'(a)') ' MPI_COMM_SIZE failed.'
         WRITE (nerr,'(a,i4)') ' Error =  ', ierr
