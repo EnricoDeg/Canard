@@ -269,11 +269,16 @@ MODULE mo_domdcomp
 
    END SUBROUTINE domdcomp_init
 
-   SUBROUTINE domdcomp_read_input(this)
+   SUBROUTINE domdcomp_read_input(this, lmodel_role)
       class(t_domdcomp), INTENT(INOUT) :: this
+      logical, intent(in)              :: lmodel_role
       character(16) :: cinput
 
-      open(9,file='input.domdcomp',status='old')
+      if (lmodel_role) then
+         open(9,file='input.domdcomp',status='old')
+      else
+         open(9,file='input.domdcomp.aio',status='old')
+      end if
       read(9,*) cinput,this%nbpc(:,1)
       read(9,*) cinput,this%nbpc(:,2)
       read(9,*) cinput,this%nbpc(:,3)

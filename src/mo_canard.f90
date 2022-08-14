@@ -31,8 +31,12 @@ module mo_canard
    PUBLIC
    contains
 
-   subroutine canard_driver(laio)
-      logical, intent(in) :: laio
+   subroutine canard_driver(laio, lmodel_role, mbk, nbody, ndata)
+      logical, intent(in)          :: laio
+      logical, intent(in)          :: lmodel_role
+      integer(kind=ni), intent(in) :: mbk
+      integer(kind=ni), intent(in) :: nbody
+      integer(kind=ni), intent(in) :: ndata
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati, nnn
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
@@ -42,11 +46,9 @@ module mo_canard
    type(t_grid)        :: p_grid
    type(t_grid_geom)   :: p_grid_geom
    type(t_physics)     :: p_physics
-   integer(kind=ni)    :: mbk
-   integer(kind=ni)    :: nts, nscrn, ndata, ndataav
+   integer(kind=ni)    :: nts, nscrn, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
-   integer(kind=ni)    :: nbody
    real(kind=nr)       :: dts, dte
    real(kind=nr)       :: tsam
    real(kind=nr)       :: tmax
@@ -84,8 +86,8 @@ module mo_canard
 
 !===== INPUT PARAMETERS
 
-   call read_input_main(mbk, nts, nscrn, ndata, ndataav, nrestart, cfl, &
-                    dto, tsam, tmax, nkrk, nbody, ltimer)
+   call read_input_main(nts, nscrn, ndataav, nrestart, cfl, &
+                    dto, tsam, tmax, nkrk, ltimer)
    if (ndata < 0) loutput = .false.
 
    call p_numerics%read()
@@ -99,7 +101,7 @@ module mo_canard
    call read_input_sponge
 
    call p_domdcomp%allocate(mbk,mpro)
-   call p_domdcomp%read()
+   call p_domdcomp%read(lmodel_role)
    call get_grid_geometry(p_grid_geom)
 
 !===== DOMAIN DECOMPOSITION INITIALIZATION

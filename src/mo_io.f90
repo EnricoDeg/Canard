@@ -32,39 +32,42 @@ MODULE mo_io
 
    CONTAINS
 
-   SUBROUTINE read_input_main(mbk, nts, nscrn, ndata, ndataav, nrestart, &
-                          cfl, dto, tsam, tmax, nkrk, nbody, ltimer)
-      integer(kind=ni), intent(out) :: mbk, nts, nscrn, ndata, ndataav
+   SUBROUTINE read_input_main(nts, nscrn, ndataav, nrestart, &
+                          cfl, dto, tsam, tmax, nkrk, ltimer)
+      integer(kind=ni), intent(out) :: nts, nscrn, ndataav
       integer(kind=ni), intent(out) :: nrestart
       real(kind=nr),    intent(out) :: cfl, dto
       real(kind=nr),    intent(out) :: tsam, tmax
       integer(kind=ni), intent(out) :: nkrk
-      integer(kind=ni), intent(out) :: nbody
       logical,          intent(out) :: ltimer
       character(16) :: cinput
 
       open(9,file='input.canard',status='old')
-      read(9,*) cinput,mbk
       read(9,*) cinput,nts
       read(9,*) cinput,nscrn
-      read(9,*) cinput,ndata,ndataav
+      read(9,*) cinput,ndataav
       read(9,*) cinput,nkrk
       read(9,*) cinput,nrestart
       read(9,*) cinput,cfl
       read(9,*) cinput,tmax,tsam
       read(9,*) cinput,dto
-      read(9,*) cinput,nbody
       read(9,*) cinput,ltimer
       close(9)
 
    END SUBROUTINE read_input_main
 
-   SUBROUTINE read_input_driver(nio)
+   SUBROUTINE read_input_driver(nio, mbk, nbody, ndata)
       integer(kind=ni), intent(out) :: nio
+      integer(kind=ni), intent(out) :: mbk
+      integer(kind=ni), intent(out) :: nbody
+      integer(kind=ni), intent(out) :: ndata
       character(16) :: cinput
 
       open(9,file='input.driver',status='old')
       read(9,*) cinput,nio
+      read(9,*) cinput,mbk
+      read(9,*) cinput,nbody
+      read(9,*) cinput,ndata
       close(9)
 
    END SUBROUTINE read_input_driver
