@@ -11,7 +11,8 @@ module mo_canard
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_files,               &
-                           & read_grid_parallel, write_output_grid
+                           & read_grid_parallel, write_output_grid,                &
+                           & write_output_file
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -34,7 +35,7 @@ module mo_canard
    subroutine canard_driver(laio)
       logical, intent(in) :: laio
 
-   integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati
+   integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati, nnn
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
    integer(kind=int64) :: nlmx
    type(t_domdcomp)    :: p_domdcomp
@@ -370,8 +371,9 @@ module mo_canard
             fctr=half*dt
             qb(:,:)=qb(:,:)+fctr*(qo(:,:)+qa(:,:))
             if(nout==1) then
+               if (ltimer) call timer_start(timer_tot_output)
                times(ndati)=timo-half*dtsum
-               open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='old')
+               !open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='old')
                if(n==1) then
                   qb(:,:)=qo(:,:)
                else
@@ -380,22 +382,48 @@ module mo_canard
                   qb(:,:)=ra0*qb(:,:)+ra1*qa(:,:)
                end if
                rr(:,1)=one/qb(:,1)
-               do m=1,5
-                  select case(m)
+               
+               !do m=1,5
+               !   select case(m)
+               !   case(1)
+               !      varr(:)=qb(:,m)
+               !   case(2:4)
+               !      varr(:)=rr(:,1)*qb(:,m)+p_physics%umf(m-1)
+               !   case(5)
+               !      varr(:)=gamm1*(qb(:,m)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4)))
+               !   end select
+               !   nn=3+5*ndati+m
+               !   write(0,rec=nn) varr(:)
+               !   call vminmax(p_domdcomp, varr, nn)
+               !end do
+               !close(0)
+               
+               nlmx = 5*(p_domdcomp%lmx+1)-1
+               allocate(vart(0:nlmx))
+               do nn=1,5
+                  select case(nn)
                   case(1)
-                     varr(:)=qb(:,m)
+                     vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = &
+                                real(qb(:,nn), kind=ieee32)
                   case(2:4)
-                     varr(:)=rr(:,1)*qb(:,m)+p_physics%umf(m-1)
+                     vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = &
+                                real(rr(:,1)*qb(:,nn)+p_physics%umf(nn-1), kind=ieee32)
                   case(5)
-                     varr(:)=gamm1*(qb(:,m)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4)))
+                     vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = &
+                                real(gamm1*(qb(:,nn)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4))), kind=ieee32)
                   end select
-                  nn=3+5*ndati+m
-                  write(0,rec=nn) varr(:)
-                  call vminmax(p_domdcomp, varr, nn)
+                  nnn=3+5*ndati+nn
+                  call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nnn)
                end do
-               close(0)
+               if (ltimer) call timer_start(timer_output)
+               call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, ndati)
+               if (ltimer) call timer_stop(timer_output)
+               deallocate(vart)
+               
+               ! reset variables
                dtsum=zero
                qb(:,:)=zero
+               if (ltimer) call timer_stop(timer_tot_output)
             end if
             if (ltimer) call timer_stop(timer_recording)
          end if
@@ -424,53 +452,53 @@ module mo_canard
       deallocate(qo,qa,qb,de,rr,ss,p)
       call p_grid%deallocate
       call p_physics%deallocate
-      if (loutput) then
-      if(tmax>=tsam) then
-         if (ltimer) call timer_start(timer_tot_output)
-         nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
-         ll=5*(p_domdcomp%lmx+1)-1
-         allocate(vart(0:nlmx),vmean(0:ll))
-         open(9,file=cdata,access='direct',form='unformatted',recl=nrecs*(nlmx+1),status='old')
-         read(9,rec=1) vart(:)
-         close(9,status='delete')
+!      if (loutput) then
+!      if(tmax>=tsam) then
+!         if (ltimer) call timer_start(timer_tot_output)
+!         nlmx=(3+5*(ndata+1))*(p_domdcomp%lmx+1)-1
+!         ll=5*(p_domdcomp%lmx+1)-1
+!         allocate(vart(0:nlmx),vmean(0:ll))
+!         open(9,file=cdata,access='direct',form='unformatted',recl=nrecs*(nlmx+1),status='old')
+!         read(9,rec=1) vart(:)
+!         close(9,status='delete')
 
 !----- CALCULATING UNSTEADY FLUCTUATIONS
 
-         if(ndatafl==1) then
-            fctr=half/(times(ndata)-times(0))
-            vmean(:)=zero
-            do n=0,ndata
-               lis=(3+5*n)*(p_domdcomp%lmx+1)
-               lie=lis+ll
-               nn=n/ndata
-               if(n*(n-ndata)==0) then
-                  ra0=fctr*(times(n+1-nn)-times(n-nn))
-               else
-                  ra0=fctr*(times(n+1)-times(n-1))
-               end if
-               vmean(:)=vmean(:)+ra0*vart(lis:lie)
-            end do
-            do n=0,ndata
-               lis=(3+5*n)*(p_domdcomp%lmx+1)
-               lie=lis+ll
-               vart(lis:lie)=vart(lis:lie)-vmean(:)
-               do m=1,5
-                  nn=3+5*n+m
-                  l=lis+(m-1)*(p_domdcomp%lmx+1)
-                  varr(:)=vart(l:l+p_domdcomp%lmx)
-                  call vminmax(p_domdcomp, varr, nn)
-               end do
-            end do
-         end if
+!         if(ndatafl==1) then
+!            fctr=half/(times(ndata)-times(0))
+!            vmean(:)=zero
+!            do n=0,ndata
+!               lis=(3+5*n)*(p_domdcomp%lmx+1)
+!               lie=lis+ll
+!               nn=n/ndata
+!               if(n*(n-ndata)==0) then
+!                  ra0=fctr*(times(n+1-nn)-times(n-nn))
+!               else
+!                  ra0=fctr*(times(n+1)-times(n-1))
+!               end if
+!               vmean(:)=vmean(:)+ra0*vart(lis:lie)
+!            end do
+!            do n=0,ndata
+!               lis=(3+5*n)*(p_domdcomp%lmx+1)
+!               lie=lis+ll
+!               vart(lis:lie)=vart(lis:lie)-vmean(:)
+!               do m=1,5
+!                  nn=3+5*n+m
+!                  l=lis+(m-1)*(p_domdcomp%lmx+1)
+!                  varr(:)=vart(l:l+p_domdcomp%lmx)
+!                  call vminmax(p_domdcomp, varr, nn)
+!               end do
+!            end do
+!         end if
 
 !----- COLLECTING DATA FROM SUBDOMAINS & BUILDING TECPLOT OUTPUT FILES
-         if (ltimer) call timer_start(timer_output)
-         call write_output_files(p_domdcomp, mbk, ndata, times, nlmx, vart)
-         if (ltimer) call timer_stop(timer_output)
+!         if (ltimer) call timer_start(timer_output)
+!         call write_output_files(p_domdcomp, mbk, ndata, times, nlmx, vart)
+!         if (ltimer) call timer_stop(timer_output)
 !-----
-         if (ltimer) call timer_stop(timer_tot_output)
-      end if
-      end if
+!         if (ltimer) call timer_stop(timer_tot_output)
+!      end if
+!      end if
    end if
    if (ltimer) call timer_stop(timer_total)
    
