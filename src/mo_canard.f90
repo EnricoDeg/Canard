@@ -169,15 +169,15 @@ module mo_canard
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
    if (loutput) then
-   open(0,file=cdata,status='unknown')
-   close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
-   open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
-   do nn=1,3
-      varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
-      write(0,rec=nn) varr(:)
-      call vminmax(p_domdcomp, varr, nn)
-   end do
-   close(0)
+      open(0,file=cdata,status='unknown')
+      close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
+      open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='new')
+      do nn=1,3
+         varr(:)=ss(:,nn) ! ss contains the grid data at this points from previous subroutines call
+         write(0,rec=nn) varr(:)
+         call vminmax(p_domdcomp, varr, nn)
+      end do
+      close(0)
    end if
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
@@ -360,41 +360,41 @@ module mo_canard
 
 !----- RECORDING INTERMEDIATE RESULTS
       if (loutput) then
-      if(timo>tsam-(tmax-tsam)/ndata) then
-         if (ltimer) call timer_start(timer_recording)
-         dtsum=dtsum+dt
-         fctr=half*dt
-         qb(:,:)=qb(:,:)+fctr*(qo(:,:)+qa(:,:))
-         if(nout==1) then
-            times(ndati)=timo-half*dtsum
-            open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='old')
-            if(n==1) then
-               qb(:,:)=qo(:,:)
-            else
-               ra0=ndataav/dtsum
-               ra1=one-ndataav
-               qb(:,:)=ra0*qb(:,:)+ra1*qa(:,:)
+         if(timo>tsam-(tmax-tsam)/ndata) then
+            if (ltimer) call timer_start(timer_recording)
+            dtsum=dtsum+dt
+            fctr=half*dt
+            qb(:,:)=qb(:,:)+fctr*(qo(:,:)+qa(:,:))
+            if(nout==1) then
+               times(ndati)=timo-half*dtsum
+               open(0,file=cdata,access='direct',form='unformatted',recl=nrecs*(p_domdcomp%lmx+1),status='old')
+               if(n==1) then
+                  qb(:,:)=qo(:,:)
+               else
+                  ra0=ndataav/dtsum
+                  ra1=one-ndataav
+                  qb(:,:)=ra0*qb(:,:)+ra1*qa(:,:)
+               end if
+               rr(:,1)=one/qb(:,1)
+               do m=1,5
+                  select case(m)
+                  case(1)
+                     varr(:)=qb(:,m)
+                  case(2:4)
+                     varr(:)=rr(:,1)*qb(:,m)+p_physics%umf(m-1)
+                  case(5)
+                     varr(:)=gamm1*(qb(:,m)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4)))
+                  end select
+                  nn=3+5*ndati+m
+                  write(0,rec=nn) varr(:)
+                  call vminmax(p_domdcomp, varr, nn)
+               end do
+               close(0)
+               dtsum=zero
+               qb(:,:)=zero
             end if
-            rr(:,1)=one/qb(:,1)
-            do m=1,5
-               select case(m)
-               case(1)
-                  varr(:)=qb(:,m)
-               case(2:4)
-                  varr(:)=rr(:,1)*qb(:,m)+p_physics%umf(m-1)
-               case(5)
-                  varr(:)=gamm1*(qb(:,m)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4)))
-               end select
-               nn=3+5*ndati+m
-               write(0,rec=nn) varr(:)
-               call vminmax(p_domdcomp, varr, nn)
-            end do
-            close(0)
-            dtsum=zero
-            qb(:,:)=zero
+            if (ltimer) call timer_stop(timer_recording)
          end if
-         if (ltimer) call timer_stop(timer_recording)
-      end if
       end if
 
 !==========================
