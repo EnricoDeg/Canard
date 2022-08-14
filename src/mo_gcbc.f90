@@ -6,7 +6,7 @@ MODULE mo_gcbc
    use mo_kind,       ONLY : ni, nr, ieee32
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
-                           & quarter, hamhamm1, gam, gamm1, hamm1
+                           & hamhamm1, gam, gamm1, hamm1
    use mo_io,         ONLY : cnnode, cdata
    use mo_physics,    ONLY : t_physics
    use mo_numerics,   ONLY : t_numerics
@@ -455,67 +455,45 @@ MODULE mo_gcbc
 
 !===== EXTRA CONDITION
 
-   subroutine extracon(p_domdcomp, p_grid, p_physics, varr, qa, p, tmax, nkrk, timo, nk, dt)
+   subroutine extracon(p_domdcomp, p_grid, p_physics, qa, p)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       type(t_grid),     intent(IN) :: p_grid
       type(t_physics),     intent(IN) :: p_physics
-      real(kind=ieee32), dimension(0:p_domdcomp%lmx), intent(inout) :: varr
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
-      real(kind=nr), intent(in)    :: tmax
-      integer(kind=ni), intent(in) :: nkrk
-      real(kind=nr), intent(in)    :: timo
-      integer(kind=ni), intent(in) :: nk
-      real(kind=nr), intent(in)    :: dt
-
-      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
+      
       real(kind=nr),dimension(3) :: vee
       integer(kind=ni) :: nn, l, ip, i, j, k, jk, kp
       real(kind=nr)    :: fctr, ra0, ra1, ra2, ra3
       real(kind=nr),dimension(3) :: rv
-      integer(kind=ni) :: ll, nrecs
-
-      inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
-
-      if ( nk == nkrk .and. ( timo + quarter - tmax )**two < ( half * dt )**two ) then
-         nn = 2
-         ip = 0
-         i  = ip * p_domdcomp%ijk(1,nn)
-         if ( p_domdcomp%nbc(nn,ip) == 25 ) then
-            open(2, file=cdata,access='direct', form='unformatted', &
-                    recl=nrecs*(p_domdcomp%lmx+1), status='old')
-            read(2, rec=1) varr(:)
-            ss(:,1) = varr(:)
-            close(2)
-            open(2, file='misc/wall'//cnnode//'.dat', status='replace')
-            write(2,*) 'variables=x,v1,v2,v3'
-            write(2,*) 'zone'
-            fctr = one / ( p_domdcomp%ijk(2,nn) + 1 )
-            do k=0,p_domdcomp%ijk(3,nn)
-               kp    = k * ( p_domdcomp%ijk(2,nn) + 1 )
-               rv(:) = zero
-               do j=0,p_domdcomp%ijk(2,nn)
-                  jk     = kp + j
-                  l      = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
-                  ra0    = two * acos(p_grid%cm2(jk,1,ip))
-                  ra1    = abs( half * sin(ra0) * ( p_physics%tyy(l) - p_physics%txx(l) ) + cos(ra0) * p_physics%txy(l) )
-                  ra2    = gam * p(l) / qa(l,1)
-                  ra3    = sqrt( ra1 * qa(l,1) ) * ( ra2 + p_physics%srefoo ) / ( p_physics%srefp1dre * ra2**1.5_nr )
-                  vee(1) = sqrt( ( p_grid%etm(l,2) * p_grid%zem(l,3) - p_grid%zem(l,2) * p_grid%etm(l,3) )**two + &
-                                 ( p_grid%etm(l,3) * p_grid%zem(l,1) - p_grid%zem(l,3) * p_grid%etm(l,1) )**two )
-                  vee(2) = p_grid%cm2(jk,1,ip) * ( p_grid%zem(l,2) * p_grid%xim(l,3)   - &
-                                                   p_grid%xim(l,2) * p_grid%zem(l,3) ) + &
-                           p_grid%cm2(jk,2,ip) * ( p_grid%zem(l,3) * p_grid%xim(l,1)   - &
-                                                   p_grid%xim(l,3) * p_grid%zem(l,1) )
-                  vee(3) = p_grid%xim(l,1) * p_grid%etm(l,2) - p_grid%etm(l,1) * p_grid%xim(l,2)
-                  rv(:)  = rv(:) + ra3 * abs( vee(:) * p_grid%yaco(l) )
-               end do
-               write(2,'(2e16.8)') ss(l,1),fctr*rv(:)
+      
+      nn = 2
+      ip = 0
+      i  = ip * p_domdcomp%ijk(1,nn)
+      if ( p_domdcomp%nbc(nn,ip) == 25 ) then
+         fctr = one / ( p_domdcomp%ijk(2,nn) + 1 )
+         do k=0,p_domdcomp%ijk(3,nn)
+            kp    = k * ( p_domdcomp%ijk(2,nn) + 1 )
+            rv(:) = zero
+            do j=0,p_domdcomp%ijk(2,nn)
+               jk     = kp + j
+               l      = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
+               ra0    = two * acos(p_grid%cm2(jk,1,ip))
+               ra1    = abs( half * sin(ra0) * ( p_physics%tyy(l) - p_physics%txx(l) ) + cos(ra0) * p_physics%txy(l) )
+               ra2    = gam * p(l) / qa(l,1)
+               ra3    = sqrt( ra1 * qa(l,1) ) * ( ra2 + p_physics%srefoo ) / ( p_physics%srefp1dre * ra2**1.5_nr )
+               vee(1) = sqrt( ( p_grid%etm(l,2) * p_grid%zem(l,3) - p_grid%zem(l,2) * p_grid%etm(l,3) )**two + &
+                              ( p_grid%etm(l,3) * p_grid%zem(l,1) - p_grid%zem(l,3) * p_grid%etm(l,1) )**two )
+               vee(2) = p_grid%cm2(jk,1,ip) * ( p_grid%zem(l,2) * p_grid%xim(l,3)   - &
+                                                p_grid%xim(l,2) * p_grid%zem(l,3) ) + &
+                        p_grid%cm2(jk,2,ip) * ( p_grid%zem(l,3) * p_grid%xim(l,1)   - &
+                                                p_grid%xim(l,3) * p_grid%zem(l,1) )
+               vee(3) = p_grid%xim(l,1) * p_grid%etm(l,2) - p_grid%etm(l,1) * p_grid%xim(l,2)
+               rv(:)  = rv(:) + ra3 * abs( vee(:) * p_grid%yaco(l) )
             end do
-            close(2)
-         end if
+         end do
       end if
-
+      
    end subroutine extracon
 
 !===== SUBROUTINE FOR TRANSFORMATION FROM Q TO R IN GCBC/GCIC

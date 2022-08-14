@@ -4,7 +4,7 @@
 
 module mo_canard
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
-   use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam
+   use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam, quarter
    use mo_io,         ONLY : cdata
    use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
                            & p_sum, p_max
@@ -324,7 +324,9 @@ module mo_canard
          qa(:,4)=qo(:,4)-rr(:,1)*de(:,4)
          qa(:,5)=qo(:,5)-rr(:,1)*de(:,5)
 
-         call extracon(p_domdcomp, p_grid, p_physics, varr, qa, p, tmax, nkrk, timo, nk, dt)
+         if ( nk == nkrk .and. ( timo + quarter - tmax )**two < ( half * dt )**two ) then
+            call extracon(p_domdcomp, p_grid, p_physics, qa, p)
+         end if
 
 !----- WALL TEMPERATURE/VELOCITY CONDITION
  
