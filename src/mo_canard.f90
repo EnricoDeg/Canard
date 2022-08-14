@@ -184,8 +184,8 @@ module mo_canard
       allocate(vart(0:nlmx))
       do nn=1,3
          ! ss contains the grid data at this points from previous subroutines call
-         vart((nn-1)*p_domdcomp%lmx:nn*p_domdcomp%lmx-1) = ss(:,nn)
-         call vminmax(p_domdcomp, vart((nn-1)*p_domdcomp%lmx:nn*p_domdcomp%lmx-1), nn)
+         vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = real(ss(0:p_domdcomp%lmx,nn), kind=ieee32)
+         call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
       end do
       call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
 
