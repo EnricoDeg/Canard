@@ -2,7 +2,7 @@
 !***** COMPRESSIBLE AERODYNAMICS & AEROACOUSTICS RESEARCH CODE (CANARD)
 !*****
 
-module mo_canard
+module mo_canard_driver
    use mo_kind,       ONLY : ieee64, ieee32, nr, ni, int64
    use mo_parameters, ONLY : zero, one, half, n45no, two, pi, gamm1, gam, quarter
    use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
@@ -12,6 +12,7 @@ module mo_canard
                            & write_restart_file, write_output_files,               &
                            & read_grid_parallel, write_output_grid,                &
                            & write_output_file
+   use mo_io_server,  ONLY : io_server_stop, io_server_start
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -103,6 +104,8 @@ module mo_canard
    call p_domdcomp%allocate(mbk,mpro)
    call p_domdcomp%read(lmodel_role)
    call get_grid_geometry(p_grid_geom)
+
+   if (laio) call io_server_start(p_grid_geom%nthick, lmodel_role)
 
 !===== DOMAIN DECOMPOSITION INITIALIZATION
 
@@ -437,6 +440,8 @@ module mo_canard
       write(*,*) "Overflow."
    end if
 
+   if (laio) call io_server_stop
+
    if (ltimer) call timer_stop(timer_total)
    
 !===== TIMERS PRINT
@@ -451,6 +456,6 @@ module mo_canard
 
    end subroutine canard_driver
 
- end module mo_canard
+ end module mo_canard_driver
 
 !*****

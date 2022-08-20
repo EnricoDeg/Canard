@@ -1,9 +1,9 @@
 program main
-   use mo_kind,   ONLY : ni
-   use mo_mpi,    ONLY : p_start, p_stop, p_set_work_comm
-   use mo_io,     ONLY : read_input_driver
-   use mo_canard, ONLY : canard_driver
-   use mo_aio,    ONLY : aio_driver
+   use mo_kind,          ONLY : ni
+   use mo_mpi,           ONLY : p_start, p_stop, p_set_work_comm
+   use mo_io,            ONLY : read_input_driver
+   use mo_canard_driver, ONLY : canard_driver
+   use mo_aio_driver,    ONLY : aio_driver
    implicit none
 
    integer(kind=ni)    :: nio

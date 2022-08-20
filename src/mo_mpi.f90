@@ -17,11 +17,13 @@ MODULE mo_mpi
   INTEGER :: p_status(MPI_STATUS_SIZE) 
 
   INTEGER, PARAMETER :: nerr = 0
+  INTEGER, PARAMETER :: icomm_tag = 2
 
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
   PUBLIC :: p_get_process_ID, p_min, p_set_work_comm
-  PUBLIC :: p_get_n_processes, p_get_global_comm
+  PUBLIC :: p_get_n_processes, p_get_global_comm, p_get_intercomm
+  PUBLIC :: p_model2io
 
   INTERFACE p_send
     MODULE PROCEDURE p_send_int
@@ -64,6 +66,10 @@ MODULE mo_mpi
      MODULE PROCEDURE p_irecv_real_2d
   END INTERFACE
 
+  INTERFACE p_model2io
+     MODULE PROCEDURE p_model2io_int_root
+  END INTERFACE
+
   CONTAINS
 
   function p_wtime() result(res)
@@ -93,6 +99,11 @@ MODULE mo_mpi
     p_get_global_comm = p_global_comm
 
   end function p_get_global_comm
+
+  function p_get_intercomm()
+    integer(kind=ni) :: p_get_intercomm
+    p_get_intercomm = iintercomm
+  end function p_get_intercomm
 
   SUBROUTINE p_start
     integer(kind=ni) :: ll
@@ -758,6 +769,23 @@ MODULE mo_mpi
     end if
 #endif
   END SUBROUTINE p_waitall
+
+  SUBROUTINE p_model2io_int_root(model, server, root, lmodel_role)
+    INTEGER, INTENT(IN)  :: model
+    INTEGER, INTENT(OUT) :: server
+    INTEGER, INTENT(IN)  :: root
+    LOGICAL, INTENT(IN)  :: lmodel_role
+
+    if (lmodel_role) then
+      if (myid == root) call p_send(buffer=model, p_destination=root, p_tag=icomm_tag, & 
+                                    comm=iintercomm)
+    else
+      if (myid == root) call p_recv(buffer=server, p_source=root, p_tag=icomm_tag,      & 
+                                    comm=iintercomm)
+      call p_bcast(buffer=server, p_source=root)
+    end if
+
+  END SUBROUTINE p_model2io_int_root
 
   SUBROUTINE p_stop
 

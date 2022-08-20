@@ -1,9 +1,10 @@
-module mo_aio
-   use mo_kind,       ONLY : ni
-   use mo_mpi,        ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
-                           & p_get_global_comm
-   use mo_domdcomp,   ONLY : t_domdcomp
-   use mo_io,         ONLY : allocate_io_memory, output_init
+module mo_aio_driver
+   use mo_kind,                    ONLY : ni
+   use mo_mpi,                     ONLY : p_get_n_processes, p_get_process_ID, p_barrier,       &
+                                        & p_get_global_comm
+   use mo_domdcomp,                ONLY : t_domdcomp
+   use mo_io,                      ONLY : allocate_io_memory, output_init
+   use mo_io_server,               ONLY : io_server_loop, io_server_start
    implicit none
    public
    contains
@@ -22,6 +23,8 @@ module mo_aio
       mpro      = p_get_n_processes() - 1
       comm_glob = p_get_global_comm()
 
+      call io_server_start(nthick, lmodel_role)
+
 !===== DOMAIN DECOMPOSITION INITIALIZATION
 
       call p_domdcomp%allocate(mbk,mpro)
@@ -33,14 +36,13 @@ module mo_aio
       call allocate_io_memory(mbk, ndata)
       call output_init(p_domdcomp, mbk, ndata)
 
+!===== MAIN LOOP
 
+      call io_server_loop
 
-
-
-      
       call p_barrier(comm_glob)
 
    end subroutine aio_driver
 
 
-end module mo_aio
+end module mo_aio_driver
