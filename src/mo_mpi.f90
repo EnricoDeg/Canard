@@ -12,6 +12,7 @@ MODULE mo_mpi
   integer(kind=ni),dimension(:,:),allocatable :: ista
   integer(kind=ni),dimension(:),allocatable :: ireq
   integer(kind=ni) :: ir,npro,myid,info,icom,ierr,iintercomm
+  integer(kind=ni) :: npro_gl
   integer(kind=ni) :: p_global_comm = MPI_COMM_WORLD
 
   INTEGER :: p_status(MPI_STATUS_SIZE) 
@@ -23,7 +24,7 @@ MODULE mo_mpi
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
   PUBLIC :: p_get_process_ID, p_min, p_set_work_comm
   PUBLIC :: p_get_n_processes, p_get_global_comm, p_get_intercomm
-  PUBLIC :: p_model2io
+  PUBLIC :: p_model2io, p_get_global_n_processes
 
   INTERFACE p_send
     MODULE PROCEDURE p_send_int
@@ -93,6 +94,13 @@ MODULE mo_mpi
 
   end function p_get_n_processes
 
+  function p_get_global_n_processes()
+    integer(kind=ni) :: p_get_global_n_processes
+
+    p_get_global_n_processes = npro_gl
+
+  end function p_get_global_n_processes
+
   function p_get_global_comm()
     integer(kind=ni) :: p_get_global_comm
 
@@ -129,6 +137,7 @@ MODULE mo_mpi
        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
        CALL p_abort
     END IF
+    npro_gl = npro
 
     icom=p_global_comm
     info=MPI_INFO_NULL
