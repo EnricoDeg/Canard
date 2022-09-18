@@ -70,7 +70,7 @@ MODULE mo_io_server
 
       myid = p_get_process_ID()
 
-      allocate(mo(mbk), nbpc(mbk,3))
+      allocate(mo(0:mbk), nbpc(0:mbk,3))
       do i=0,mbk
          call p_model2io(model=mo(i), server=mo(i), root=0, lmodel_role=lmodel_role)         
       end do
