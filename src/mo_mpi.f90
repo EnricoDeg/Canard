@@ -30,12 +30,14 @@ MODULE mo_mpi
     MODULE PROCEDURE p_send_int
     MODULE PROCEDURE p_send_long_int
     MODULE PROCEDURE p_send_real_1d_sp
+    MODULE PROCEDURE p_send_real_1d_dp
   END INTERFACE p_send
 
   INTERFACE p_recv
     MODULE PROCEDURE p_recv_int
     MODULE PROCEDURE p_recv_long_int
     MODULE PROCEDURE p_recv_real_1d_sp
+    MODULE PROCEDURE p_recv_real_1d_dp
   END INTERFACE p_recv
 
   INTERFACE p_bcast
@@ -331,6 +333,40 @@ MODULE mo_mpi
 
   END SUBROUTINE p_send_real_1d_sp
 
+  SUBROUTINE p_send_real_1d_dp (buffer, p_destination, p_tag, p_count, comm)
+
+    REAL(nr), INTENT(in) :: buffer(:)
+    INTEGER,   INTENT(in) :: p_destination, p_tag
+    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+#ifndef NOMPI
+    INTEGER :: p_comm
+
+    IF (PRESENT(comm)) THEN
+       p_comm = comm
+    ELSE
+       p_comm = icom
+    ENDIF
+
+    IF (PRESENT(p_count)) THEN
+      CALL MPI_SEND (buffer, p_count, MPI_REAL4, p_destination, p_tag, &
+           p_comm, ierr)
+    ELSE
+      CALL MPI_SEND (buffer, SIZE(buffer), MPI_REAL4, p_destination, p_tag, &
+           p_comm, ierr)
+    END IF
+
+#ifdef DEBUG
+    IF (ierr /= MPI_SUCCESS) THEN
+      WRITE (nerr,'(a,i4,a,i4,a,i6,a)') ' MPI_SEND from ', myid, &
+           ' to ', p_destination, ' for tag ', p_tag, ' failed.'
+      WRITE (nerr,'(a,i4)') ' Error = ', ierr
+      CALL p_abort
+    END IF
+#endif
+#endif
+
+  END SUBROUTINE p_send_real_1d_dp
+
   SUBROUTINE p_recv_int(buffer, p_source, p_tag, p_count, comm)
     INTEGER, INTENT(out) :: buffer
     INTEGER, INTENT(in)  :: p_source, p_tag
@@ -427,6 +463,41 @@ MODULE mo_mpi
 #endif
 
   END SUBROUTINE p_recv_real_1d_sp
+
+  SUBROUTINE p_recv_real_1d_dp (buffer, p_source, p_tag, p_count, comm)
+
+    REAL(nr), INTENT(out) :: buffer(:)
+    INTEGER,   INTENT(in)  :: p_source, p_tag
+    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+#ifndef NOMPI
+    INTEGER :: p_comm
+
+    IF (PRESENT(comm)) THEN
+       p_comm = comm
+    ELSE
+       p_comm = icom
+    ENDIF
+
+    IF (PRESENT(p_count)) THEN
+       CALL MPI_RECV (buffer, p_count, MPI_REAL4, p_source, p_tag, &
+            p_comm, p_status, ierr)
+    ELSE
+       CALL MPI_RECV (buffer, SIZE(buffer), MPI_REAL4, p_source, p_tag, &
+            p_comm, p_status, ierr)
+    END IF
+
+#ifdef DEBUG
+    IF (ierr /= MPI_SUCCESS) THEN
+       WRITE (nerr,'(a,i4,a,i4,a,i6,a)') ' MPI_RECV on ', myid, &
+            ' from ', p_source, ' for tag ', p_tag, ' failed.'
+       WRITE (nerr,'(a,i4)') ' Error = ', ierr
+       CALL p_abort
+    END IF
+#endif
+#endif
+
+  END SUBROUTINE p_recv_real_1d_dp
+
 
   SUBROUTINE p_bcast_int(buffer, p_source, comm)
 
