@@ -12,7 +12,8 @@ module mo_canard_driver
                            & write_restart_file, write_output_files,               &
                            & read_grid_parallel, write_output_grid,                &
                            & write_output_file
-   use mo_io_server,  ONLY : io_server_stop, io_server_start
+   use mo_io_server,  ONLY : io_server_stop, io_server_start, io_server_init,      &
+                           & t_io_server_interface
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -47,6 +48,7 @@ module mo_canard_driver
    type(t_grid)        :: p_grid
    type(t_grid_geom)   :: p_grid_geom
    type(t_physics)     :: p_physics
+   type(t_io_server_interface) :: p_io_server_interface
    integer(kind=ni)    :: nts, nscrn, ndataav
    integer(kind=ni)    :: nrestart
    real(kind=nr)       :: cfl, dto
@@ -111,6 +113,9 @@ module mo_canard_driver
 
    call p_domdcomp%init(mbk, p_grid_geom%nthick, nbody)
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
+
+!===== IO SERVER INITIALIZATION
+   call io_server_init(mbk, p_domdcomp, p_io_server_interface, lmodel_role)
 
 !===== TIMERS INITIALIZATION
    if (ltimer) call timer_init()
