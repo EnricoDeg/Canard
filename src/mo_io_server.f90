@@ -8,6 +8,7 @@ MODULE mo_io_server
    implicit none
    private
    integer(kind=ni), parameter :: CMD_IO_EXIT=1
+   integer(kind=ni), parameter :: CMD_IO_INIT=2
 
    type, public :: t_model_interface
       integer(kind=ni) :: mps
@@ -42,6 +43,8 @@ MODULE mo_io_server
       LOGICAL, INTENT(IN)                        :: lmodel_role
 
       integer(kind=ni) :: myid, npro, i, j, temp
+
+      CALL send_cmd(CMD_IO_INIT)
 
       myid = p_get_process_ID()
       npro = p_get_n_processes()
@@ -121,7 +124,12 @@ MODULE mo_io_server
       CALL send_cmd(CMD_IO_EXIT)
    END SUBROUTINE io_server_stop
 
-   SUBROUTINE io_server_loop
+   SUBROUTINE io_server_loop(mbk, p_domdcomp, p_model_interface, lmodel_role)
+      integer(kind=ni), intent(in)           :: mbk
+      type(t_domdcomp), intent(in)           :: p_domdcomp
+      type(t_model_interface), intent(inout) :: p_model_interface
+      logical, intent(in)                    :: lmodel_role
+
       integer(kind=ni)    :: i_cmd
       integer(kind=ni)    :: myid
 
@@ -129,6 +137,10 @@ MODULE mo_io_server
       event_loop: DO
          i_cmd =  get_cmd()
          SELECT CASE(i_cmd)
+
+         CASE(CMD_IO_INIT)
+            if (myid == 0) write(*,*) "(remote_stepon): CMD_IO_INIT"
+            call io_server_init(mbk, p_domdcomp, p_model_interface, lmodel_role)
 
          CASE(CMD_IO_EXIT)
             if (myid == 0) write(*,*) "(remote_stepon): CMD_IO_EXIT"

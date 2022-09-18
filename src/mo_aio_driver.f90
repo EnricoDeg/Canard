@@ -4,8 +4,7 @@ module mo_aio_driver
                                         & p_get_global_comm
    use mo_domdcomp,                ONLY : t_domdcomp
    use mo_io,                      ONLY : allocate_io_memory, output_init
-   use mo_io_server,               ONLY : io_server_loop, io_server_start, io_server_init, &
-                                          t_model_interface
+   use mo_io_server,               ONLY : io_server_loop, io_server_start, t_model_interface
    implicit none
    public
    contains
@@ -33,9 +32,6 @@ module mo_aio_driver
       call p_domdcomp%read(lmodel_role)
       call p_domdcomp%init(mbk, nthick, nbody)
 
-!===== IO SERVER INITIALIZATION
-      call io_server_init(mbk, p_domdcomp, p_model_interface, lmodel_role)
-
 !===== WRITING START POSITIONS IN OUTPUT FILE
 
       call allocate_io_memory(mbk, ndata)
@@ -43,7 +39,7 @@ module mo_aio_driver
 
 !===== MAIN LOOP
 
-      call io_server_loop
+      call io_server_loop(mbk, p_domdcomp, p_model_interface, lmodel_role)
 
       call p_barrier(comm_glob)
 
