@@ -39,7 +39,7 @@ module mo_aio_driver
 
 !===== MAIN LOOP
 
-      call io_server_loop(mbk, p_domdcomp, p_model_interface, lmodel_role)
+      call io_server_loop(mbk, ndata, p_domdcomp, p_model_interface, lmodel_role)
 
       call p_barrier(comm_glob)
 

@@ -1,5 +1,5 @@
 MODULE mo_model_ioserver_exchange
-  USE mo_kind, ONLY : ni, nr
+  USE mo_kind, ONLY : ni, nr, ieee32
   USE mo_mpi,  ONLY : p_barrier, p_get_intercomm, p_model2io, p_recv, &
                     & p_send, p_get_global_comm
   IMPLICIT NONE
@@ -7,11 +7,11 @@ MODULE mo_model_ioserver_exchange
   PUBLIC :: meeting_point, send_cmd, get_cmd, recv_model2io, send_model2io
 
   INTERFACE send_model2io
-    MODULE PROCEDURE send_model2io_1d_dp
+    MODULE PROCEDURE send_model2io_1d_ieee32
   END INTERFACE send_model2io
 
   INTERFACE recv_model2io
-    MODULE PROCEDURE recv_model2io_1d_dp
+    MODULE PROCEDURE recv_model2io_1d_ieee32
   END INTERFACE recv_model2io
 
   CONTAINS
@@ -32,8 +32,8 @@ MODULE mo_model_ioserver_exchange
     call p_model2io(model=i_cmd, server=i_cmd, root=0, lmodel_role=.false.)
   END FUNCTION get_cmd
 
-  SUBROUTINE send_model2io_1d_dp(field, mp, ljs, lje)
-    REAL(nr), INTENT(in)      :: field(:)
+  SUBROUTINE send_model2io_1d_ieee32(field, mp, ljs, lje)
+    REAL(kind=ieee32), INTENT(in)      :: field(:)
     INTEGER(kind=ni), intent(in) :: mp
     INTEGER(kind=ni), intent(in) :: ljs, lje
 
@@ -44,10 +44,10 @@ MODULE mo_model_ioserver_exchange
     itag = 1
     call p_send(field(ljs:lje), mp, itag, p_count=lmpi, comm=global_comm)
 
-  END SUBROUTINE send_model2io_1d_dp
+  END SUBROUTINE send_model2io_1d_ieee32
 
-  SUBROUTINE recv_model2io_1d_dp(field, mps, mpe, lis, lie)
-    REAL(nr), INTENT(inout)      :: field(:)
+  SUBROUTINE recv_model2io_1d_ieee32(field, mps, mpe, lis, lie)
+    REAL(kind=ieee32), INTENT(inout)      :: field(:)
     INTEGER(kind=ni), INTENT(IN) :: mps
     INTEGER(kind=ni), INTENT(IN) :: mpe
     INTEGER(kind=ni), dimension(0:mpe-mps), intent(in) :: lis
@@ -63,6 +63,6 @@ MODULE mo_model_ioserver_exchange
       call p_recv(field(lis(mp-mps):lie(mp-mps)), mp, itag, p_count=lmpi, comm=global_comm)
     end do
 
-  END SUBROUTINE recv_model2io_1d_dp
+  END SUBROUTINE recv_model2io_1d_ieee32
 
 END MODULE mo_model_ioserver_exchange

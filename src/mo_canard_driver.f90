@@ -13,7 +13,7 @@ module mo_canard_driver
                            & read_grid_parallel, write_output_grid,                &
                            & write_output_file
    use mo_io_server,  ONLY : io_server_stop, io_server_start, io_server_init,      &
-                           & t_io_server_interface
+                           & t_io_server_interface, io_server_write_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -188,9 +188,15 @@ module mo_canard_driver
       do nn=1,3
          ! ss contains the grid data at this points from previous subroutines call
          vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = real(ss(0:p_domdcomp%lmx,nn), kind=ieee32)
-         call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
       end do
-      call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
+      if (laio) then
+         call io_server_write_grid(vart, p_domdcomp, p_io_server_interface)
+      else
+         do nn=1,3
+            call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
+         end do
+         call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
+      end if
       deallocate(vart)
    !end if
 
