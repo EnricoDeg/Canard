@@ -33,17 +33,9 @@ MODULE mo_io_server
       MODULE PROCEDURE io_server_write_grid_io
    END INTERFACE io_server_write_grid
 
-   public :: io_server_loop, io_server_start, io_server_stop, io_server_init
+   public :: io_server_loop, io_server_stop, io_server_init
    public :: io_server_write_grid
    contains
-
-   SUBROUTINE io_server_start(nthick, lmodel_role)
-      integer(kind=ni), intent(inout) :: nthick
-      logical, intent(in)             :: lmodel_role
-
-      call p_model2io(model=nthick, server=nthick, root=0, lmodel_role=lmodel_role)
-
-   END SUBROUTINE io_server_start
 
    SUBROUTINE io_server_init_model(mbk, p_domdcomp, p_io_server_interface, lmodel_role)
       integer(kind=ni), intent(in)               :: mbk

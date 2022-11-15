@@ -12,7 +12,7 @@ module mo_canard_driver
                            & write_restart_file, write_output_files,               &
                            & read_grid_parallel, write_output_grid,                &
                            & write_output_file
-   use mo_io_server,  ONLY : io_server_stop, io_server_start, io_server_init,      &
+   use mo_io_server,  ONLY : io_server_stop, io_server_init,      &
                            & t_io_server_interface, io_server_write_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
@@ -20,8 +20,7 @@ module mo_canard_driver
                            & get_grid_geometry
    use mo_sponge,     ONLY : spongeup, spongego, read_input_sponge
    use mo_gcbc,       ONLY : gcbc_init, gcbc_setup, gcbc_comm, gcbc_update,        &
-                           & extracon, wall_condition_update, average_surface,     &
-                           & read_input_gcbc
+                           & extracon, wall_condition_update, average_surface
    use mo_numerics,   ONLY : t_numerics
    use mo_physics,    ONLY : t_physics
    use mo_timer,      ONLY : timer_init, timer_start, timer_stop, timer_print
@@ -33,12 +32,13 @@ module mo_canard_driver
    PUBLIC
    contains
 
-   subroutine canard_driver(laio, lmodel_role, mbk, nbody, ndata)
+   subroutine canard_driver(laio, lmodel_role, mbk, ndata)
       logical, intent(in)          :: laio
       logical, intent(in)          :: lmodel_role
       integer(kind=ni), intent(in) :: mbk
-      integer(kind=ni), intent(in) :: nbody
       integer(kind=ni), intent(in) :: ndata
+   
+   integer(kind=ni),parameter    :: nkrk = 4
 
    integer(kind=ni)    :: m, nn, ll, nout, lis, lie, l, ndati, nnn
    real(kind=nr)       :: res, ra0, ra1, fctr, dtko, dtk, dtsum
@@ -49,13 +49,11 @@ module mo_canard_driver
    type(t_grid_geom)   :: p_grid_geom
    type(t_physics)     :: p_physics
    type(t_io_server_interface) :: p_io_server_interface
-   integer(kind=ni)    :: nts, nscrn, ndataav
+   integer(kind=ni)    :: nts
    integer(kind=ni)    :: nrestart
-   real(kind=nr)       :: cfl, dto
+   real(kind=nr)       :: cfl
    real(kind=nr)       :: dts, dte
-   real(kind=nr)       :: tsam
    real(kind=nr)       :: tmax
-   integer(kind=ni)    :: nkrk
    real(kind=nr)       :: timo
    integer(kind=ni)    :: ndt
    integer(kind=ni)    :: nk
@@ -88,14 +86,13 @@ module mo_canard_driver
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 
 !===== INPUT PARAMETERS
+   if (myid==0) write(*,*) "read input parameters"
 
-   call read_input_main(nts, nscrn, ndataav, nrestart, cfl, &
-                    dto, tsam, tmax, nkrk, ltimer)
+   call read_input_main(nts, nrestart, cfl, &
+                        tmax, ltimer)
    if (ndata < 0) loutput = .false.
 
    call p_numerics%read()
-
-   call read_input_gcbc
 
    call p_physics%read()
 
@@ -104,23 +101,24 @@ module mo_canard_driver
    call read_input_sponge
 
    call p_domdcomp%allocate(mbk,mpro)
-   call p_domdcomp%read(lmodel_role)
+   call p_domdcomp%read(mbk,lmodel_role)
    call get_grid_geometry(p_grid_geom)
 
-   if (laio) call io_server_start(p_grid_geom%nthick, lmodel_role)
-
 !===== DOMAIN DECOMPOSITION INITIALIZATION
+   if (myid==0) write(*,*) "initialize domain decomposition"
 
-   call p_domdcomp%init(mbk, p_grid_geom%nthick, nbody)
+   call p_domdcomp%init(mbk)
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
 
 !===== IO SERVER INITIALIZATION
-   call io_server_init(mbk, p_domdcomp, p_io_server_interface, lmodel_role)
+   if (laio .and. myid==0) write(*,*) "model intiialize io server"
+   if (laio) call io_server_init(mbk, p_domdcomp, p_io_server_interface, lmodel_role)
 
 !===== TIMERS INITIALIZATION
    if (ltimer) call timer_init()
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
+   if (myid==0) write(*,*) "initialize IO"
 
    call allocate_io_memory(mbk, ndata)
    call output_init(p_domdcomp, mbk, ndata)
@@ -143,6 +141,7 @@ module mo_canard_driver
    allocate(p(0:p_domdcomp%lmx))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES INITIALIZATION
+   if (myid==0) write(*,*) "initialize numerics"
 
    call p_numerics%init_extra
 
@@ -151,7 +150,8 @@ module mo_canard_driver
    call p_numerics%init(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
 !===== GRID GENERATION & CALCULATION OF GRID METRICS
-    
+   if (myid==0) write(*,*) "grid generation"
+
    allocate(lio(0:p_domdcomp%let,0:p_domdcomp%lze))
    call p_grid%allocate(p_domdcomp)
 
@@ -169,6 +169,7 @@ module mo_canard_driver
    call p_grid%grid_metrics(p_domdcomp, p_numerics, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC INITIALIZATION
+   if (myid==0) write(*,*) "initialize GCBC"
 
    call gcbc_init(p_domdcomp, p_grid%yaco)
 
@@ -232,7 +233,7 @@ module mo_canard_driver
    
    do while(timo<tmax.and.(dt/=zero.or.n<=2))
 
-      if(myid**2+mod(n,nscrn)**2==0) then
+      if(myid==0) then
          write(*,"(' n =',i8,'   time =',f12.5)") n,timo
       end if
 
@@ -287,16 +288,12 @@ module mo_canard_driver
             if(mod(n,10)==1) then
                ndt=n
                dts=dte
-               if(dto<zero) then
-                  call p_physics%calc_time_step(p_domdcomp%lmx, p_grid, de, ss(:,1), cfl, dte)
-               else
-                  dte = dto
-               end if
+               call p_physics%calc_time_step(p_domdcomp%lmx, p_grid, de, ss(:,1), cfl, dte)
             end if
             dt=dts+(dte-dts)*sin(0.05_nr*pi*(n-ndt))**two
 
             nout=0
-            res=tsam+(ndati+1)*(tmax-tsam)/ndata
+            res=(ndati+1)*(tmax)/ndata
             if((timo-res)*(timo+dt-res)<=zero) then
                nout=1
                ndati=ndati+1
@@ -382,7 +379,7 @@ module mo_canard_driver
 
 !----- RECORDING INTERMEDIATE RESULTS
       if (loutput) then
-         if(timo>tsam-(tmax-tsam)/ndata) then
+         if(timo>-(tmax)/ndata) then
             if (ltimer) call timer_start(timer_recording)
             dtsum=dtsum+dt
             fctr=half*dt
@@ -393,9 +390,8 @@ module mo_canard_driver
                if(n==1) then
                   qb(:,:)=qo(:,:)
                else
-                  ra0=ndataav/dtsum
-                  ra1=one-ndataav
-                  qb(:,:)=ra0*qb(:,:)+ra1*qa(:,:)
+                  ra0=one/dtsum
+                  qb(:,:)=ra0*qb(:,:)
                end if
                rr(:,1)=one/qb(:,1)               
                nlmx = 5*(p_domdcomp%lmx+1)-1

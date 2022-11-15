@@ -19,10 +19,13 @@ MODULE mo_sponge
 
    subroutine read_input_sponge
       character(16) :: ccinput
+      integer(kind=ni) :: fu, rc
 
-      open(9,file='input.sponge',status='old')
-      read(9,*) ccinput,szco
-      close(9)
+      namelist /nml_sponge/ szco
+
+      open (action='read', file='input.canard', iostat=rc, newunit=fu)
+      read (nml=nml_sponge, iostat=rc, unit=fu)
+      close(fu)
 
    end subroutine read_input_sponge
 
@@ -39,7 +42,7 @@ MODULE mo_sponge
       real(kind=nr) :: tmpa, tmpb
 
       ll   = -1
-      ra2  = p_grid_geom%skew / p_grid_geom%domh
+      ra2  = zero
       tmpa = pi / p_grid_geom%szth0
       tmpb = pi / p_grid_geom%szth1
       do l=0,lmx

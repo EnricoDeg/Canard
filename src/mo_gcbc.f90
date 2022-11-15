@@ -26,8 +26,6 @@ MODULE mo_gcbc
    real(kind=nr),    private, dimension(:,:,:), pointer :: drvb
    real(kind=nr),    private, dimension(:,:,:), allocatable, target :: drvb1,drvb2,drvb3
    real(kind=nr),    private, dimension(3) :: dm
-   real(kind=nr),    private  :: wtemp
-   integer(kind=ni), private  :: nextgcic
    real(kind=nr),    private, dimension(5,5) :: xt
    real(kind=nr),    private, dimension(5) :: cha, dha
    real(kind=nr),    private :: aoi, hv2, ao
@@ -35,16 +33,6 @@ MODULE mo_gcbc
    private :: eleme, xtq2r, xtr2q
 
    CONTAINS
-
-   SUBROUTINE read_input_gcbc
-      character(16) :: ccinput
-     
-      open(9,file='input.gcbc',status='old')
-      read(9,*) ccinput,wtemp
-      read(9,*) ccinput,nextgcic
-      close(9)
-     
-   END SUBROUTINE read_input_gcbc
 
    SUBROUTINE gcbc_init(p_domdcomp, yaco)
       type(t_domdcomp),                              intent(IN) :: p_domdcomp
@@ -205,7 +193,7 @@ MODULE mo_gcbc
          do ip=0,1
             iq=1-ip
             np = p_domdcomp%nbc(nn,ip)
-            if ( ( np - 30 ) * ( abs(nextgcic-1) + abs((np-20)*(np-25)) ) == 0 ) then
+            if ( ( np - 30 ) * ( one + abs((np-20)*(np-25)) ) == 0 ) then
                call p_isend(drva(:,:,ip), p_domdcomp%mcd(nn,ip), itag+iq, &
                             5*p_domdcomp%nbsize(nn))
                call p_irecv(drvb(:,:,ip), p_domdcomp%mcd(nn,ip), itag+ip, &
@@ -366,7 +354,7 @@ MODULE mo_gcbc
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
             if ( ( np - 30 ) * ( np - 35 ) * ( np - 45 ) * &
-                ( abs(nextgcic-1) + abs((np-20)*(np-25)) ) == 0 ) then
+                ( one + abs((np-20)*(np-25)) ) == 0 ) then
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -397,7 +385,7 @@ MODULE mo_gcbc
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
             if( ( np - 30 ) * ( np - 35 ) * ( np - 45 ) * &
-                ( abs(nextgcic-1) + abs((np-20)*(np-25)) ) == 0) then
+                ( one + abs((np-20)*(np-25)) ) == 0) then
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -436,7 +424,7 @@ MODULE mo_gcbc
                   end do
                end do
             case(25)
-               ra0 = hamhamm1 * wtemp
+               ra0 = hamhamm1
                do k=0,p_domdcomp%ijk(3,nn)
                   do j=0,p_domdcomp%ijk(2,nn)
                      l         = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
