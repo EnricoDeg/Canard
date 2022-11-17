@@ -13,8 +13,7 @@ module mo_canard_driver
                            & read_grid_parallel, write_output_grid,                &
                            & write_output_file, lpos
    use mo_io_server,  ONLY : io_server_stop, io_server_init,      &
-                           & t_io_server_interface, io_server_write_grid, &
-                           & io_server_write_output
+                           & t_io_server_interface, io_server_write_output
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -63,7 +62,7 @@ module mo_canard_driver
    integer(kind=ni)    :: comm_glob
    real(kind=nr)       :: dt
    integer(kind=ni)    :: j, k, kp, jp
-   integer(kind=ni)    :: nrecs, myid, mpro
+   integer(kind=ni)    :: nrecs, myid, mpro, nvar
    logical             :: ltimer, loutput = .true.
    real(kind=nr), dimension(:), allocatable     :: times
    real(kind=nr), dimension(:), allocatable     :: p
@@ -183,7 +182,8 @@ module mo_canard_driver
    call p_domdcomp%search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
-
+   
+   ndati=-1
    if (loutput) then
       nlmx=3*(p_domdcomp%lmx+1)-1      
       allocate(vart(0:nlmx))
@@ -192,7 +192,8 @@ module mo_canard_driver
          vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = real(ss(0:p_domdcomp%lmx,nn), kind=ieee32)
       end do
       if (laio) then
-         call io_server_write_grid(vart, p_domdcomp, p_io_server_interface)
+         nvar = 3
+         call io_server_write_output(vart, nvar, ndati, times(0), p_domdcomp, p_io_server_interface)
       else
          do nn=1,3
             call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
@@ -229,7 +230,6 @@ module mo_canard_driver
    if (ltimer) call timer_start(timer_total)
    if (ltimer) call timer_start(timer_loop)
 
-   ndati=-1
    dtsum=zero
    
    do while(timo<tmax.and.(dt/=zero.or.n<=2))
@@ -412,7 +412,8 @@ module mo_canard_driver
                end do
                if (ltimer) call timer_start(timer_output)
                if (laio) then
-                  call io_server_write_output(vart, ndati, times(ndati), p_domdcomp, p_io_server_interface)
+                  nvar = 5
+                  call io_server_write_output(vart, nvar, ndati, times(ndati), p_domdcomp, p_io_server_interface)
                else
                   do nn=1,5
                      nnn=3+5*ndati+nn
