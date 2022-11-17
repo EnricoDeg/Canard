@@ -37,62 +37,48 @@ Once the model is installed, the `canard` executable can be found in the `bin` f
 
 #### Input parameters
 
-The input files are located in `input/parameters` folder.
+The input parameters are in `input.canard` file.
 
-##### input.main
+##### nml_driver
 
+- `nio`: number of IO servers
 - `mbk`: domain blocks `(0:mbk)`
-- `nts`: initial conditions (**0**: initialize physics with upstream flow -- **1**: initialize physics with restart files)
-- `nscrn`: LOG file output frequency (number of time step -- simulation time)
 - `ndata`: output files `(0:ndata)`
-- `ndataav`: data average in output data (**0**: OFF -- **1**: ON)
-- `nkrk`: number of Runge-Kutta stages (time integration)
+
+##### nml_canard
+
+- `nts`: initial conditions (**0**: initialize physics with upstream flow -- **1**: initialize physics with restart files)
 - `nrestart`: write restart files (**0**: OFF -- **1**: ON)
 - `cfl`: CFL number
 - `tmax`: end time of the simulation
-- `tsam`: start time for output files
-- `dto`: time step value (if `dto>0`)
-- `nbody`: presence of body in computational domain (**0**: NO -- **1**: YES)
 - `ltimer`: enable profiling (`.true.`/`.false.`)
 
 ##### input.domdcomp
 
-- `npbxi`: number of `MPI` processes for each domain block in `x` direction (1D array `[0:mbk]`)
-- `npbet`: number of `MPI` processes for each domain block in `y` direction (1D array `[0:mbk]`)
-- `npbze`: number of `MPI` processes for each domain block in `z` direction (1D array `[0:mbk]`)
+- `nbpc`: number of `MPI` processes for each domain block (2D array `[0:mbk,1:3]`)
+
 - `lximb`: number of cells for each domain block in `x` direction (1D array `[0:mbk]`)
 - `letmb`: number of cells for each domain block in `y` direction (1D array `[0:mbk]`)
 - `lzemb`: number of cells for each domain block in `z` direction (1D array `[0:mbk]`)
+- `nbbc`: blocks boundary conditions (3D array `[0:mbk,1:3,1:2]`) 
+- `mbcd`: block communication (3D array `[0:mbk,1:3,1:2]`)
 
-##### input.gridgen
+##### nml_aio
 
-- `lxi0`: 
-- `lxi1`: 
-- `lxi2`: 
-- `let0`: 
-- `lze0`: 
-- `nthick`: 
-- `smg`: 
-- `smgvr`: 
-- `doml0`: 
-- `doml1`: 
-- `domh`: 
-- `span`: 
-- `wlew`: 
-- `wlea`: 
-- `szth0`: 
-- `szth1`: 
-- `skew`: 
-- `spx`: 
-- `gridtype`: 
+- `nbpc`: number of `MPI` processes for each domain block (2D array `[0:mbk,1:3]`)
 
-##### input.numerics
+- `lximb`: number of cells for each domain block in `x` direction (1D array `[0:mbk]`)
+- `letmb`: number of cells for each domain block in `y` direction (1D array `[0:mbk]`)
+- `lzemb`: number of cells for each domain block in `z` direction (1D array `[0:mbk]`)
+- `nbbc`: blocks boundary conditions (3D array `[0:mbk,1:3,1:2]`) 
+- `mbcd`: block communication (3D array `[0:mbk,1:3,1:2]`)
 
-- `fltk`:
-- `fltrbc`:
-- `nnf1-2-3`:
+##### nml_numerics
 
-##### input.physics
+- `fltk`: filter coefficient
+- `fltrbc`: boundary filter coefficient
+
+##### nml_physics
 
 - `reoo`: upstream flow Reynolds number
 - `tempoo`: upstream flow temperature
@@ -102,12 +88,6 @@ The input files are located in `input/parameters` folder.
 - `timf`: moving frame time
 - `nsmf`: enable moving frame (**0**: OFF -- **1**: ON)
 
-##### input.sponge
+##### nml_sponge
 
-- `szco`: 
-
-##### input.gcbc
-
-- `wtemp`: wall temperature coefficient
-- `nextgcic`: 
-
+- `szco`: magnitude of non reflective sponge
