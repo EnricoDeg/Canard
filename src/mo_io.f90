@@ -26,7 +26,7 @@ MODULE mo_io
    real(kind=nr),       private, dimension(5)                :: cha, dha
    character(19),       private                              :: crestart
    character(4),        private, dimension(:), allocatable   :: czonet
-   integer(kind=ni),    public, dimension(:), allocatable   :: lpos
+   integer(kind=ni),    private, dimension(:), allocatable   :: lpos
 
    character(16), public :: cgrid
 
@@ -82,10 +82,12 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR INITIALIZING OUTPUT
 
-   SUBROUTINE output_init(p_domdcomp, mbk, ndata)
+   SUBROUTINE output_init(p_domdcomp, mbk, ndata, lpos_temp)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
+      integer(kind=ni), intent(inout), dimension(:), optional :: lpos_temp
+
       integer(kind=ni) :: n
       integer(kind=ni) :: mm, mp, kp, jp, i, j, k
       integer(kind=ni) :: myid
@@ -139,6 +141,8 @@ MODULE mo_io
             end do
          end do
       end do
+
+      if (present(lpos_temp)) lpos_temp(:) = lpos(:)
 
    END SUBROUTINE output_init
 

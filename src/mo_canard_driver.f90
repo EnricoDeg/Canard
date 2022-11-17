@@ -10,7 +10,7 @@ module mo_canard_driver
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file,                                   &
-                           & read_grid_parallel, write_output_file, lpos
+                           & read_grid_parallel, write_output_file
    use mo_io_server,  ONLY : io_server_stop, io_server_init,      &
                            & t_io_server_interface, io_server_write_output
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -75,6 +75,7 @@ module mo_canard_driver
    real(kind=ieee32), dimension(:), allocatable :: vart
    real(kind=ieee32), dimension(:), allocatable :: varr
    integer(kind=ni), dimension(:,:),   allocatable :: lio
+   integer(kind=ni), dimension(:), allocatable   :: lpos_temp
 
 !===== PREPARATION FOR PARALLEL COMPUTING
 
@@ -114,16 +115,16 @@ module mo_canard_driver
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
    if (myid==0) write(*,*) "Canard: initialize IO"
-
+   allocate(lpos_temp(0:mpro))
    call allocate_io_memory(mbk, ndata)
-   call output_init(p_domdcomp, mbk, ndata)
+   call output_init(p_domdcomp, mbk, ndata, lpos_temp=lpos_temp)
 
 !===== IO SERVER INITIALIZATION
    if (laio .and. myid==0) write(*,*) "Canard: model intiialize io server"
-   if (laio) call io_server_init(mbk, p_domdcomp, p_io_server_interface, mpro, lpos, lmodel_role)
+   if (laio) call io_server_init(mbk, p_domdcomp, p_io_server_interface, mpro, lpos_temp, lmodel_role)
+   deallocate(lpos_temp)
 
 !===== ALLOCATION OF MAIN ARRAYS
-
    call p_physics%allocate(p_domdcomp%lmx)
    call p_numerics%allocate(lim, p_domdcomp%nbsize)
 
@@ -141,11 +142,9 @@ module mo_canard_driver
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES INITIALIZATION
    if (myid==0) write(*,*) "Canard: initialize numerics"
-
    call p_numerics%init_extra
 
 !===== PENTADIAGONAL MATRICES INITIALIZATION
-
    call p_numerics%init(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
 !===== GRID GENERATION & CALCULATION OF GRID METRICS
@@ -169,19 +168,15 @@ module mo_canard_driver
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC INITIALIZATION
    if (myid==0) write(*,*) "Canard: initialize GCBC"
-
    call gcbc_init(p_domdcomp, p_grid%yaco)
 
 !===== POINT JUNCTION SEARCH
-
    call p_domdcomp%search_point(mbk)
 
 !===== LINE JUNCTION SEARCH
-
    call p_domdcomp%search_line(mbk)
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
-   
    ndati=-1
    if (loutput) then
       nlmx=3*(p_domdcomp%lmx+1)-1      
@@ -203,11 +198,9 @@ module mo_canard_driver
    end if
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
-
    call spongeup(p_grid_geom, p_domdcomp%lmx, p_grid%yaco, de, ss) ! use ss which contains grid data
 
 !===== INITIAL CONDITIONS
-
    if(nts==0) then
       n=0
       ndt=0
@@ -224,7 +217,6 @@ module mo_canard_driver
 !============================================
 !===== BEGINNING OF TIME MARCHING IN SOLUTION
 !============================================
-
    call p_barrier
    if (ltimer) call timer_start(timer_total)
    if (ltimer) call timer_start(timer_loop)
