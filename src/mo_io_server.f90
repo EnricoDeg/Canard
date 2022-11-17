@@ -5,7 +5,7 @@ MODULE mo_io_server
                                         & p_get_global_n_processes
    use mo_model_ioserver_exchange, ONLY : get_cmd, send_cmd, recv_model2io, send_model2io
    use mo_domdcomp,                ONLY : t_domdcomp
-   use mo_io,                      ONLY : write_output_server, vminmax
+   use mo_io,                      ONLY : write_output_file_mb, vminmax
    
    implicit none
    private
@@ -155,7 +155,8 @@ MODULE mo_io_server
       type(t_domdcomp), intent(in)                  :: p_domdcomp
       type(t_model_interface), intent(in)           :: p_model_interface
 
-      integer(kind=ni)    :: myid, ltomb, llmb, mp, mps, mpe, nn
+      integer(kind=ni)    :: myid, ltomb, mp, mps, mpe, nn
+      integer(kind=int64) :: llmb
       integer(kind=ni)    :: lisi, ljsi, j, k, m, ndati, nnn, mq
       integer(kind=ni),  allocatable, dimension(:) :: lis, lie
       real(kind=ieee32), allocatable, dimension(:) :: vara, varb
@@ -210,7 +211,7 @@ MODULE mo_io_server
          end if
          call vminmax(p_domdcomp, varb((nn-1)*(ltomb):nn*(ltomb)-1), nnn)
        end do
-      call write_output_server(p_domdcomp, mbk, ndata, times, llmb, varb, mq, ndati)
+      call write_output_file_mb(p_domdcomp, mbk, ndata, times, llmb, varb, mq, ndati)
       deallocate(lis, lie)
       deallocate(vara, varb)
       

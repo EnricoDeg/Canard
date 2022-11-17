@@ -80,6 +80,8 @@ MODULE mo_io
       allocate(lpos(0:mpro))
    END SUBROUTINE allocate_io_memory
 
+!===== SUBROUTINE FOR INITIALIZING OUTPUT
+
    SUBROUTINE output_init(p_domdcomp, mbk, ndata)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: mbk
@@ -140,6 +142,8 @@ MODULE mo_io
 
    END SUBROUTINE output_init
 
+!===== SUBROUTINE FOR READING GRID 
+
    SUBROUTINE read_grid_parallel(p_domdcomp, ssk, lio)
       type(t_domdcomp), intent(IN)  :: p_domdcomp
       real(kind=nr),    intent(out) :: ssk(0:p_domdcomp%lmx,3)
@@ -170,6 +174,8 @@ MODULE mo_io
       end if
 
    END SUBROUTINE read_grid_parallel
+
+!===== SUBROUTINE FOR READING RESTART FILE
 
    SUBROUTINE read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
@@ -209,6 +215,8 @@ MODULE mo_io
       close(9)
 
    END SUBROUTINE read_restart_file
+
+!===== SUBROUTINE FOR WRITING RESTART FILE
 
    SUBROUTINE write_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
@@ -250,16 +258,19 @@ MODULE mo_io
 
    END SUBROUTINE write_restart_file
 
-   SUBROUTINE write_output_server(p_domdcomp, mbk, ndata, times, llmb, vart, mq, n)
+!===== SUBROUTINE FOR WRITING OUTPUT FILE (IO SERVER)
+
+   SUBROUTINE write_output_file_mb(p_domdcomp, mbk, ndata, times, llmb, vart, mq, n)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
       real(kind=nr), dimension(0:ndata), intent(in) :: times
-      integer(kind=ni), intent(in) :: llmb
+      integer(kind=int64), intent(in) :: llmb
       real(kind=ieee32), dimension(0:llmb), intent(inout) :: vart
       integer(kind=ni), intent(in) :: mq
       integer(kind=ni), intent(in) :: n
 
+      real(kind=ieee32), dimension(:), allocatable :: varbm
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, lis, lie, ljs, lje
       integer(kind=ni) :: ltomb
@@ -289,23 +300,23 @@ MODULE mo_io
             call p_recv(lhmb(mm), p_domdcomp%mo(mm), itag)
          end do
          llmo = sum(lhmb(:)) - 1
-         allocate(varb(0:llmo))
+         allocate(varbm(0:llmo))
          lis = 0
          lie = lhmb(p_domdcomp%mb)-1
-         varb(lis:lie) = vara(:)
+         varbm(lis:lie) = vara(:)
          do mm=1,mbk
             lis  = lie + 1
             lie  = lis + lhmb(mm) - 1
             lmpi = lie - lis + 1
             itag = 3
-            call p_recv(varb(lis:lie), p_domdcomp%mo(mm), itag, lmpi)
+            call p_recv(varbm(lis:lie), p_domdcomp%mo(mm), itag, lmpi)
          end do
          open(0,file=ctecplt(n),status='unknown')
          close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
          open(0,file=ctecplt(n),access='direct',form='unformatted',recl=nrecs*(llmo+1),status='new')
-         write(0,rec=1) varb(:)
+         write(0,rec=1) varbm(:)
          close(0)
-         deallocate(varb)
+         deallocate(varbm)
       else !-------------------
          itag = 2
          call p_send(lhmb(p_domdcomp%mb), p_domdcomp%mo(0), itag)
@@ -315,115 +326,11 @@ MODULE mo_io
       end if !-----------
       deallocate(vara)
 
-   END SUBROUTINE write_output_server
+   END SUBROUTINE write_output_file_mb
 
-   SUBROUTINE write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
-      type(t_domdcomp), intent(IN) :: p_domdcomp
-      integer(kind=ni), intent(in) :: mbk
-      integer(kind=ni), intent(in) :: ndata
-      real(kind=nr), dimension(0:ndata), intent(in) :: times
-      integer(kind=int64), intent(in) :: nlmx
-      real(kind=ieee32), dimension(0:nlmx), intent(inout) :: vart
-      integer(kind=ni) :: n
-      integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
-      integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
-      integer(kind=ni) :: ltomb, mq
-      integer(kind=ni) :: ll, nrecs
-      integer(kind=ni) :: myid, nn
+!===== SUBROUTINE FOR WRITING OUTPUT FILE
 
-
-      myid = p_get_process_ID()
-      inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
-
-      ltomb = ( p_domdcomp%lxio + 1 ) * &
-              ( p_domdcomp%leto + 1 ) * &
-              ( p_domdcomp%lzeo + 1 )
-      lje  = -1
-      n    = -1
-      mq   = 3
-      llmb = mq * ltomb - 1
-      allocate(vara(0:llmb),varb(0:llmb))
-      ljs = lje + 1
-      lje = ljs + mq * ( p_domdcomp%lmx + 1 ) - 1
-      if ( myid == p_domdcomp%mo(p_domdcomp%mb) ) then !===========================
-         mps = p_domdcomp%mo(p_domdcomp%mb)
-         mpe = mps + p_domdcomp%nbpc(p_domdcomp%mb,1) * &
-                     p_domdcomp%nbpc(p_domdcomp%mb,2) * &
-                     p_domdcomp%nbpc(p_domdcomp%mb,3)-1
-         lis = 0
-         lie = mq * ( p_domdcomp%lmx + 1 ) - 1
-         vara(lis:lie) = vart(ljs:lje)
-         do mp=mps+1,mpe
-            lis = lie + 1
-            lie = lis + mq * ( p_domdcomp%lxim(mp) + 1 ) * &
-                             ( p_domdcomp%letm(mp) + 1 ) * &
-                             ( p_domdcomp%lzem(mp) + 1 ) - 1
-            lmpi = lie - lis + 1
-            itag = 1
-            call p_recv(vara(lis:lie), mp, itag, lmpi)
-         end do
-         lis=0
-         do mp=mps,mpe
-            do m=1,mq
-               do k=0,p_domdcomp%lzem(mp)
-                  do j=0,p_domdcomp%letm(mp)
-                     ljs = lpos(mp) + ( m - 1 ) * ltomb + k * ( p_domdcomp%leto + 1 ) *     &
-                                                              ( p_domdcomp%lxio + 1 ) + j * &
-                                                              ( p_domdcomp%lxio + 1 )
-                     varb(ljs:ljs+p_domdcomp%lxim(mp)) = vara(lis:lis+p_domdcomp%lxim(mp))
-                     lis = lis + p_domdcomp%lxim(mp) + 1
-                  end do
-               end do
-            end do
-         end do
-         open(9,file=cthead(p_domdcomp%mb),access='stream',form='unformatted',status='replace')
-         call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq, mbk, ndata, times)
-         deallocate(vara)
-         allocate(vara(0:lh+llmb))
-         read(9,pos=1) vara(0:lh-1)
-         close(9,status='delete')
-         lhmb(p_domdcomp%mb) = lh + llmb + 1
-         vara(lh:lh+llmb)    = varb(:)
-         if(p_domdcomp%mb==0) then !---------------------
-            do mm=1,mbk
-               itag=2
-               call p_recv(lhmb(mm), p_domdcomp%mo(mm), itag)
-            end do
-            llmo = sum(lhmb(:)) - 1
-            deallocate(varb)
-            allocate(varb(0:llmo))
-            lis = 0
-            lie = lhmb(p_domdcomp%mb)-1
-            varb(lis:lie) = vara(:)
-            do mm=1,mbk
-               lis  = lie + 1
-               lie  = lis + lhmb(mm) - 1
-               lmpi = lie - lis + 1
-               itag = 3
-               call p_recv(varb(lis:lie), p_domdcomp%mo(mm), itag, lmpi)
-            end do
-            open(0,file=ctecplt(n),status='unknown')
-            close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
-            open(0,file=ctecplt(n),access='direct',form='unformatted',recl=nrecs*(llmo+1),status='new')
-            write(0,rec=1) varb(:)
-            close(0)
-         else !-------------------
-            itag = 2
-            call p_send(lhmb(p_domdcomp%mb), p_domdcomp%mo(0), itag)
-            lmpi = lhmb(p_domdcomp%mb)
-            itag = 3
-            call p_send(vara(:), p_domdcomp%mo(0), itag, lmpi)
-         end if !-----------
-      else !===========================
-         lmpi = lje - ljs + 1
-         itag = 1
-         call p_send(vart(ljs:lje), p_domdcomp%mo(p_domdcomp%mb), itag, lmpi)
-      end if !=========================
-      deallocate(vara,varb)
-
-   END SUBROUTINE write_output_grid
-
-   SUBROUTINE write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, n)
+   SUBROUTINE write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, n, mq)
       type(t_domdcomp), intent(IN) :: p_domdcomp
       integer(kind=ni), intent(in) :: mbk
       integer(kind=ni), intent(in) :: ndata
@@ -431,9 +338,10 @@ MODULE mo_io
       integer(kind=int64), intent(in) :: nlmx
       real(kind=ieee32), dimension(0:nlmx), intent(inout) :: vart
       integer(kind=ni), intent(in) :: n
+      integer(kind=ni), intent(in) :: mq
       integer(kind=ni) :: mm, mp, j, k, mps, mpe, m, lmpi, lhf, itag, lh
       integer(kind=int64) :: llmo, llmb, lis, lie, ljs, lje
-      integer(kind=ni) :: ltomb, mq
+      integer(kind=ni) :: ltomb
       integer(kind=ni) :: ll, nrecs
       integer(kind=ni) :: myid
 
@@ -444,7 +352,6 @@ MODULE mo_io
               ( p_domdcomp%leto + 1 ) * &
               ( p_domdcomp%lzeo + 1 )
       lje   = -1
-         mq   = 5
          llmb = mq * ltomb - 1
          allocate(vara(0:llmb),varb(0:llmb))
          ljs = lje + 1
@@ -480,50 +387,15 @@ MODULE mo_io
                   end do
                end do
             end do
-            open(9,file=cthead(p_domdcomp%mb),access='stream',form='unformatted',status='replace')
-            call techead(p_domdcomp, 9, n, p_domdcomp%mb, lh, mq, mbk, ndata, times)
             deallocate(vara)
-            allocate(vara(0:lh+llmb))
-            read(9,pos=1) vara(0:lh-1)
-            close(9,status='delete')
-            lhmb(p_domdcomp%mb) = lh + llmb + 1
-            vara(lh:lh+llmb)    = varb(:)
-            if(p_domdcomp%mb==0) then !---------------------
-               do mm=1,mbk
-                  itag=2
-                  call p_recv(lhmb(mm), p_domdcomp%mo(mm), itag)
-               end do
-               llmo = sum(lhmb(:)) - 1
-               deallocate(varb)
-               allocate(varb(0:llmo))
-               lis = 0
-               lie = lhmb(p_domdcomp%mb)-1
-               varb(lis:lie) = vara(:)
-               do mm=1,mbk
-                  lis  = lie + 1
-                  lie  = lis + lhmb(mm) - 1
-                  lmpi = lie - lis + 1
-                  itag = 3
-                  call p_recv(varb(lis:lie), p_domdcomp%mo(mm), itag, lmpi)
-               end do
-               open(0,file=ctecplt(n),status='unknown')
-               close(0,status='delete') ! 'replace' not suitable as 'recl' may vary
-               open(0,file=ctecplt(n),access='direct',form='unformatted',recl=nrecs*(llmo+1),status='new')
-               write(0,rec=1) varb(:)
-               close(0)
-            else !-------------------
-               itag = 2
-               call p_send(lhmb(p_domdcomp%mb), p_domdcomp%mo(0), itag)
-               lmpi = lhmb(p_domdcomp%mb)
-               itag = 3
-               call p_send(vara(:), p_domdcomp%mo(0), itag, lmpi)
-            end if !-----------
+            call write_output_file_mb(p_domdcomp, mbk, ndata, times, llmb, varb, mq, n)
          else !===========================
             lmpi = lje - ljs + 1
             itag = 1
             call p_send(vart(ljs:lje), p_domdcomp%mo(p_domdcomp%mb), itag, lmpi)
+            deallocate(vara)
          end if !=========================
-         deallocate(vara,varb)
+         deallocate(varb)
 
    END SUBROUTINE write_output_file
 

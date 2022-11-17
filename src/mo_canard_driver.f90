@@ -10,8 +10,7 @@ module mo_canard_driver
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file,                                   &
-                           & read_grid_parallel, write_output_grid,                &
-                           & write_output_file, lpos
+                           & read_grid_parallel, write_output_file, lpos
    use mo_io_server,  ONLY : io_server_stop, io_server_init,      &
                            & t_io_server_interface, io_server_write_output
    use mo_domdcomp,   ONLY : t_domdcomp
@@ -191,14 +190,14 @@ module mo_canard_driver
          ! ss contains the grid data at this points from previous subroutines call
          vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = real(ss(0:p_domdcomp%lmx,nn), kind=ieee32)
       end do
+      nvar = 3
       if (laio) then
-         nvar = 3
          call io_server_write_output(vart, nvar, ndati, times(0), p_domdcomp, p_io_server_interface)
       else
          do nn=1,3
             call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
          end do
-         call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
+         call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, ndati, nvar)
       end if
       deallocate(vart)
    end if
@@ -411,15 +410,15 @@ module mo_canard_driver
                   end select                  
                end do
                if (ltimer) call timer_start(timer_output)
+               nvar = 5
                if (laio) then
-                  nvar = 5
                   call io_server_write_output(vart, nvar, ndati, times(ndati), p_domdcomp, p_io_server_interface)
                else
                   do nn=1,5
                      nnn=3+5*ndati+nn
                      call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nnn)
                   end do
-                  call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, ndati)
+                  call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, ndati, nvar)
                end if
                if (ltimer) call timer_stop(timer_output)
                deallocate(vart)
