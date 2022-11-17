@@ -9,7 +9,7 @@ module mo_canard_driver
                            & p_sum, p_max, p_get_global_comm
    use mo_io,         ONLY : read_input_main, allocate_io_memory,                  &
                            & output_init, vminmax, read_restart_file,              &
-                           & write_restart_file, write_output_files,               &
+                           & write_restart_file,                                   &
                            & read_grid_parallel, write_output_grid,                &
                            & write_output_file, lpos
    use mo_io_server,  ONLY : io_server_stop, io_server_init,      &
