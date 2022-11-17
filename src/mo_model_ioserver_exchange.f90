@@ -33,7 +33,7 @@ MODULE mo_model_ioserver_exchange
   END FUNCTION get_cmd
 
   SUBROUTINE send_model2io_1d_ieee32(field, mp, ljs, lje)
-    REAL(kind=ieee32), INTENT(in)      :: field(:)
+    REAL(kind=ieee32), INTENT(in)      :: field(ljs:lje)
     INTEGER(kind=ni), intent(in) :: mp
     INTEGER(kind=ni), intent(in) :: ljs, lje
 
@@ -47,7 +47,7 @@ MODULE mo_model_ioserver_exchange
   END SUBROUTINE send_model2io_1d_ieee32
 
   SUBROUTINE recv_model2io_1d_ieee32(field, mps, mpe, lis, lie)
-    REAL(kind=ieee32), INTENT(inout)      :: field(:)
+    REAL(kind=ieee32), INTENT(inout)      :: field(0:)
     INTEGER(kind=ni), INTENT(IN) :: mps
     INTEGER(kind=ni), INTENT(IN) :: mpe
     INTEGER(kind=ni), dimension(0:mpe-mps), intent(in) :: lis

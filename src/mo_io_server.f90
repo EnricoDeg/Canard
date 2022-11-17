@@ -5,18 +5,20 @@ MODULE mo_io_server
                                         & p_get_global_n_processes
    use mo_model_ioserver_exchange, ONLY : get_cmd, send_cmd, recv_model2io, send_model2io
    use mo_domdcomp,                ONLY : t_domdcomp
-   use mo_io,                      ONLY : write_output_grid, vminmax
+   use mo_io,                      ONLY : write_output_server, vminmax
    
    implicit none
    private
-   integer(kind=ni), parameter :: CMD_IO_EXIT         = 1
-   integer(kind=ni), parameter :: CMD_IO_INIT         = 2
-   integer(kind=ni), parameter :: CMD_WRITE_GRID_FILE = 3
+   integer(kind=ni), parameter :: CMD_IO_EXIT           = 1
+   integer(kind=ni), parameter :: CMD_IO_INIT           = 2
+   integer(kind=ni), parameter :: CMD_WRITE_GRID_FILE   = 3
+   integer(kind=ni), parameter :: CMD_WRITE_OUTPUT_FILE = 4
 
    type, public :: t_model_interface
       integer(kind=ni) :: mps
       integer(kind=ni) :: mpe
       integer(kind=ni), dimension(:), allocatable :: lxim, letm, lzem
+      integer(kind=ni), dimension(:), allocatable :: lpos
    end type t_model_interface
 
    type, public :: t_io_server_interface
@@ -33,14 +35,21 @@ MODULE mo_io_server
       MODULE PROCEDURE io_server_write_grid_io
    END INTERFACE io_server_write_grid
 
+   INTERFACE io_server_write_output
+      MODULE PROCEDURE io_server_write_output_model
+      MODULE PROCEDURE io_server_write_output_io
+   END INTERFACE io_server_write_output
+
    public :: io_server_loop, io_server_stop, io_server_init
-   public :: io_server_write_grid
+   public :: io_server_write_grid, io_server_write_output
    contains
 
-   SUBROUTINE io_server_init_model(mbk, p_domdcomp, p_io_server_interface, lmodel_role)
+   SUBROUTINE io_server_init_model(mbk, p_domdcomp, p_io_server_interface, mpro, lpos, lmodel_role)
       integer(kind=ni), intent(in)               :: mbk
       type(t_domdcomp), intent(in)               :: p_domdcomp
       type(t_io_server_interface), intent(INOUT) :: p_io_server_interface
+      integer(kind=ni), intent(in)               :: mpro      
+      integer(kind=ni), dimension(0:mpro), intent(in) :: lpos
       LOGICAL, INTENT(IN)                        :: lmodel_role
 
       integer(kind=ni) :: myid, npro, i, j, temp
@@ -70,6 +79,8 @@ MODULE mo_io_server
          call p_model2io(model=temp, server=temp, root=0, lmodel_role=lmodel_role)
          temp = p_domdcomp%lzem(i)
          call p_model2io(model=temp, server=temp, root=0, lmodel_role=lmodel_role)
+         temp = lpos(i)
+         call p_model2io(model=temp, server=temp, root=0, lmodel_role=lmodel_role)
       end do
 
    END SUBROUTINE io_server_init_model
@@ -90,7 +101,8 @@ MODULE mo_io_server
       mpro_model = npro_gl - npro - 1
       allocate(p_model_interface%lxim(0:mpro_model), &
                p_model_interface%letm(0:mpro_model), &
-               p_model_interface%lzem(0:mpro_model)  )
+               p_model_interface%lzem(0:mpro_model), &
+               p_model_interface%lpos(0:mpro_model)  )
 
       allocate(mo(0:mbk), nbpc(0:mbk,3))
       do i=0,mbk
@@ -114,10 +126,9 @@ MODULE mo_io_server
                          root=0, lmodel_role=lmodel_role)
          call p_model2io(model=p_model_interface%lzem(i), server=p_model_interface%lzem(i), &
                          root=0, lmodel_role=lmodel_role)
-      end do
-
-      write(*,*) "io server ", myid, ": mps = ", p_model_interface%mps, &
-                                   " -- mpe = ", p_model_interface%mpe
+         call p_model2io(model=p_model_interface%lpos(i), server=p_model_interface%lpos(i), &
+                         root=0, lmodel_role=lmodel_role)
+      end do      
 
    END SUBROUTINE io_server_init_io
 
@@ -135,46 +146,147 @@ MODULE mo_io_server
 
    END SUBROUTINE io_server_write_grid_model
 
+   SUBROUTINE io_server_write_output_model(vara, ndati, time, p_domdcomp, p_io_server_interface)
+      real(kind=ieee32), intent(in), dimension(:) :: vara
+      integer(kind=ni), intent(inout)             :: ndati
+      real(kind=nr), intent(inout)                :: time
+      type(t_domdcomp), intent(in)                :: p_domdcomp
+      type(t_io_server_interface), intent(in)     :: p_io_server_interface
+
+      integer(kind=ni) :: ljs, lje
+
+      ljs = 0
+      lje = 5 * ( p_domdcomp%lmx + 1 ) - 1
+      call send_cmd(CMD_WRITE_OUTPUT_FILE)
+      call p_model2io(model=ndati, server=ndati, root=0, lmodel_role=.true.)
+      call p_model2io(model=time, server=time, root=0, lmodel_role=.true.)
+      call send_model2io(vara, p_io_server_interface%mb, ljs, lje)
+
+   END SUBROUTINE io_server_write_output_model
+
    SUBROUTINE io_server_write_grid_io(mbk, ndata, times, p_domdcomp, p_model_interface, lmodel_role)
       integer(kind=ni), intent(in)                  :: mbk
       integer(kind=ni), intent(in)                  :: ndata
-      real(kind=nr), intent(in), dimension(0:ndata) :: times
+      real(kind=nr), intent(inout), dimension(0:ndata) :: times
       type(t_domdcomp), intent(in)                  :: p_domdcomp
       type(t_model_interface), intent(in)           :: p_model_interface
       logical, intent(in)                           :: lmodel_role
 
       integer(kind=ni)    :: myid, ltomb, llmb, mp, mps, mpe, nn
-      integer(kind=int64) :: nlmx
-      integer(kind=ni), allocatable, dimension(:) :: lis, lie
-      real(kind=ieee32), allocatable, dimension(:)    :: vara
+      integer(kind=ni)    :: lisi, ljsi, j, k, m, mq
+      integer(kind=ni),  allocatable, dimension(:) :: lis, lie
+      real(kind=ieee32), allocatable, dimension(:) :: vara, varb
 
+      mq = 3
       ltomb = ( p_domdcomp%lxio + 1 ) * ( p_domdcomp%leto + 1 ) * &
               ( p_domdcomp%lzeo + 1 )
-      llmb  = 3 * ltomb - 1
-      nlmx  = int(llmb, kind=int64)
+      llmb  = mq * ltomb - 1
       mps = p_model_interface%mps
       mpe = p_model_interface%mpe
-      allocate(vara(0:llmb))
+      allocate(vara(0:llmb), varb(0:llmb))
       allocate(lis(0:mpe-mps), lie(0:mpe-mps))
+
+      ! receive data from IO client
       lis(0) = 0
-      lie(0) = 3 * ( p_model_interface%lxim(mps) + 1 ) * &
+      lie(0) = mq * (( p_model_interface%lxim(mps) + 1 ) * &
                    ( p_model_interface%letm(mps) + 1 ) * &
-                   ( p_model_interface%lzem(mps) + 1 ) - 1
+                   ( p_model_interface%lzem(mps) + 1 ) ) - 1
       do mp=mps+1,mpe
          lis(mp-mps) = lie(mp-mps-1) + 1
-         lie(mp-mps) = lis(mp-mps-1) + 3 * ( p_model_interface%lxim(mp) + 1 ) * &
+         lie(mp-mps) = lis(mp-mps  ) + mq * ( p_model_interface%lxim(mp) + 1 ) * &
                                            ( p_model_interface%letm(mp) + 1 ) * &
                                            ( p_model_interface%lzem(mp) + 1 ) - 1
       end do
       call recv_model2io(vara, mps, mpe, lis, lie)
-      call vminmax(p_domdcomp, vara((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nn)
-      do nn=1,3
-         call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vara)
+
+      ! reorganize data
+      lisi=0
+      do mp=mps,mpe
+         do m=1,mq
+            do k=0,p_model_interface%lzem(mp)
+               do j=0,p_model_interface%letm(mp)
+                  ljsi = p_model_interface%lpos(mp) + ( m - 1 ) * ltomb + k * ( p_domdcomp%leto + 1 ) *     &
+                                                                              ( p_domdcomp%lxio + 1 ) + j * &
+                                                                              ( p_domdcomp%lxio + 1 )
+                  varb(ljsi:ljsi+p_model_interface%lxim(mp)) = vara(lisi:lisi+p_model_interface%lxim(mp))
+                  lisi = lisi + p_model_interface%lxim(mp) + 1
+               end do
+            end do
+         end do
       end do
+      do nn=1,3
+         call vminmax(p_domdcomp, varb((nn-1)*(ltomb):nn*(ltomb)-1), nn)
+       end do
+      call write_output_server(p_domdcomp, mbk, ndata, times, llmb, varb, mq, -1)
       deallocate(lis, lie)
-      deallocate(vara)
+      deallocate(vara, varb)
 
    END SUBROUTINE io_server_write_grid_io
+
+   SUBROUTINE io_server_write_output_io(mbk, ndata, times, p_domdcomp, p_model_interface, lmodel_role)
+      integer(kind=ni), intent(in)                  :: mbk
+      integer(kind=ni), intent(in)                  :: ndata
+      real(kind=nr), intent(inout), dimension(0:ndata) :: times
+      type(t_domdcomp), intent(in)                  :: p_domdcomp
+      type(t_model_interface), intent(in)           :: p_model_interface
+      logical, intent(in)                           :: lmodel_role
+
+      integer(kind=ni)    :: myid, ltomb, llmb, mp, mps, mpe, nn
+      integer(kind=ni)    :: lisi, ljsi, j, k, m, ndati, nnn, mq
+      integer(kind=ni),  allocatable, dimension(:) :: lis, lie
+      real(kind=ieee32), allocatable, dimension(:) :: vara, varb
+      
+      call p_model2io(model=ndati, server=ndati, root=0, lmodel_role=.false.)
+      call p_model2io(model=times(ndati), server=times(ndati), root=0, lmodel_role=.false.)
+      
+      mq = 5
+      ltomb = ( p_domdcomp%lxio + 1 ) * ( p_domdcomp%leto + 1 ) * &
+              ( p_domdcomp%lzeo + 1 )
+      llmb  = mq * ltomb - 1
+      mps = p_model_interface%mps
+      mpe = p_model_interface%mpe
+      allocate(vara(0:llmb), varb(0:llmb))
+      allocate(lis(0:mpe-mps), lie(0:mpe-mps))
+
+      vara(:) = -1.0_ieee32
+
+      ! receive data from IO client
+      lis(0) = 0
+      lie(0) = mq * (( p_model_interface%lxim(mps) + 1 ) * &
+                   ( p_model_interface%letm(mps) + 1 ) * &
+                   ( p_model_interface%lzem(mps) + 1 ) ) - 1
+      do mp=mps+1,mpe
+         lis(mp-mps) = lie(mp-mps-1) + 1
+         lie(mp-mps) = lis(mp-mps  ) + mq * ( p_model_interface%lxim(mp) + 1 ) * &
+                                           ( p_model_interface%letm(mp) + 1 ) * &
+                                           ( p_model_interface%lzem(mp) + 1 ) - 1
+      end do
+      call recv_model2io(vara, mps, mpe, lis, lie)
+
+      ! reorganize data
+      lisi=0
+      do mp=mps,mpe
+         do m=1,mq
+            do k=0,p_model_interface%lzem(mp)
+               do j=0,p_model_interface%letm(mp)
+                  ljsi = p_model_interface%lpos(mp) + ( m - 1 ) * ltomb + k * ( p_domdcomp%leto + 1 ) *     &
+                                                                              ( p_domdcomp%lxio + 1 ) + j * &
+                                                                              ( p_domdcomp%lxio + 1 )
+                  varb(ljsi:ljsi+p_model_interface%lxim(mp)) = vara(lisi:lisi+p_model_interface%lxim(mp))
+                  lisi = lisi + p_model_interface%lxim(mp) + 1
+               end do
+            end do
+         end do
+      end do
+      do nn=1,mq
+         nnn=3+5*ndati+nn
+         call vminmax(p_domdcomp, varb((nn-1)*(ltomb):nn*(ltomb)-1), nnn)
+       end do
+      call write_output_server(p_domdcomp, mbk, ndata, times, llmb, varb, mq, ndati)
+      deallocate(lis, lie)
+      deallocate(vara, varb)
+      
+   END SUBROUTINE io_server_write_output_io
 
    SUBROUTINE io_server_stop
       CALL send_cmd(CMD_IO_EXIT)
@@ -206,7 +318,10 @@ MODULE mo_io_server
             if (myid == 0) write(*,*) "(remote_stepon): CMD_WRITE_GRID_FILE"
             call io_server_write_grid(mbk, ndata, times, p_domdcomp, &
                                       p_model_interface, lmodel_role)
-
+         CASE(CMD_WRITE_OUTPUT_FILE)
+            if (myid == 0) write(*,*) "(remote_stepon): CMD_WRITE_OUTPUT_FILE"
+            call io_server_write_output(mbk, ndata, times, p_domdcomp, &
+                                        p_model_interface, lmodel_role)
          CASE(CMD_IO_EXIT)
             if (myid == 0) write(*,*) "(remote_stepon): CMD_IO_EXIT"
             EXIT event_loop

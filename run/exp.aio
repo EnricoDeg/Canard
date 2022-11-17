@@ -26,7 +26,7 @@ EOF
 
 cat > input.canard << EOF
 &nml_driver
-nio = 0
+nio = 1
 mbk = 0
 ndata = 1
 /

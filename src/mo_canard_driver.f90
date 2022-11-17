@@ -11,9 +11,10 @@ module mo_canard_driver
                            & output_init, vminmax, read_restart_file,              &
                            & write_restart_file, write_output_files,               &
                            & read_grid_parallel, write_output_grid,                &
-                           & write_output_file
+                           & write_output_file, lpos
    use mo_io_server,  ONLY : io_server_stop, io_server_init,      &
-                           & t_io_server_interface, io_server_write_grid
+                           & t_io_server_interface, io_server_write_grid, &
+                           & io_server_write_output
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_grid,       ONLY : t_grid
    use mo_gridgen,    ONLY : t_grid_geom, read_input_gridgen, makegrid,            &
@@ -86,7 +87,7 @@ module mo_canard_driver
    inquire(iolength=ll) real(1.0,kind=ieee32); nrecs=ll
 
 !===== INPUT PARAMETERS
-   if (myid==0) write(*,*) "read input parameters"
+   if (myid==0) write(*,*) "Canard: read input parameters"
 
    call read_input_main(nts, nrestart, cfl, &
                         tmax, ltimer)
@@ -105,23 +106,23 @@ module mo_canard_driver
    call get_grid_geometry(p_grid_geom)
 
 !===== DOMAIN DECOMPOSITION INITIALIZATION
-   if (myid==0) write(*,*) "initialize domain decomposition"
+   if (myid==0) write(*,*) "Canard: initialize domain decomposition"
 
    call p_domdcomp%init(mbk)
    lim=(p_domdcomp%lxi+1)+(p_domdcomp%let+1)+(p_domdcomp%lze+1)-1
-
-!===== IO SERVER INITIALIZATION
-   if (laio .and. myid==0) write(*,*) "model intiialize io server"
-   if (laio) call io_server_init(mbk, p_domdcomp, p_io_server_interface, lmodel_role)
 
 !===== TIMERS INITIALIZATION
    if (ltimer) call timer_init()
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
-   if (myid==0) write(*,*) "initialize IO"
+   if (myid==0) write(*,*) "Canard: initialize IO"
 
    call allocate_io_memory(mbk, ndata)
    call output_init(p_domdcomp, mbk, ndata)
+
+!===== IO SERVER INITIALIZATION
+   if (laio .and. myid==0) write(*,*) "Canard: model intiialize io server"
+   if (laio) call io_server_init(mbk, p_domdcomp, p_io_server_interface, mpro, lpos, lmodel_role)
 
 !===== ALLOCATION OF MAIN ARRAYS
 
@@ -141,7 +142,7 @@ module mo_canard_driver
    allocate(p(0:p_domdcomp%lmx))
 
 !===== EXTRA COEFFICIENTS FOR DOMAIN BOUNDARIES INITIALIZATION
-   if (myid==0) write(*,*) "initialize numerics"
+   if (myid==0) write(*,*) "Canard: initialize numerics"
 
    call p_numerics%init_extra
 
@@ -150,7 +151,7 @@ module mo_canard_driver
    call p_numerics%init(p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, p_domdcomp%nbc, lim)
 
 !===== GRID GENERATION & CALCULATION OF GRID METRICS
-   if (myid==0) write(*,*) "grid generation"
+   if (myid==0) write(*,*) "Canard: grid generation"
 
    allocate(lio(0:p_domdcomp%let,0:p_domdcomp%lze))
    call p_grid%allocate(p_domdcomp)
@@ -169,7 +170,7 @@ module mo_canard_driver
    call p_grid%grid_metrics(p_domdcomp, p_numerics, ss)
 
 !===== EXTRA COEFFICIENTS FOR GCBC/GCIC INITIALIZATION
-   if (myid==0) write(*,*) "initialize GCBC"
+   if (myid==0) write(*,*) "Canard: initialize GCBC"
 
    call gcbc_init(p_domdcomp, p_grid%yaco)
 
@@ -183,7 +184,7 @@ module mo_canard_driver
 
 !===== SETTING UP OUTPUT FILE & STORING GRID DATA
 
-   !if (loutput) then
+   if (loutput) then
       nlmx=3*(p_domdcomp%lmx+1)-1      
       allocate(vart(0:nlmx))
       do nn=1,3
@@ -199,7 +200,7 @@ module mo_canard_driver
          call write_output_grid(p_domdcomp, mbk, ndata, times, nlmx, vart)
       end if
       deallocate(vart)
-   !end if
+   end if
 
 !===== SETTING UP SPONGE ZONE PARAMETERS
 
@@ -407,12 +408,18 @@ module mo_canard_driver
                   case(5)
                      vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1) = &
                                 real(gamm1*(qb(:,nn)-half*rr(:,1)*(qb(:,2)*qb(:,2)+qb(:,3)*qb(:,3)+qb(:,4)*qb(:,4))), kind=ieee32)
-                  end select
-                  nnn=3+5*ndati+nn
-                  call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nnn)
+                  end select                  
                end do
                if (ltimer) call timer_start(timer_output)
-               call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, ndati)
+               if (laio) then
+                  call io_server_write_output(vart, ndati, times(ndati), p_domdcomp, p_io_server_interface)
+               else
+                  do nn=1,5
+                     nnn=3+5*ndati+nn
+                     call vminmax(p_domdcomp, vart((nn-1)*(p_domdcomp%lmx+1):nn*(p_domdcomp%lmx+1)-1), nnn)
+                  end do
+                  call write_output_file(p_domdcomp, mbk, ndata, times, nlmx, vart, ndati)
+               end if
                if (ltimer) call timer_stop(timer_output)
                deallocate(vart)
                
@@ -443,9 +450,7 @@ module mo_canard_driver
    deallocate(qo,qa,qb,de,rr,ss,p)
    call p_grid%deallocate
    call p_physics%deallocate
-   if (dt==zero .and. myid==0) then
-      write(*,*) "Overflow."
-   end if
+   if (dt==zero .and. myid==0) write(*,*) "Canard: Overflow."
 
    if (laio) call io_server_stop
 
@@ -457,9 +462,7 @@ module mo_canard_driver
 !===== END OF JOB
    
    call p_barrier(comm_glob)
-   if(myid==0) then
-      write(*,*) "Finished."
-   end if
+   if(myid==0) write(*,*) "Canard: Finished."
 
    end subroutine canard_driver
 

@@ -23,17 +23,20 @@ module mo_aio_driver
       comm_glob = p_get_global_comm()
 
 !===== DOMAIN DECOMPOSITION INITIALIZATION
+      if (myid==0) write(*,*) "IO server: initialize domain decomposition"
 
       call p_domdcomp%allocate(mbk,mpro)
       call p_domdcomp%read(mbk, lmodel_role)
       call p_domdcomp%init(mbk)
 
 !===== WRITING START POSITIONS IN OUTPUT FILE
+      if (myid==0) write(*,*) "IO server: initialize IO"
 
       call allocate_io_memory(mbk, ndata)
       call output_init(p_domdcomp, mbk, ndata)
 
 !===== MAIN LOOP
+      if (myid==0) write(*,*) "IO server: starting loop"
 
       call io_server_loop(mbk, ndata, p_domdcomp, p_model_interface, lmodel_role)
 
