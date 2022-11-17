@@ -1,0 +1,158 @@
+#!/bin/bash
+
+EXP_ID=toy_aio
+MODEL=canard
+
+mkdir ${EXP_ID}
+cd ${EXP_ID}
+ln -s ../../bin/${MODEL} ${MODEL}
+mkdir misc
+mkdir data
+
+cat > batch << EOF
+#! /bin/bash
+#SBATCH --job-name=canard
+#SBATCH --partition=compute
+#SBATCH --exclusive
+#SBATCH --ntasks=54
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=00:10:00
+#SBATCH --output=batch.%j.out
+#SBATCH --error=batch.%j.err
+#SBATCH --account=k20200
+
+srun --cpu-bind=cores ./${MODEL}
+EOF
+
+cat > input.canard << EOF
+&nml_driver
+nio = 6
+mbk = 5
+ndata = 1
+/
+&nml_canard
+nts = 0
+nrestart = 1
+cfl = 1.4e0
+tmax = 0.15e0
+ltimer = .true.
+/
+&nml_domdcomp
+nbpc(:,1) = 4,4,4,4,4,4
+nbpc(:,2) = 2,2,2,2,2,2
+nbpc(:,3) = 1,1,1,1,1,1
+lximb = 100,100,100,100,100,100
+letmb = 100,100,100,100,100,100
+lzemb = 16,16,16,16,16,16
+nbbc(0,1,:) = 10,35
+nbbc(0,2,:) = 45,35
+nbbc(0,3,:) = 45,45
+mbcd(0,1,:) = -1,1
+mbcd(0,2,:) = 3,3
+mbcd(0,3,:) =  0,0
+nbbc(1,1,:) = 35,35
+nbbc(1,2,:) = 45,35
+nbbc(1,3,:) = 45,45
+mbcd(1,1,:) = 0,2
+mbcd(1,2,:) = 4,4
+mbcd(1,3,:) =  1,1
+nbbc(2,1,:) = 35,10
+nbbc(2,2,:) = 45,35
+nbbc(2,3,:) = 45,45
+mbcd(2,1,:) = 1,-1
+mbcd(2,2,:) = 5,5
+mbcd(2,3,:) =  2,2
+nbbc(3,1,:) = 10,35
+nbbc(3,2,:) = 35,45
+nbbc(3,3,:) = 45,45
+mbcd(3,1,:) = -1,4
+mbcd(3,2,:) = 0,0
+mbcd(3,3,:) =  3,3
+nbbc(4,1,:) = 35,35
+nbbc(4,2,:) = 35,45
+nbbc(4,3,:) = 45,45
+mbcd(4,1,:) = 3,5
+mbcd(4,2,:) = 1,1
+mbcd(4,3,:) =  4,4
+nbbc(5,1,:) = 35,10
+nbbc(5,2,:) = 35,45
+nbbc(5,3,:) = 45,45
+mbcd(5,1,:) = 4,-1
+mbcd(5,2,:) = 2,2
+mbcd(5,3,:) =  5,5
+/
+&nml_aio
+nbpc(:,1) = 1,1,1,1,1,1
+nbpc(:,2) = 1,1,1,1,1,1
+nbpc(:,3) = 1,1,1,1,1,1
+lximb = 100,100,100,100,100,100
+letmb = 100,100,100,100,100,100
+lzemb = 16,16,16,16,16,16
+nbbc(0,1,:) = 10,35
+nbbc(0,2,:) = 45,35
+nbbc(0,3,:) = 45,45
+mbcd(0,1,:) = -1,1
+mbcd(0,2,:) = 3,3
+mbcd(0,3,:) =  0,0
+nbbc(1,1,:) = 35,35
+nbbc(1,2,:) = 45,35
+nbbc(1,3,:) = 45,45
+mbcd(1,1,:) = 0,2
+mbcd(1,2,:) = 4,4
+mbcd(1,3,:) =  1,1
+nbbc(2,1,:) = 35,10
+nbbc(2,2,:) = 45,35
+nbbc(2,3,:) = 45,45
+mbcd(2,1,:) = 1,-1
+mbcd(2,2,:) = 5,5
+mbcd(2,3,:) =  2,2
+nbbc(3,1,:) = 10,35
+nbbc(3,2,:) = 35,45
+nbbc(3,3,:) = 45,45
+mbcd(3,1,:) = -1,4
+mbcd(3,2,:) = 0,0
+mbcd(3,3,:) =  3,3
+nbbc(4,1,:) = 35,35
+nbbc(4,2,:) = 35,45
+nbbc(4,3,:) = 45,45
+mbcd(4,1,:) = 3,5
+mbcd(4,2,:) = 1,1
+mbcd(4,3,:) =  4,4
+nbbc(5,1,:) = 35,10
+nbbc(5,2,:) = 35,45
+nbbc(5,3,:) = 45,45
+mbcd(5,1,:) = 4,-1
+mbcd(5,2,:) = 2,2
+mbcd(5,3,:) =  5,5
+/
+&nml_numerics
+fltk = 0.65e0
+fltrbc = 0.9e0
+/
+&nml_physics
+reoo = 500000.0e0
+tempoo = 300.0e0
+amach1 = 0.3e0
+amach2 = 0.0e0
+amach3 = 0.0e0
+timf = 0.0e0
+nsmf = 1
+/
+&nml_gridgen
+gridtype = 1
+lxi0 = 100
+lxi1 = 100
+lxi2 = 100
+let0 = 100
+lze0 = 16
+doml0 = 0.5e0
+doml1 = 1.0e0
+domh = 0.5e0
+span = 0.1e0
+szth0 = 0.0e0
+szth1 = 0.6e0
+/
+nml_sponge
+szco = 10.0e0
+/
+EOF

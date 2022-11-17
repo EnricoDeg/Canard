@@ -14,19 +14,19 @@ module mo_numerics
    implicit none
    private
 
-   integer(kind=ni), private, parameter :: lmd=11,lmf=11,lmp=max(lmd,lmf)
+   integer(kind=ni), private, parameter               :: lmd=11, lmf=11, lmp=max(lmd,lmf)
+   integer(kind=ni), private, parameter, dimension(3) :: nnf = (/ 2,3,1 /)
 
    type, public :: t_numerics
       ! private vars
-      real(kind=nr), private                           :: alphf, betf
-      real(kind=nr), private, dimension(0:lmp,0:1,0:1) :: pbci, pbco
-      real(kind=nr), private, dimension(0:1,0:1)       :: pbcot
-      real(kind=nr), private                           :: fa, fb, fc
-      real(kind=nr), private, dimension(-2:2,0:2,0:1)  :: albef
-      real(kind=nr), private, dimension(0:lmp)         :: sap
-      real(kind=nr), private, dimension(0:4,0:2)       :: fbc
-      integer(kind=ni), private, dimension(3,0:1,0:1)  :: ndf
-      integer(kind=ni), private, dimension(3)          :: nnf
+      real(kind=nr), private                             :: alphf, betf
+      real(kind=nr), private, dimension(0:lmp,0:1,0:1)   :: pbci, pbco
+      real(kind=nr), private, dimension(0:1,0:1)         :: pbcot
+      real(kind=nr), private                             :: fa, fb, fc
+      real(kind=nr), private, dimension(-2:2,0:2,0:1)    :: albef
+      real(kind=nr), private, dimension(0:lmp)           :: sap
+      real(kind=nr), private, dimension(0:4,0:2)         :: fbc
+      integer(kind=ni), private, dimension(3,0:1,0:1)    :: ndf
 
       real(kind=nr), private, dimension(:,:), allocatable :: xu, yu
       real(kind=nr), private, dimension(:,:), allocatable :: xl, yl
@@ -91,14 +91,16 @@ module mo_numerics
 
    SUBROUTINE read_input_numerics(this)
       class(t_numerics), intent(inout) :: this
-      character(16) :: ccinput
+      real(kind=nr) :: fltk, fltrbc      
+      integer(kind=ni) :: fu, rc
+      namelist /nml_numerics/ fltk, fltrbc
 
-      open(9,file='input.numerics',status='old')
-      read(9,*) ccinput,this%fltk
-      read(9,*) ccinput,this%fltrbc
-      read(9,*) ccinput,this%nnf(:)
-      close(9)
-      this%fltk = pi * this%fltk
+      open (action='read', file='input.canard', iostat=rc, newunit=fu)
+      read (nml=nml_numerics, iostat=rc, unit=fu)
+      close(fu)
+      
+      this%fltk = pi * fltk
+      this%fltrbc = fltrbc
 
    END SUBROUTINE read_input_numerics
 
@@ -891,7 +893,7 @@ module mo_numerics
       integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
       real(kind=nr)    :: resk, ra2k
 
-      nn = this%nnf(inn)
+      nn = nnf(inn)
 
       ntk    = 1
       nstart = this%ndf(nn,0,1)

@@ -12,10 +12,8 @@ module mo_gridgen
    public
 
    type, public :: t_grid_geom
-      integer(kind=ni) :: nthick
       real(kind=nr)    :: szth0
       real(kind=nr)    :: szth1
-      real(kind=nr)    :: skew
       real(kind=nr)    :: doml0
       real(kind=nr)    :: doml1
       real(kind=nr)    :: domh
@@ -41,7 +39,7 @@ module mo_gridgen
    real(kind=nr), private :: am,tmp,tmpa,tmpb,gf
 
    integer(kind=ni), private :: nthick ! input vars
-   real(kind=nr),    private :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx ! input vars
+   real(kind=nr),    private :: smg,smgvr,doml0,doml1,domh,span,szth0,szth1,spx ! input vars
 
    real(kind=nr), private, dimension(5,5) :: xt
 
@@ -51,31 +49,23 @@ module mo_gridgen
    SUBROUTINE read_input_gridgen
       
       character(16) :: cinput
+      integer(kind=ni) :: fu, rc
 
-      open(9,file='input.gridgen',status='old')
-      read(9,*) cinput,lxi0,lxi1,lxi2
-      read(9,*) cinput,let0
-      read(9,*) cinput,lze0
-      read(9,*) cinput,nthick
-      read(9,*) cinput,smg,smgvr
-      read(9,*) cinput,doml0,doml1,domh
-      read(9,*) cinput,span
-      read(9,*) cinput,wlew,wlea
-      read(9,*) cinput,szth0,szth1
-      read(9,*) cinput,skew,spx
-      read(9,*) cinput,gridtype
-      close(9)
+      namelist /nml_gridgen/ gridtype,lxi0,let0,lze0,let0,lze0,doml0, &
+                             doml1,domh,span,szth0,szth1,nthick, &
+                             smg,smgvr
 
+      open (action='read', file='input.canard', iostat=rc, newunit=fu)
+      read (nml=nml_gridgen, iostat=rc, unit=fu)
+      close(fu)
 
    END SUBROUTINE read_input_gridgen
 
    SUBROUTINE get_grid_geometry(p_grid_geom)
       type(t_grid_geom), intent(out) :: p_grid_geom
    
-      p_grid_geom%nthick = nthick
       p_grid_geom%szth0  = szth0
       p_grid_geom%szth1  = szth1
-      p_grid_geom%skew   = skew
       p_grid_geom%doml0  = doml0
       p_grid_geom%doml1  = doml1
       p_grid_geom%domh   = domh
@@ -91,8 +81,10 @@ module mo_gridgen
       if (gridtype == 0) then
          call gridtoy(mb, lxio, leto, mo, nblocks, doml0, doml1, domh, span)
       else if (gridtype == 1) then
+         call gridtoy_multi(mb, lxio, leto, mo, nblocks, doml0, doml1, domh, span)
+      else if (gridtype == 2) then
          call gridaerofoil(mb, lxio, leto, mo, nblocks, &
-                           nthick, smg, smgvr, doml0, doml1, domh, span, wlew, wlea, szth0, szth1, skew, spx)
+                           nthick, smg, smgvr, doml0, doml1, domh, span, szth0, szth1, spx)
       else
          write(*,*) 'Unknown grid type'
          STOP 1
@@ -103,11 +95,11 @@ module mo_gridgen
 !===== GRID GENERATION
 
    subroutine gridaerofoil(mb, lxio, leto, mo, nblocks, &
-                           nthick, smg, smgvr, doml0, doml1, domh, span, wlew, wlea, szth0, szth1, skew, spx)
+                           nthick, smg, smgvr, doml0, doml1, domh, span, szth0, szth1, spx)
       integer(kind=ni), intent(in) :: mb, lxio, leto, nblocks
       integer(kind=ni), intent(in), dimension(0:nblocks) :: mo
       integer(kind=ni), intent(in) :: nthick
-      real(kind=nr),    intent(in) :: smg,smgvr,doml0,doml1,domh,span,wlew,wlea,szth0,szth1,skew,spx
+      real(kind=nr),    intent(in) :: smg,smgvr,doml0,doml1,domh,span,szth0,szth1,spx
       integer(kind=ni)             :: m, n, np, ll, lh, k, js, je, jp, jj
       integer(kind=ni)             :: l, j, i, is, ie, ip, ii, im, jm, lxisz
       integer(kind=ni)             :: lxit, lett, lxie0, lxis1, lxie1, lxis2, lete0, lets1
@@ -239,12 +231,11 @@ module mo_gridgen
             ya=-domh
             yd=domh
 
-            fctr=twopi/wlew
-            shswle=shs*sqrt(one+0*(fctr*wlea*cos(fctr*(zs(k)-zs(0))))**two)
+            shswle=shs
 
 !----- WAVY LEADING EDGE
 
-            tmp=one-wlea*sin(twopi*(zs(k)-zs(0))/wlew)
+            tmp=one
             if(nthick==0) then
                xb=half-tmp
                yb=zero
@@ -313,25 +304,25 @@ module mo_gridgen
             sho=szth0/16
             if(nthick==0) then
                do i=0,lxit
-                  xp(i,n)=xp(i,n+1)-skew
+                  xp(i,n)=xp(i,n+1)
                end do
             else
                ip=0
                im=lxi0
-               call gridf(xp(:,n),pxi,xa-skew,xb-skew-spx,sho,fctr*shs,lxit,im,ip)
+               call gridf(xp(:,n),pxi,xa,xb-spx,sho,fctr*shs,lxit,im,ip)
                ip=lxis1
                im=lxi1
-               call gridf(xp(:,n),pxi,xb-skew-spx,xc-skew+spx,fctr*shs,fctr*she,lxit,im,ip)
+               call gridf(xp(:,n),pxi,xb-spx,xc+spx,fctr*shs,fctr*she,lxit,im,ip)
                ip=lxis2
                im=lxi2-lxisz
-               call gridf(xp(:,n),pxi,xc-skew+spx,xd-skew,fctr*she,free,lxit,im,ip)
+               call gridf(xp(:,n),pxi,xc+spx,xd,fctr*she,free,lxit,im,ip)
                ip=ip+im
                im=lxisz
-               call gridf(xp(:,n),pxi,xd-skew,xe-skew,pxi(ip),free,lxit,im,ip)
+               call gridf(xp(:,n),pxi,xd,xe,pxi(ip),free,lxit,im,ip)
             end if
             do i=0,lxit
                yp(i,n)=ya
-               xp(i,n+3)=xp(i,n)+two*skew
+               xp(i,n+3)=xp(i,n)
                yp(i,n+3)=yd
             end do
 
@@ -368,10 +359,10 @@ module mo_gridgen
                qeto(:,m)=qet(:)
             end do
             if(nthick==0) then
-               fctr=two*skew/(yd-ya)
+               fctr=zero
                do j=0,lett
-                  xq(j,1)=xb-skew+fctr*(yq(j,1)-ya)
-                  xq(j,2)=xc-skew+fctr*(yq(j,2)-ya)
+                  xq(j,1)=xb+fctr*(yq(j,1)-ya)
+                  xq(j,2)=xc+fctr*(yq(j,2)-ya)
                end do
             else
                do n=0,2,2
@@ -384,7 +375,7 @@ module mo_gridgen
                      je=lett
                   end select
                   do m=1,2
-                     res=skew/domh
+                     res=zero
                      select case(m)
                      case(1)
                         i=lxis1
@@ -439,10 +430,10 @@ module mo_gridgen
                jm=let0-jj
                call gridf(yq(:,m),qet,yo+ra0,yd,qet(jp),free,lett,jm,jp)
             end do
-            fctr=two*skew/(yd-ya)
+            fctr=zero
             do j=0,lett
-               xq(j,0)=xa-skew+fctr*(yq(j,0)-ya)
-               xq(j,3)=xe-skew+fctr*(yq(j,3)-ya)
+               xq(j,0)=xa+fctr*(yq(j,0)-ya)
+               xq(j,3)=xe+fctr*(yq(j,3)-ya)
             end do
 
 !----- GRID OUTPUT
@@ -529,6 +520,73 @@ module mo_gridgen
       inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
       myid = p_get_process_ID()
 
+      lxit=lxi0+1
+      lett=let0+1
+      lxie0=lxi0
+      lxis1=lxie0+1
+      lxie1=lxis1+lxi1
+      lxis2=lxie1+1
+      lete0=let0
+      lets1=lete0+1
+
+      np=3*(lxio+1)*(leto+1)-1
+      allocate(xx(0:lxit,0:lett),yy(0:lxit,0:lett))
+      allocate(xyzmb(0:np), zs(0:lze0))
+
+      if(myid==mo(mb)) then
+         open(9,file=cgrid,status='unknown')
+         close(9,status='delete')
+         open(9,file=cgrid,access='direct',form='unformatted',recl=nrecd*(np+1),status='new')
+
+         do k=0,lze0
+            zs(k)=span*(real(lze0-k,kind=nr)/lze0-half)
+
+         select case(mb)
+            case(0)
+               js=0
+               je=lete0
+               ra3=0
+            end select
+            select case(mb)
+            case(0)
+               is=0
+               ie=lxie0
+               ra2=0
+            end select
+ 
+            ra0 = (doml1+doml0)/(lxi0)
+            ra1 = 2.0_nr*domh/(let0)
+            l=-3
+            do j=js,je
+               do i=is,ie
+                  l=l+3
+                  xx(i,j) = -doml0 + (i-ra2)*ra0
+                  yy(i,j) = -domh + (j-ra3)*ra1
+                  xyzmb(l:l+2)=(/xx(i,j),yy(i,j),zs(k)/)
+               end do
+            end do
+            write(9,rec=k+1) xyzmb(:)
+         end do
+         close(9)
+
+      end if
+      deallocate(xx, yy, xyzmb, zs)
+
+   end subroutine gridtoy
+
+   subroutine gridtoy_multi(mb, lxio, leto, mo, nblocks, doml0, doml1, domh, span)
+      integer(kind=ni), intent(in) :: mb, lxio, leto, nblocks
+      integer(kind=ni), intent(in), dimension(0:nblocks) :: mo
+      real(kind=nr),    intent(in) :: doml0, doml1, domh, span
+      integer(kind=ni)             :: np, ll, k, js, je
+      integer(kind=ni)             :: l, j, i, is, ie
+      integer(kind=ni)             :: lxit, lett, lxie0, lxis1, lxie1, lxis2, lete0, lets1
+      real(kind=nr)                :: ra0, ra1, ra2, ra3
+      integer(kind=ni)             :: nrecd, myid
+
+      inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
+      myid = p_get_process_ID()
+
       lxit=lxi0+lxi1+lxi2+2
       lett=2*let0+1
       lxie0=lxi0
@@ -574,7 +632,7 @@ module mo_gridgen
                ie=lxit
                ra2=2;
             end select
- 
+
             ra0 = (doml1+doml0)/(lxi0+lxi1+lxi2)
             ra1 = domh/(2.0*let0)*2.0
             l=-3
@@ -593,7 +651,7 @@ module mo_gridgen
       end if
       deallocate(xx, yy, xyzmb, zs)
 
-   end subroutine gridtoy
+   end subroutine gridtoy_multi
 
 !===== AEROFOIL INTERPOLATION
 

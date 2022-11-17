@@ -74,18 +74,30 @@ MODULE mo_physics
 
    subroutine read_input_physics(this)
       class(t_physics), INTENT(INOUT) :: this
-      character(16) :: cinput
+      character(16)    :: cinput
+      real(kind=nr)    :: reoo
+      real(kind=nr)    :: tempoo
+      real(kind=nr)    :: amach1, amach2, amach3
+      real(kind=nr)    :: amachoo
+      real(kind=nr)    :: timf
+      integer(kind=ni) :: nsmf
+      integer(kind=ni) :: rc, fu
 
-      open(9,file='input.physics',status='old')
-      read(9,*) cinput, this%reoo
-      read(9,*) cinput, this%tempoo
-      read(9,*) cinput, this%amach1
-      read(9,*) cinput, this%amach2
-      read(9,*) cinput, this%amach3
-      read(9,*) cinput, this%timf
-      read(9,*) cinput, this%nsmf
-      close(9)
+      namelist /nml_physics/ reoo, tempoo, amach1, amach2, amach3, &
+                              timf, nsmf
 
+      open (action='read', file='input.canard', iostat=rc, newunit=fu)
+      read (nml=nml_physics, iostat=rc, unit=fu)
+      close(fu)
+
+      this%reoo   = reoo
+      this%tempoo = tempoo
+      this%amach1 = amach1
+      this%amach2 = amach2
+      this%amach3 = amach3
+      this%timf   = timf
+      this%nsmf   = nsmf
+      
       this%amachoo = sqrt( this%amach1 * this%amach1 + &
                            this%amach2 * this%amach2 + &
                            this%amach3 * this%amach3 )

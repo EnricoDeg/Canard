@@ -82,10 +82,9 @@ MODULE mo_domdcomp
 
    end subroutine allocate_domdcomp
 
-   subroutine domdcomp_init(this, nblocks, nkthick, nkbody)
+   subroutine domdcomp_init(this, nblocks)
       class(t_domdcomp), INTENT(INOUT) :: this
-      integer(kind=ni), intent(in) :: nblocks, nkthick
-      integer(kind=ni), intent(in) :: nkbody
+      integer(kind=ni), intent(in) :: nblocks
       integer(kind=ni) :: ipk, jpk, mmk, nnk, nstart, nend
       integer(kind=ni) :: llk, mpk, lpk, mak, lk, mm, mp, itag
       integer(kind=ni) :: myid, mpro
@@ -109,45 +108,6 @@ MODULE mo_domdcomp
       this%lxio = this%lximb(this%mb)
       this%leto = this%letmb(this%mb)
       this%lzeo = this%lzemb(this%mb)
-
-      ! multiblock info
-      ipk = 30 * nkthick + 35 * (1 - nkthick)
-#ifdef VISCOUS
-      jpk = 35 * (1 - nkbody) + nkbody * (20 + 5)
-#else
-      jpk = 35 * (1 - nkbody) + nkbody * (20)
-#endif
-      do mmk = 0,nblocks
-         select case(mmk)
-         case(0,3)
-            this%nbbc(mmk,1,:) = (/ 10, ipk /)
-            this%mbcd(mmk,1,:) = (/ -1, mmk+1 /)
-         case(1,4)
-            this%nbbc(mmk,1,:) = (/ ipk, ipk  /)
-            this%mbcd(mmk,1,:) = (/ mmk-1, mmk+1 /)
-         case(2,5)
-            this%nbbc(mmk,1,:) = (/ipk,10/)
-            this%mbcd(mmk,1,:) = (/mmk-1,-1/)
-         end select
-
-         select case(mmk)
-         case(0,2)
-            this%nbbc(mmk,2,:) = (/45,ipk/)
-            this%mbcd(mmk,2,:) = (/mmk+3,mmk+3/)
-         case(1)
-            this%nbbc(mmk,2,:) = (/45,ipk/)
-            this%mbcd(mmk,2,:) = (/mmk+3,mmk+3/)
-         case(3,5)
-            this%nbbc(mmk,2,:) = (/ipk,45/)
-            this%mbcd(mmk,2,:) = (/mmk-3,mmk-3/)
-         case(4)
-            this%nbbc(mmk,2,:) = (/ipk,45/)
-            this%mbcd(mmk,2,:) = (/mmk-3,mmk-3/)
-         end select
-
-         this%nbbc(mmk,3,:) = (/45,45/)
-         this%mbcd(mmk,3,:) = (/mmk,mmk/)
-      end do
 
       ! domdcomp initialize
       this%ijkp(1) = mod( myid - this%mo(this%mb),    &
@@ -269,19 +229,41 @@ MODULE mo_domdcomp
 
    END SUBROUTINE domdcomp_init
 
-   SUBROUTINE domdcomp_read_input(this)
+   SUBROUTINE domdcomp_read_input(this, nblocks, lmodel_role)
       class(t_domdcomp), INTENT(INOUT) :: this
+      integer, INTENT(IN)              :: nblocks
+      logical, intent(in)              :: lmodel_role
       character(16) :: cinput
+      integer :: mmk, nnk
+      integer(kind=ni) :: rc, fu
+      integer(kind=ni), dimension(0:nblocks,3) :: nbpc
+      integer(kind=ni), dimension(0:nblocks)   :: lximb
+      integer(kind=ni), dimension(0:nblocks)   :: letmb
+      integer(kind=ni), dimension(0:nblocks)   :: lzemb
+      integer(kind=ni), dimension(0:nblocks,3,2)   :: nbbc
+      integer(kind=ni), dimension(0:nblocks,3,2)   :: mbcd
 
-      open(9,file='input.domdcomp',status='old')
-      read(9,*) cinput,this%nbpc(:,1)
-      read(9,*) cinput,this%nbpc(:,2)
-      read(9,*) cinput,this%nbpc(:,3)
-      read(9,*) cinput,this%lximb(:)
-      read(9,*) cinput,this%letmb(:)
-      read(9,*) cinput,this%lzemb(:)
-      close(9)
-
+      namelist /nml_domdcomp/ nbpc, lximb, letmb, lzemb, nbbc, mbcd
+      namelist /nml_aio/ nbpc, lximb, letmb, lzemb, nbbc, mbcd
+      
+      
+      if (lmodel_role) then
+         open (action='read', file='input.canard', iostat=rc, newunit=fu)
+         read (nml=nml_domdcomp, iostat=rc, unit=fu)
+         close(fu)
+      else
+         open (action='read', file='input.canard', iostat=rc, newunit=fu)
+         read (nml=nml_aio, iostat=rc, unit=fu)
+         close(fu)
+      end if
+      
+      this%nbpc  = nbpc
+      this%lximb = lximb
+      this%letmb = letmb
+      this%lzemb = lzemb
+      this%nbbc  = nbbc
+      this%mbcd  = mbcd
+   
    END SUBROUTINE
 
    SUBROUTINE search_point(this, mbki)

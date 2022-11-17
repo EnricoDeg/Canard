@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXP_ID=validation
+EXP_ID=aio
 MODEL=canard
 
 mkdir ${EXP_ID}
@@ -14,7 +14,7 @@ cat > batch << EOF
 #SBATCH --job-name=canard
 #SBATCH --partition=compute
 #SBATCH --exclusive
-#SBATCH --ntasks=4
+#SBATCH --ntasks=5
 #SBATCH --ntasks-per-core=1
 #SBATCH --time=00:10:00
 #SBATCH --output=batch.%j.out
@@ -26,7 +26,7 @@ EOF
 
 cat > input.canard << EOF
 &nml_driver
-nio = 0
+nio = 1
 mbk = 0
 ndata = 1
 /
@@ -40,6 +40,20 @@ ltimer = .true.
 &nml_domdcomp
 nbpc(:,1) = 2
 nbpc(:,2) = 2
+nbpc(:,3) = 1
+lximb = 50
+letmb = 50
+lzemb = 16
+nbbc(0,1,:) = 10,10
+nbbc(0,2,:) = 10,10
+nbbc(0,3,:) = 45,45
+mbcd(0,1,:) = -1,-1
+mbcd(0,2,:) = -1,-1
+mbcd(0,3,:) =  0,0
+/
+&nml_aio
+nbpc(:,1) = 1
+nbpc(:,2) = 1
 nbpc(:,3) = 1
 lximb = 50
 letmb = 50

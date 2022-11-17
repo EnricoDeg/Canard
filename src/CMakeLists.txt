@@ -4,6 +4,7 @@ find_package(MPI REQUIRED COMPONENTS Fortran)
 set(SOURCE_EXE  mo_kind.f90
                 mo_parameters.f90
                 mo_mpi.f90
+                mo_model_ioserver_exchange.f90
                 mo_timer.f90
                 mo_utils.f90
                 mo_domdcomp.f90
@@ -14,7 +15,10 @@ set(SOURCE_EXE  mo_kind.f90
                 mo_sponge.f90
                 mo_physics.f90
                 mo_gcbc.f90
-                canard.f90)
+                mo_io_server.f90
+                mo_canard_driver.f90
+                mo_aio_driver.f90
+                driver.f90)
 
 add_executable(canard ${SOURCE_EXE})
 if(ENABLE_VISCOSITY)

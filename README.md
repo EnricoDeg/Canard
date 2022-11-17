@@ -45,7 +45,6 @@ The input files are located in `input/parameters` folder.
 - `nts`: initial conditions (**0**: initialize physics with upstream flow -- **1**: initialize physics with restart files)
 - `nscrn`: LOG file output frequency (number of time step -- simulation time)
 - `ndata`: output files `(0:ndata)`
-- `ndatafl`: unsteady fluctuations in output files (**0**: OFF -- **1**: ON)
 - `ndataav`: data average in output data (**0**: OFF -- **1**: ON)
 - `nkrk`: number of Runge-Kutta stages (time integration)
 - `nrestart`: write restart files (**0**: OFF -- **1**: ON)
