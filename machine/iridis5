@@ -1,0 +1,10 @@
+#!/bin/bash
+module purge
+
+module add intel-compilers/2021.2.0
+module add intel-mpi/2021.2.0
+module add cmake/3.24.1
+
+export FC=/mainfs/local/software/intel/2021.2.0/mpi/2021.2.0/bin/mpif90
+
+export CANARD_DIR=${PWD}
