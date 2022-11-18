@@ -38,8 +38,8 @@ module mo_numerics
 
       real(kind=nr), private, dimension(:,:,:), pointer :: send01, send02, send03
       real(kind=nr), private, dimension(:,:,:), pointer :: send11, send12, send13
-      real(kind=nr), private, dimension(:,:,:), pointer :: recv01, recv02, recv03
-      real(kind=nr), private, dimension(:,:,:), pointer :: recv11, recv12, recv13
+      real(kind=nr), private, dimension(:,:,:,:), pointer :: recv01, recv02, recv03
+      real(kind=nr), private, dimension(:,:,:,:), pointer :: recv11, recv12, recv13
       real(kind=nr), private, dimension(:,:,:), pointer :: send,   recv
       integer(kind=ni), private, dimension(:),  allocatable :: li
       real(kind=nr), private, dimension(:),     allocatable :: sa, sb
@@ -86,9 +86,9 @@ module mo_numerics
       allocate(this%xu(0:limk,3), this%yu(0:limk,3), this%xl(0:limk,2), this%yl(0:limk,2))
       allocate(this%li(0:limk),   this%sa(0:limk),   this%sb(0:limk))
       allocate(this%send01(0:iik,0:1,0:1), this%send02(0:jjk,0:1,0:1), this%send03(0:kkk,0:1,0:1))
-      allocate(this%recv01(0:iik,0:1,0:1), this%recv02(0:jjk,0:1,0:1), this%recv03(0:kkk,0:1,0:1))
+      allocate(this%recv01(0:iik,0:1,0:1,1:5), this%recv02(0:jjk,0:1,0:1,1:5), this%recv03(0:kkk,0:1,0:1,1:5))
       allocate(this%send11(0:iik,0:2,0:1), this%send12(0:jjk,0:2,0:1), this%send13(0:kkk,0:2,0:1))
-      allocate(this%recv11(0:iik,0:2,0:1), this%recv12(0:jjk,0:2,0:1), this%recv13(0:kkk,0:2,0:1))
+      allocate(this%recv11(0:iik,0:2,0:1,1:5), this%recv12(0:jjk,0:2,0:1,1:5), this%recv13(0:kkk,0:2,0:1,1:5))
       allocate(this%drva1(0:iik,5,0:1),    this%drva2(0:jjk,5,0:1),    this%drva3(0:kkk,5,0:1))
 
    END SUBROUTINE allocate_numerics
@@ -425,7 +425,7 @@ module mo_numerics
 
 !===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo_1d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, itag, lxi, let)
+   subroutine mpigo_1d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, itag, lxi, let, m)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                   :: lmx
@@ -434,7 +434,7 @@ module mo_numerics
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,n45,itag
-      integer(kind=ni), intent(in)                   :: lxi, let
+      integer(kind=ni), intent(in)                   :: lxi, let, m
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
@@ -453,25 +453,25 @@ module mo_numerics
             select case(nnk)
             case(1)
                this%send => this%send01
-               this%recv => this%recv01
+               this%recv => this%recv01(:,:,:,m)
             case(2)
                this%send => this%send02
-               this%recv => this%recv02
+               this%recv => this%recv02(:,:,:,m)
             case(3)
                this%send => this%send03
-               this%recv => this%recv03
+               this%recv => this%recv03(:,:,:,m)
             end select
          else
             select case(nnk)
             case(1)
                this%send => this%send11
-               this%recv => this%recv11
+               this%recv => this%recv11(:,:,:,m)
             case(2)
                this%send => this%send12
-               this%recv => this%recv12
+               this%recv => this%recv12(:,:,:,m)
             case(3)
                this%send => this%send13
-               this%recv => this%recv13
+               this%recv => this%recv13(:,:,:,m)
             end select
          end if
          
@@ -526,20 +526,20 @@ module mo_numerics
             if ( nt == 0 ) then
                select case(nnk)
                case(1)
-                  this%recv => this%recv01
+                  this%recv => this%recv01(:,:,:,m)
                case(2)
-                  this%recv => this%recv02
+                  this%recv => this%recv02(:,:,:,m)
                case(3)
-                  this%recv => this%recv03
+                  this%recv => this%recv03(:,:,:,m)
                end select
             else
                select case(nnk)
                case(1)
-                  this%recv => this%recv11
+                  this%recv => this%recv11(:,:,:,m)
                case(2)
-                  this%recv => this%recv12
+                  this%recv => this%recv12(:,:,:,m)
                case(3)
-                  this%recv => this%recv13
+                  this%recv => this%recv13(:,:,:,m)
                end select
             end if
             
@@ -563,7 +563,7 @@ module mo_numerics
 
    end subroutine mpigo_1d
 
-   subroutine mpigo_2d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag, lxi, let)
+   subroutine mpigo_2d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag, lxi, let, m)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                   :: lmx
@@ -572,7 +572,7 @@ module mo_numerics
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
-      integer(kind=ni), intent(in)                   :: lxi, let
+      integer(kind=ni), intent(in)                   :: lxi, let, m
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
@@ -592,25 +592,25 @@ module mo_numerics
             select case(nnk)
             case(1)
                this%send => this%send01
-               this%recv => this%recv01
+               this%recv => this%recv01(:,:,:,m)
             case(2)
                this%send => this%send02
-               this%recv => this%recv02
+               this%recv => this%recv02(:,:,:,m)
             case(3)
                this%send => this%send03
-               this%recv => this%recv03
+               this%recv => this%recv03(:,:,:,m)
             end select
          else
             select case(nnk)
             case(1)
                this%send => this%send11
-               this%recv => this%recv11
+               this%recv => this%recv11(:,:,:,m)
             case(2)
                this%send => this%send12
-               this%recv => this%recv12
+               this%recv => this%recv12(:,:,:,m)
             case(3)
                this%send => this%send13
-               this%recv => this%recv13
+               this%recv => this%recv13(:,:,:,m)
             end select
          end if
          
@@ -666,20 +666,20 @@ module mo_numerics
             if ( nt == 0 ) then
                select case(nnk)
                case(1)
-                  this%recv => this%recv01
+                  this%recv => this%recv01(:,:,:,m)
                case(2)
-                  this%recv => this%recv02
+                  this%recv => this%recv02(:,:,:,m)
                case(3)
-                  this%recv => this%recv03
+                  this%recv => this%recv03(:,:,:,m)
                end select
             else
                select case(nnk)
                case(1)
-                  this%recv => this%recv11
+                  this%recv => this%recv11(:,:,:,m)
                case(2)
-                  this%recv => this%recv12
+                  this%recv => this%recv12(:,:,:,m)
                case(3)
-                  this%recv => this%recv13
+                  this%recv => this%recv13(:,:,:,m)
                end select
             end if
             
@@ -724,17 +724,17 @@ module mo_numerics
       case(1)
          istart =  0
          iend   =  istart + lxik
-         this%recv   => this%recv01
+         this%recv   => this%recv01(:,:,:,m)
          this%drva   => this%drva1
       case(2)
          istart =  lxik + 1
          iend   =  istart + letk
-         this%recv   => this%recv02
+         this%recv   => this%recv02(:,:,:,m)
          this%drva   => this%drva2
       case(3)
          istart =  lxik + letk + 2
          iend   =  istart + lzek
-         this%recv   => this%recv03
+         this%recv   => this%recv03(:,:,:,m)
          this%drva   => this%drva3
       end select
 
@@ -813,17 +813,17 @@ module mo_numerics
       case(1)
          istart =  0
          iend   =  istart + lxik
-         this%recv   => this%recv01
+         this%recv   => this%recv01(:,:,:,m)
          this%drva   => this%drva1
       case(2)
          istart =  lxik + 1
          iend   =  istart + letk
-         this%recv   => this%recv02
+         this%recv   => this%recv02(:,:,:,m)
          this%drva   => this%drva2
       case(3)
          istart =  lxik + letk + 2
          iend   =  istart + lzek
-         this%recv   => this%recv03
+         this%recv   => this%recv03(:,:,:,m)
          this%drva   => this%drva3
       end select
 
@@ -886,13 +886,13 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(this, rfield, lmx, lxik, letk, lzek, ijks, inn)
+   subroutine filte(this, rfield, lmx, lxik, letk, lzek, ijks, inn, m)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
-      integer(kind=ni), intent(in)                  :: inn
+      integer(kind=ni), intent(in)                  :: inn, m
       integer(kind=ni) :: nstart, nend, istart, iend, ntk, nn
       integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
       real(kind=nr)    :: resk, ra2k
@@ -907,15 +907,15 @@ module mo_numerics
       case(1)
          istart =  0
          iend   =  istart + lxik
-         this%recv   => this%recv11
+         this%recv   => this%recv11(:,:,:,m)
       case(2)
          istart =  lxik + 1
          iend   =  istart + letk
-         this%recv   => this%recv12
+         this%recv   => this%recv12(:,:,:,m)
       case(3)
          istart =  lxik + letk + 2
          iend   =  istart + lzek
-         this%recv   => this%recv13
+         this%recv   => this%recv13(:,:,:,m)
       end select
 
       do kkk = 0,ijks(3,nn)

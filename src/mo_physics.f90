@@ -221,89 +221,96 @@ MODULE mo_physics
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in)    :: ssk
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
-      real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: rr
+      real(kind=nr), dimension(0:p_domdcomp%lmx,3,2:5) :: rr
 
       integer(kind=ni) :: m
 #ifdef VISCOUS
       de(:,1) = ssk(:)
 
-      rr(:,1) = de(:,2)
+      do m=2,5
+         rr(:,1,m) = de(:,m)
+         call p_numerics%mpigo(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+                               p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
+                               p_domdcomp%lxi, p_domdcomp%let, m)
+      end do
+
+!      rr(:,1) = de(:,2)
       m = 2
-      call p_numerics%mpigo(rr(:,1), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                          p_domdcomp%mcd, p_domdcomp%nbsize, 0, n45no, m, &
-                          p_domdcomp%lxi, p_domdcomp%let)
-      call p_numerics%deriv(rr(:,1), rr(:,3), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+!      call p_numerics%mpigo(rr(:,:), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
+!                            p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
+!                            p_domdcomp%lxi, p_domdcomp%let)
+      call p_numerics%deriv(rr(:,1,m), rr(:,3,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 3, m)
-      call p_numerics%deriv(rr(:,1), rr(:,2), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+      call p_numerics%deriv(rr(:,1,m), rr(:,2,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 2, m)
-      call p_numerics%deriv(rr(:,1), rr(:,1), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
+      call p_numerics%deriv(rr(:,1,m), rr(:,1,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 1, m)
-      this%txx(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      this%hzz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      this%tzx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      this%txx(:) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
+      this%hzz(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
+      this%tzx(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-      rr(:,1) = de(:,3)
+!      rr(:,1) = de(:,3)
       m = 3
-      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
-                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+!      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+!                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
+!                     p_domdcomp%lxi, p_domdcomp%let)
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
                      p_domdcomp%ijk, 2, 1, m)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      this%txy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      this%tyy(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      this%hxx(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      this%txy(:) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
+      this%tyy(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
+      this%hxx(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-      rr(:,1) = de(:,4)
+!      rr(:,1) = de(:,4)
       m = 4
-      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
-                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+!      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+!                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
+!                     p_domdcomp%lxi, p_domdcomp%let)
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 1, m)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      this%hyy(:) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      this%tyz(:) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      this%tzz(:) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      this%hyy(:) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
+      this%tyz(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
+      this%tzz(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-      rr(:,1) = de(:,5)
+!      rr(:,1) = de(:,5)
       m = 5
-      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
-                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, & 
-                     p_domdcomp%lxi, p_domdcomp%let)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+!      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
+!                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, & 
+!                     p_domdcomp%lxi, p_domdcomp%let)
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 2, 1, m)
-      call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
-      ss(:,1) = p_grid%xim(:,1) * rr(:,1) + p_grid%etm(:,1) * rr(:,2) + p_grid%zem(:,1) * rr(:,3)
-      ss(:,2) = p_grid%xim(:,2) * rr(:,1) + p_grid%etm(:,2) * rr(:,2) + p_grid%zem(:,2) * rr(:,3)
-      ss(:,3) = p_grid%xim(:,3) * rr(:,1) + p_grid%etm(:,3) * rr(:,2) + p_grid%zem(:,3) * rr(:,3)
+      ss(:,1) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
+      ss(:,2) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
+      ss(:,3) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-      rr(:,1) = de(:,1) * p_grid%yaco(:)
-      rr(:,2) = gamm1prndtli * rr(:,1)
+      rr(:,1,m) = de(:,1) * p_grid%yaco(:)
+      rr(:,2,m) = gamm1prndtli * rr(:,1,m)
       de(:,5) = twothirds * ( this%txx(:) + this%tyy(:) + this%tzz(:) )
 
-      this%txx(:) = rr(:,1) * ( this%txx(:) + this%txx(:) - de(:,5) )
-      this%tyy(:) = rr(:,1) * ( this%tyy(:) + this%tyy(:) - de(:,5) )
-      this%tzz(:) = rr(:,1) * ( this%tzz(:) + this%tzz(:) - de(:,5) )
+      this%txx(:) = rr(:,1,m) * ( this%txx(:) + this%txx(:) - de(:,5) )
+      this%tyy(:) = rr(:,1,m) * ( this%tyy(:) + this%tyy(:) - de(:,5) )
+      this%tzz(:) = rr(:,1,m) * ( this%tzz(:) + this%tzz(:) - de(:,5) )
 
-      this%txy(:) = rr(:,1) * ( this%txy(:) + this%hzz(:) )
-      this%tyz(:) = rr(:,1) * ( this%tyz(:) + this%hxx(:) )
-      this%tzx(:) = rr(:,1) * ( this%tzx(:) + this%hyy(:) )
+      this%txy(:) = rr(:,1,m) * ( this%txy(:) + this%hzz(:) )
+      this%tyz(:) = rr(:,1,m) * ( this%tyz(:) + this%hxx(:) )
+      this%tzx(:) = rr(:,1,m) * ( this%tzx(:) + this%hyy(:) )
 
-      this%hxx(:) = rr(:,2) * ss(:,1) + de(:,2) * this%txx(:) + &
+      this%hxx(:) = rr(:,2,m) * ss(:,1) + de(:,2) * this%txx(:) + &
                     de(:,3) * this%txy(:) + de(:,4) * this%tzx(:)
-      this%hyy(:) = rr(:,2) * ss(:,2) + de(:,2) * this%txy(:) + &
+      this%hyy(:) = rr(:,2,m) * ss(:,2) + de(:,2) * this%txy(:) + &
                     de(:,3) * this%tyy(:) + de(:,4) * this%tyz(:)
-      this%hzz(:) = rr(:,2) * ss(:,3) + de(:,2) * this%tzx(:) + &
+      this%hzz(:) = rr(:,2,m) * ss(:,3) + de(:,2) * this%tzx(:) + &
                     de(:,3) * this%tyz(:) + de(:,4) * this%tzz(:)
 #endif
    end subroutine calc_viscous_shear_stress
@@ -338,7 +345,7 @@ MODULE mo_physics
       m = 1
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
+                     p_domdcomp%lxi, p_domdcomp%let, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
@@ -361,7 +368,7 @@ MODULE mo_physics
       m = 2
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
+                     p_domdcomp%lxi, p_domdcomp%let, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
@@ -384,7 +391,7 @@ MODULE mo_physics
       m = 3
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
+                     p_domdcomp%lxi, p_domdcomp%let, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
@@ -407,7 +414,7 @@ MODULE mo_physics
       m = 4
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
+                     p_domdcomp%lxi, p_domdcomp%let, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
@@ -431,7 +438,7 @@ MODULE mo_physics
       m = 5
       call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
-                     p_domdcomp%lxi, p_domdcomp%let)
+                     p_domdcomp%lxi, p_domdcomp%let, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 1, 1, m)
       call p_numerics%deriv(rr, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &

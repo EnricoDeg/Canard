@@ -234,19 +234,19 @@ module mo_canard_driver
       do m=1,5
          call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+1, &
-                             p_domdcomp%lxi, p_domdcomp%let)
+                             p_domdcomp%lxi, p_domdcomp%let, m)
          call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                             p_domdcomp%lze, p_domdcomp%ijk, 1)
+                             p_domdcomp%lze, p_domdcomp%ijk, 1, m)
          call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+2, &
-                             p_domdcomp%lxi, p_domdcomp%let)
+                             p_domdcomp%lxi, p_domdcomp%let, m)
          call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                             p_domdcomp%lze, p_domdcomp%ijk, 2)
+                             p_domdcomp%lze, p_domdcomp%ijk, 2, m)
          call p_numerics%mpigo(qa(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 3*(m-1)+3, &
-                             p_domdcomp%lxi, p_domdcomp%let)
+                             p_domdcomp%lxi, p_domdcomp%let, m)
          call p_numerics%filte(qa(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                             p_domdcomp%lze, p_domdcomp%ijk, 3)
+                             p_domdcomp%lze, p_domdcomp%ijk, 3, m)
       end do
       if (ltimer) call timer_stop(timer_filter)
       qo(:,:)=qa(:,:)
