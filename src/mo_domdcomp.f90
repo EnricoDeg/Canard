@@ -4,7 +4,7 @@
 
 MODULE mo_domdcomp
    use mo_kind,       ONLY : ni, nr
-   use mo_parameters, ONLY : one
+   use mo_parameters, ONLY : one, BC_INTER_SUBDOMAINS
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall,    &
                            & p_recv, p_send, p_bcast, p_get_n_processes, &
                            & p_get_process_ID
@@ -160,20 +160,20 @@ MODULE mo_domdcomp
             if( lpk == 0 ) then
                lk = llk - ( ( llk + 1 ) / mak ) * ( mak - 1 )
                this%nbc(nnk,0) = this%nbbc(this%mb,nnk,0)
-               this%nbc(nnk,1) = 40
+               this%nbc(nnk,1) = BC_INTER_SUBDOMAINS
                this%mcd(nnk,0) = this%mmcd(nnk,0)
                this%mcd(nnk,1) = myid+mpk
             end if
             if ( lpk > 0 .and. lpk < mak-1 ) then
                lk = ( llk + 1 ) / mak - 1
-               this%nbc(nnk,0) = 40
-               this%nbc(nnk,1) = 40
+               this%nbc(nnk,0) = BC_INTER_SUBDOMAINS
+               this%nbc(nnk,1) = BC_INTER_SUBDOMAINS
                this%mcd(nnk,0) = myid-mpk
                this%mcd(nnk,1) = myid+mpk
             end if
             if ( lpk == mak - 1 ) then
                lk = ( llk + 1 ) / mak - 1
-               this%nbc(nnk,0) = 40
+               this%nbc(nnk,0) = BC_INTER_SUBDOMAINS
                this%nbc(nnk,1) = this%nbbc(this%mb,nnk,1)
                this%mcd(nnk,0) = myid - mpk
                this%mcd(nnk,1) = this%mmcd(nnk,1)

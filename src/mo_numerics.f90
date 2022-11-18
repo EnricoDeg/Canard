@@ -4,9 +4,13 @@
 
 module mo_numerics
    use mo_parameters, ONLY : pi, half, zero, one, alpha01, alpha10,   &
-                             alpha, beta, beta02, beta13, alpha12,    &
-                             a01, a02, a03, a04, a10, a12, a13, a14, &
-                             ab, aa, two, n45go
+                           & alpha, beta, beta02, beta13, alpha12,    &
+                           & a01, a02, a03, a04, a10, a12, a13, a14,  &
+                           & ab, aa, two, n45go,                      &
+                           & BC_NON_REFLECTIVE, BC_WALL_INVISCID,     &
+                           & BC_WALL_VISCOUS, BC_INTER_CURV,          &
+                           & BC_INTER_STRAIGHT, BC_INTER_SUBDOMAINS,  &
+                           & BC_PERIODIC
    use mo_kind,       ONLY : nr, ni
    use mo_mpi,        ONLY : p_null_req, p_isend, p_irecv, p_waitall, &
                              p_send
@@ -151,10 +155,10 @@ module mo_numerics
          do ipk = 0,1
             npk=nbck(nnk,ipk)
             select case(npk)
-            case(10,20,25,30)
+            case(BC_NON_REFLECTIVE,BC_WALL_INVISCID,BC_WALL_VISCOUS,BC_INTER_CURV)
                this%ndf(nnk,ipk,0) = 0
                this%ndf(nnk,ipk,1) = 0
-            case(35,40,45)
+            case(BC_INTER_STRAIGHT,BC_INTER_SUBDOMAINS,BC_PERIODIC)
                this%ndf(nnk,ipk,0) = 1
                this%ndf(nnk,ipk,1) = 1
             end select
@@ -477,13 +481,13 @@ module mo_numerics
             iend   = 1 - 2 * ipk
 
             select case(nbck(nnk,ipk))
-            case(35)
+            case(BC_INTER_STRAIGHT)
                ra0k = zero
                iik  = 1
-            case(40)
+            case(BC_INTER_SUBDOMAINS)
                ra0k = zero
                iik  = 0
-            case(45)
+            case(BC_PERIODIC)
                ra0k = n45
                iik  = 1
             end select
@@ -541,7 +545,7 @@ module mo_numerics
             
             do ipk = 0,1
                istart = ipk * ijks(1,nnk)
-               if ( nbck(nnk,ipk) == 45 ) then
+               if ( nbck(nnk,ipk) == BC_PERIODIC ) then
                   do kkk = 0,ijks(3,nnk)
                      kpp = kkk * ( ijks(2,nnk) + 1 )
                      do jjj = 0,ijks(2,nnk)
@@ -616,13 +620,13 @@ module mo_numerics
             iend   = 1 - 2 * ipk
 
             select case(nbck(nnk,ipk))
-            case(35)
+            case(BC_INTER_STRAIGHT)
                ra0k = zero
                iik  = 1
-            case(40)
+            case(BC_INTER_SUBDOMAINS)
                ra0k = zero
                iik  = 0
-            case(45)
+            case(BC_PERIODIC)
                ra0k = n45
                iik  = 1
             end select
@@ -681,7 +685,7 @@ module mo_numerics
             
             do ipk = 0,1
                istart = ipk * ijks(1,nnk)
-               if ( nbck(nnk,ipk) == 45 ) then
+               if ( nbck(nnk,ipk) == BC_PERIODIC ) then
                   do kkk = 0,ijks(3,nnk)
                      kpp = kkk * ( ijks(2,nnk) + 1 )
                      do jjj = 0,ijks(2,nnk)

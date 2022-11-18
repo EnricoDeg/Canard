@@ -6,7 +6,10 @@ MODULE mo_gcbc
    use mo_kind,       ONLY : ni, nr, ieee32
    use mo_parameters, ONLY : one, zero, sml, pi, half, beta13, beta02,    &
                            & beta, alpha12, alpha10, alpha, alpha01, two, &
-                           & hamhamm1, gam, gamm1, hamm1
+                           & hamhamm1, gam, gamm1, hamm1,                 &
+                           & BC_NON_REFLECTIVE, BC_WALL_INVISCID,         &
+                           & BC_WALL_VISCOUS, BC_INTER_CURV,              &
+                           & BC_INTER_STRAIGHT, BC_PERIODIC
    use mo_physics,    ONLY : t_physics
    use mo_numerics,   ONLY : t_numerics
    use mo_grid,       ONLY : t_grid
@@ -81,7 +84,10 @@ MODULE mo_gcbc
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
             iq = 1 - 2 * ip
-            if ( ( np - 10 ) * ( np - 20 ) * ( np - 25 ) * ( np - 30 ) == 0 ) then
+            if ( ( np - BC_NON_REFLECTIVE ) *    &
+                 ( np - BC_WALL_INVISCID  ) *    &
+                 ( np - BC_WALL_VISCOUS   ) *    &
+                 ( np - BC_INTER_CURV     ) == 0 ) then
                do k=0,p_domdcomp%ijk(3,nn)
                   do j=0,p_domdcomp%ijk(2,nn)
                      l   = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
@@ -100,7 +106,9 @@ MODULE mo_gcbc
                   end do
                end do
             end if
-            if ( ( np - 30 ) * ( np - 35 ) * ( np - 45 ) == 0 ) then
+            if ( ( np - BC_INTER_CURV     ) * &
+                 ( np - BC_INTER_STRAIGHT ) * &
+                 ( np - BC_PERIODIC       ) == 0 ) then
                do k=0,p_domdcomp%ijk(3,nn)
                   do j=0,p_domdcomp%ijk(2,nn)
                      l      = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
@@ -150,8 +158,13 @@ MODULE mo_gcbc
          do ip=0,1
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
-            if ( ( np - 10 ) * ( np - 20 ) * ( np - 25 ) * ( np - 30 ) == 0 ) then
-               ra0 = ( 20 - np ) * ( 25 - np ) * ( 30 - np ) / 3000
+            if ( ( np - BC_NON_REFLECTIVE ) *    &
+                 ( np - BC_WALL_INVISCID  ) *    &
+                 ( np - BC_WALL_VISCOUS   ) *    &
+                 ( np - BC_INTER_CURV     ) == 0 ) then
+               ra0 = ( BC_WALL_INVISCID - np ) * &
+                     ( BC_WALL_VISCOUS - np  ) * &
+                     ( BC_INTER_CURV - np    ) / 3000
                ra1 = one - ra0
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
@@ -193,7 +206,8 @@ MODULE mo_gcbc
          do ip=0,1
             iq=1-ip
             np = p_domdcomp%nbc(nn,ip)
-            if ( ( np - 30 ) * ( one + abs((np-20)*(np-25)) ) == 0 ) then
+            if ( ( np - BC_INTER_CURV ) * &
+                 ( one + abs((np-BC_WALL_INVISCID)*(np-BC_WALL_VISCOUS)) ) == 0 ) then
                call p_isend(drva(:,:,ip), p_domdcomp%mcd(nn,ip), itag+iq, &
                             5*p_domdcomp%nbsize(nn))
                call p_irecv(drvb(:,:,ip), p_domdcomp%mcd(nn,ip), itag+ip, &
@@ -244,7 +258,7 @@ MODULE mo_gcbc
             iq  = 1 - 2 * ip
             ra0 = iq
             select case(np)
-            case(10)
+            case(BC_NON_REFLECTIVE)
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -268,7 +282,7 @@ MODULE mo_gcbc
                      end do
                   end do
                end do
-            case(20,25)
+            case(BC_WALL_INVISCID,BC_WALL_VISCOUS)
                dtwi = one / ( nkrk * dt + sml )
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
@@ -292,7 +306,7 @@ MODULE mo_gcbc
                      end do
                   end do
                end do
-            case(30)
+            case(BC_INTER_CURV)
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -353,8 +367,10 @@ MODULE mo_gcbc
             iq = 1 - ip
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
-            if ( ( np - 30 ) * ( np - 35 ) * ( np - 45 ) * &
-                ( one + abs((np-20)*(np-25)) ) == 0 ) then
+            if ( ( np - BC_INTER_CURV     ) * &
+                 ( np - BC_INTER_STRAIGHT ) * &
+                 ( np - BC_PERIODIC       ) * &
+                 ( one + abs((np-BC_WALL_INVISCID)*(np-BC_WALL_VISCOUS)) ) == 0 ) then
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -384,8 +400,10 @@ MODULE mo_gcbc
          do ip=0,1
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
-            if( ( np - 30 ) * ( np - 35 ) * ( np - 45 ) * &
-                ( one + abs((np-20)*(np-25)) ) == 0) then
+            if ( ( np - BC_INTER_CURV     ) * &
+                 ( np - BC_INTER_STRAIGHT ) * &
+                 ( np - BC_PERIODIC       ) * &
+                 ( one + abs((np-BC_WALL_INVISCID)*(np-BC_WALL_VISCOUS)) ) == 0 ) then            
                do k=0,p_domdcomp%ijk(3,nn)
                   kp = k * ( p_domdcomp%ijk(2,nn) + 1 )
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -415,7 +433,7 @@ MODULE mo_gcbc
             np = p_domdcomp%nbc(nn,ip)
             i  = ip * p_domdcomp%ijk(1,nn)
             select case(np)
-            case(20)
+            case(BC_WALL_INVISCID)
                do k=0,p_domdcomp%ijk(3,nn)
                   do j=0,p_domdcomp%ijk(2,nn)
                      l = indx3(i, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
@@ -423,7 +441,7 @@ MODULE mo_gcbc
                                ( hamhamm1 * qa(l,1)**gam + half * sum( qa(l,2:4) * qa(l,2:4) ) / qa(l,1) )
                   end do
                end do
-            case(25)
+            case(BC_WALL_VISCOUS)
                ra0 = hamhamm1
                do k=0,p_domdcomp%ijk(3,nn)
                   do j=0,p_domdcomp%ijk(2,nn)
@@ -457,7 +475,7 @@ MODULE mo_gcbc
       nn = 2
       ip = 0
       i  = ip * p_domdcomp%ijk(1,nn)
-      if ( p_domdcomp%nbc(nn,ip) == 25 ) then
+      if ( p_domdcomp%nbc(nn,ip) == BC_WALL_VISCOUS ) then
          fctr = one / ( p_domdcomp%ijk(2,nn) + 1 )
          do k=0,p_domdcomp%ijk(3,nn)
             kp    = k * ( p_domdcomp%ijk(2,nn) + 1 )
