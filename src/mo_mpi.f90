@@ -12,13 +12,14 @@ MODULE mo_mpi
   integer(kind=ni),dimension(:,:),allocatable :: ista
   integer(kind=ni),dimension(:),allocatable :: ireq
   integer(kind=ni) :: ir,npro,myid,info,icom,ierr,iintercomm
-  integer(kind=ni) :: npro_gl
+  integer(kind=ni) :: npro_gl, max_req
   integer(kind=ni) :: p_global_comm = MPI_COMM_WORLD
 
-  INTEGER :: p_status(MPI_STATUS_SIZE) 
+  integer(kind=ni) :: p_status(MPI_STATUS_SIZE) 
 
-  INTEGER, PARAMETER :: nerr = 0
-  INTEGER, PARAMETER :: icomm_tag = 2
+  integer(kind=ni), PARAMETER :: nerr = 0
+  integer(kind=ni), PARAMETER :: icomm_tag = 2
+
 
   PUBLIC :: p_send, p_recv, p_bcast, p_sum, p_isend, p_irecv, p_wtime
   PUBLIC :: p_start, p_stop, p_null_req, p_waitall, p_barrier, p_max
@@ -147,7 +148,8 @@ MODULE mo_mpi
     info=MPI_INFO_NULL
 
     ll=max(npro,12)
-    allocate(ista(MPI_STATUS_SIZE,ll),ireq(ll))
+    max_req=ll
+    allocate(ista(MPI_STATUS_SIZE,max_req),ireq(max_req))
 
   END SUBROUTINE p_start
 
@@ -667,10 +669,18 @@ MODULE mo_mpi
 
     IF (PRESENT(p_count)) THEN
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_ISEND (buffer, p_count, MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
     ELSE
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_ISEND (buffer, SIZE(buffer), MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
     END IF
@@ -703,10 +713,18 @@ MODULE mo_mpi
 
     IF (PRESENT(p_count)) THEN
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_ISEND (buffer, p_count, MPI_REAL4, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
     ELSE
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_ISEND (buffer, SIZE(buffer), MPI_REAL4, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
     END IF
@@ -740,10 +758,18 @@ MODULE mo_mpi
 
     IF (PRESENT(p_count)) THEN
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_ISEND (buffer, p_count, MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
     ELSE
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_ISEND (buffer, SIZE(buffer), MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
     END IF
@@ -776,10 +802,18 @@ MODULE mo_mpi
 
     IF (PRESENT(p_count)) THEN
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_IRECV (buffer, p_count, MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
     ELSE
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_IRECV (buffer, SIZE(buffer), MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
     END IF
@@ -812,10 +846,18 @@ MODULE mo_mpi
 
     IF (PRESENT(p_count)) THEN
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_IRECV (buffer, p_count, MPI_REAL4, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
     ELSE
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_IRECV (buffer, SIZE(buffer), MPI_REAL4, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
     END IF
@@ -849,10 +891,18 @@ MODULE mo_mpi
 
     IF (PRESENT(p_count)) THEN
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_IRECV (buffer, p_count, MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
     ELSE
        ir = ir + 1
+       if (ir > max_req) then
+         write(*,*) "ir > max_req -> ir =", ir
+         call p_abort
+       end if
        CALL MPI_IRECV (buffer, SIZE(buffer), MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
     END IF
