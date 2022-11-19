@@ -227,6 +227,7 @@ MODULE mo_physics
 #ifdef VISCOUS
       de(:,1) = ssk(:)
 
+      ! Halo exchange
       do m=2,5
          rr(:,1,m) = de(:,m)
          call p_numerics%mpigo(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
@@ -234,11 +235,7 @@ MODULE mo_physics
                                p_domdcomp%lxi, p_domdcomp%let, m)
       end do
 
-!      rr(:,1) = de(:,2)
       m = 2
-!      call p_numerics%mpigo(rr(:,:), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-!                            p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
-!                            p_domdcomp%lxi, p_domdcomp%let)
       call p_numerics%deriv(rr(:,1,m), rr(:,3,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                                    p_domdcomp%lze, p_domdcomp%ijk, 3, m)
       call p_numerics%deriv(rr(:,1,m), rr(:,2,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
@@ -249,11 +246,7 @@ MODULE mo_physics
       this%hzz(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
       this%tzx(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-!      rr(:,1) = de(:,3)
       m = 3
-!      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
-!                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
-!                     p_domdcomp%lxi, p_domdcomp%let)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
@@ -264,11 +257,7 @@ MODULE mo_physics
       this%tyy(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
       this%hxx(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-!      rr(:,1) = de(:,4)
       m = 4
-!      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
-!                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
-!                     p_domdcomp%lxi, p_domdcomp%let)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
@@ -279,11 +268,7 @@ MODULE mo_physics
       this%tyz(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
       this%tzz(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
 
-!      rr(:,1) = de(:,5)
       m = 5
-!      call p_numerics%mpigo(rr, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
-!                     p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, & 
-!                     p_domdcomp%lxi, p_domdcomp%let)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
                      p_domdcomp%ijk, 3, 1, m)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
