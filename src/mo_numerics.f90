@@ -38,9 +38,10 @@ module mo_numerics
 
       real(kind=nr), private, dimension(:,:,:), pointer :: send01, send02, send03
       real(kind=nr), private, dimension(:,:,:), pointer :: send11, send12, send13
-      real(kind=nr), private, dimension(:,:,:), pointer :: recv01, recv02, recv03
-      real(kind=nr), private, dimension(:,:,:), pointer :: recv11, recv12, recv13
-      real(kind=nr), private, dimension(:,:,:), pointer :: send,   recv
+      real(kind=nr), private, dimension(:,:,:,:), pointer :: recv01, recv02, recv03
+      real(kind=nr), private, dimension(:,:,:,:), pointer :: recv11, recv12, recv13
+      real(kind=nr), private, dimension(:,:,:), pointer :: send
+      real(kind=nr), private, dimension(:,:,:,:), pointer :: recv
       integer(kind=ni), private, dimension(:),  allocatable :: li
       real(kind=nr), private, dimension(:),     allocatable :: sa, sb
 
@@ -86,9 +87,9 @@ module mo_numerics
       allocate(this%xu(0:limk,3), this%yu(0:limk,3), this%xl(0:limk,2), this%yl(0:limk,2))
       allocate(this%li(0:limk),   this%sa(0:limk),   this%sb(0:limk))
       allocate(this%send01(0:iik,0:1,0:1), this%send02(0:jjk,0:1,0:1), this%send03(0:kkk,0:1,0:1))
-      allocate(this%recv01(0:iik,0:1,0:1), this%recv02(0:jjk,0:1,0:1), this%recv03(0:kkk,0:1,0:1))
+      allocate(this%recv01(0:iik,0:1,0:1,1:5), this%recv02(0:jjk,0:1,0:1,1:5), this%recv03(0:kkk,0:1,0:1,1:5))
       allocate(this%send11(0:iik,0:2,0:1), this%send12(0:jjk,0:2,0:1), this%send13(0:kkk,0:2,0:1))
-      allocate(this%recv11(0:iik,0:2,0:1), this%recv12(0:jjk,0:2,0:1), this%recv13(0:kkk,0:2,0:1))
+      allocate(this%recv11(0:iik,0:2,0:1,1:5), this%recv12(0:jjk,0:2,0:1,1:5), this%recv13(0:kkk,0:2,0:1,1:5))
       allocate(this%drva1(0:iik,5,0:1),    this%drva2(0:jjk,5,0:1),    this%drva3(0:kkk,5,0:1))
 
    END SUBROUTINE allocate_numerics
@@ -425,7 +426,7 @@ module mo_numerics
 
 !===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo_1d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, itag, lxi, let)
+   subroutine mpigo_1d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, itag, lxi, let, m)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                   :: lmx
@@ -434,7 +435,7 @@ module mo_numerics
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,n45,itag
-      integer(kind=ni), intent(in)                   :: lxi, let
+      integer(kind=ni), intent(in)                   :: lxi, let, m
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
@@ -510,10 +511,10 @@ module mo_numerics
                end do
                if ( nt == 0 ) then
                   call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
                else
                   call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
                end if
             end if
          end do
@@ -551,9 +552,9 @@ module mo_numerics
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
                         lll = indx3(istart, jjj, kkk, nnk,lxi,let)
-                        this%recv(jkk,0,ipk)    = this%recv(jkk,0,ipk) + rfield(lll) * this%pbcot(0,nt)
-                        this%recv(jkk,1,ipk)    = this%recv(jkk,1,ipk) + rfield(lll) * this%pbcot(1,nt)
-                        this%recv(jkk,nt+1,ipk) = this%recv(jkk,nt+1,ipk) + nt * rfield(lll)
+                        this%recv(jkk,0,ipk,m)    = this%recv(jkk,0,ipk,m) + rfield(lll) * this%pbcot(0,nt)
+                        this%recv(jkk,1,ipk,m)    = this%recv(jkk,1,ipk,m) + rfield(lll) * this%pbcot(1,nt)
+                        this%recv(jkk,nt+1,ipk,m) = this%recv(jkk,nt+1,ipk,m) + nt * rfield(lll)
                      end do
                   end do
                end if
@@ -563,7 +564,7 @@ module mo_numerics
 
    end subroutine mpigo_1d
 
-   subroutine mpigo_2d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag, lxi, let)
+   subroutine mpigo_2d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag, lxi, let, m)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                   :: lmx
@@ -572,7 +573,7 @@ module mo_numerics
       integer(kind=ni), intent(in), dimension(3,0:1) :: mcdk
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
-      integer(kind=ni), intent(in)                   :: lxi, let
+      integer(kind=ni), intent(in)                   :: lxi, let, m
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
@@ -649,10 +650,10 @@ module mo_numerics
                end do
                if ( nt == 0 ) then
                   call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
                else
                   call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
                end if
             end if
          end do
@@ -691,9 +692,9 @@ module mo_numerics
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
                         lll = indx3(istart, jjj, kkk, nnk,lxi,let)
-                        this%recv(jkk,0,ipk)    = this%recv(jkk,0,ipk) + rfield(lll,nzk) * this%pbcot(0,nt)
-                        this%recv(jkk,1,ipk)    = this%recv(jkk,1,ipk) + rfield(lll,nzk) * this%pbcot(1,nt)
-                        this%recv(jkk,nt+1,ipk) = this%recv(jkk,nt+1,ipk) + nt * rfield(lll,nzk)
+                        this%recv(jkk,0,ipk,m)    = this%recv(jkk,0,ipk,m) + rfield(lll,nzk) * this%pbcot(0,nt)
+                        this%recv(jkk,1,ipk,m)    = this%recv(jkk,1,ipk,m) + rfield(lll,nzk) * this%pbcot(1,nt)
+                        this%recv(jkk,nt+1,ipk,m) = this%recv(jkk,nt+1,ipk,m) + nt * rfield(lll,nzk)
                      end do
                   end do
                end if
@@ -753,8 +754,8 @@ module mo_numerics
                this%sb(istart)   = sum( (/a01,a02,a03,a04/) * ( this%sa(istart+(/1,2,3,4/)) - this%sa(istart)   ) )
                this%sb(istart+1) = sum( (/a10,a12,a13,a14/) * ( this%sa(istart+(/0,2,3,4/)) - this%sa(istart+1) ) )
             case(1)
-               this%sb(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,0,0)
-               this%sb(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,1,0)
+               this%sb(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,0,0,m)
+               this%sb(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,1,0,m)
             end select
 
             do iii = istart+2,iend-2
@@ -766,8 +767,8 @@ module mo_numerics
                this%sb(iend)   = sum( (/a01,a02,a03,a04/) * ( this%sa(iend)   - this%sa(iend-(/1,2,3,4/)) ) )
                this%sb(iend-1) = sum( (/a10,a12,a13,a14/) * ( this%sa(iend-1) - this%sa(iend-(/0,2,3,4/)) ) )
             case(1)
-               this%sb(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,0,1)
-               this%sb(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,1,1)
+               this%sb(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,0,1,m)
+               this%sb(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,1,1,m)
             end select
 
             this%sa(istart)   = this%sb(istart)
@@ -842,8 +843,8 @@ module mo_numerics
                this%sb(istart)   = sum( (/a01,a02,a03,a04/) * ( this%sa(istart+(/1,2,3,4/)) - this%sa(istart)   ) )
                this%sb(istart+1) = sum( (/a10,a12,a13,a14/) * ( this%sa(istart+(/0,2,3,4/)) - this%sa(istart+1) ) )
             case(1)
-               this%sb(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,0,0)
-               this%sb(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,1,0)
+               this%sb(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,0,0,m)
+               this%sb(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,1,0,m)
             end select
 
             do iii = istart+2,iend-2
@@ -855,8 +856,8 @@ module mo_numerics
                this%sb(iend)   = sum( (/a01,a02,a03,a04/) * ( this%sa(iend)   - this%sa(iend-(/1,2,3,4/)) ) )
                this%sb(iend-1) = sum( (/a10,a12,a13,a14/) * ( this%sa(iend-1) - this%sa(iend-(/0,2,3,4/)) ) )
             case(1)
-               this%sb(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,0,1)
-               this%sb(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,1,1)
+               this%sb(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,0,1,m)
+               this%sb(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,1,1,m)
             end select
 
             this%sa(istart)   = this%sb(istart)
@@ -886,13 +887,13 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(this, rfield, lmx, lxik, letk, lzek, ijks, inn)
+   subroutine filte(this, rfield, lmx, lxik, letk, lzek, ijks, inn, m)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
-      integer(kind=ni), intent(in)                  :: inn
+      integer(kind=ni), intent(in)                  :: inn, m
       integer(kind=ni) :: nstart, nend, istart, iend, ntk, nn
       integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
       real(kind=nr)    :: resk, ra2k
@@ -935,11 +936,11 @@ module mo_numerics
                this%sb(istart+2) = sum( this%fbc(:,2) * ( this%sa(istart+(/0,1,3,4,5/)) - this%sa(istart+2) ) )
             case(1)
                ra2k              = this%sa(istart+2) + this%sa(istart+2)
-               this%sb(istart)   = sum( this%pbci(0:lmf,0,ntk) * this%sa(istart:istart+lmf) ) + this%recv(jkk,0,0)
-               this%sb(istart+1) = sum( this%pbci(0:lmf,1,ntk) * this%sa(istart:istart+lmf) ) + this%recv(jkk,1,0)
+               this%sb(istart)   = sum( this%pbci(0:lmf,0,ntk) * this%sa(istart:istart+lmf) ) + this%recv(jkk,0,0,m)
+               this%sb(istart+1) = sum( this%pbci(0:lmf,1,ntk) * this%sa(istart:istart+lmf) ) + this%recv(jkk,1,0,m)
                this%sb(istart+2) = this%fa * ( this%sa(istart+1)  + this%sa(istart+3) - ra2k ) + &
                                    this%fb * ( this%sa(istart)    + this%sa(istart+4) - ra2k ) + &
-                                   this%fc * ( this%recv(jkk,2,0) + this%sa(istart+5) - ra2k )
+                                   this%fc * ( this%recv(jkk,2,0,m) + this%sa(istart+5) - ra2k )
             end select
 
             do iii = istart+3,iend-3
@@ -956,11 +957,11 @@ module mo_numerics
                this%sb(iend-2) = sum( this%fbc(:,2) * ( this%sa(iend-(/0,1,3,4,5/)) - this%sa(iend-2) ) )
             case(1)
                ra2k       = this%sa(iend-2) + this%sa(iend-2)
-               this%sb(iend)   = sum( this%pbci(0:lmf,0,ntk) * this%sa(iend:iend-lmf:-1) ) + this%recv(jkk,0,1)
-               this%sb(iend-1) = sum( this%pbci(0:lmf,1,ntk) * this%sa(iend:iend-lmf:-1) ) + this%recv(jkk,1,1)
+               this%sb(iend)   = sum( this%pbci(0:lmf,0,ntk) * this%sa(iend:iend-lmf:-1) ) + this%recv(jkk,0,1,m)
+               this%sb(iend-1) = sum( this%pbci(0:lmf,1,ntk) * this%sa(iend:iend-lmf:-1) ) + this%recv(jkk,1,1,m)
                this%sb(iend-2) = this%fa * ( this%sa(iend-3) + this%sa(iend-1)    - ra2k ) + &
                                  this%fb * ( this%sa(iend-4) + this%sa(iend)      - ra2k ) + &
-                                 this%fc * ( this%sa(iend-5) + this%recv(jkk,2,1) - ra2k )
+                                 this%fc * ( this%sa(iend-5) + this%recv(jkk,2,1,m) - ra2k )
             end select
 
             this%sa(istart)   = this%sb(istart)

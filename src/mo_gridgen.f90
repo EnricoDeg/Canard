@@ -53,7 +53,7 @@ module mo_gridgen
 
       namelist /nml_gridgen/ gridtype,lxi0,let0,lze0,let0,lze0,doml0, &
                              doml1,domh,span,szth0,szth1,nthick, &
-                             smg,smgvr
+                             smg,smgvr,lxi1,lxi2
 
       open (action='read', file='input.canard', iostat=rc, newunit=fu)
       read (nml=nml_gridgen, iostat=rc, unit=fu)

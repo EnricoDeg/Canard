@@ -65,7 +65,7 @@ MODULE mo_grid
       rrk(:,1) = ssk(:,1)
       m = 1
       call p_numerics%mpigo(rrk, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45go, m, p_domdcomp%lxi, p_domdcomp%let)
+                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45go, m, p_domdcomp%lxi, p_domdcomp%let,m)
       call p_numerics%deriv(rrk, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                       p_domdcomp%lze, p_domdcomp%ijk, 3, 1, m)
       call p_numerics%deriv(rrk, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
@@ -79,7 +79,7 @@ MODULE mo_grid
       rrk(:,1) = ssk(:,2)
       m = 2
       call p_numerics%mpigo(rrk, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45go, m, p_domdcomp%lxi, p_domdcomp%let)
+                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45go, m, p_domdcomp%lxi, p_domdcomp%let,m)
       call p_numerics%deriv(rrk, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                       p_domdcomp%lze, p_domdcomp%ijk, 3, 1, m)
       call p_numerics%deriv(rrk, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
@@ -93,7 +93,7 @@ MODULE mo_grid
       rrk(:,1) = ssk(:,3)
       m = 3
       call p_numerics%mpigo(rrk, p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45go, m, p_domdcomp%lxi, p_domdcomp%let)
+                      p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45go, m, p_domdcomp%lxi, p_domdcomp%let,m)
       call p_numerics%deriv(rrk, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
                       p_domdcomp%lze, p_domdcomp%ijk, 3, 1, m)
       call p_numerics%deriv(rrk, p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
@@ -116,43 +116,43 @@ MODULE mo_grid
 
       do m=1,3
          call p_numerics%mpigo(this%xim(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+1, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+1, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%xim(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 1)
+                              p_domdcomp%lze, p_domdcomp%ijk, 1, m)
          call p_numerics%mpigo(this%xim(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+2, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+2, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%xim(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 2)
+                              p_domdcomp%lze, p_domdcomp%ijk, 2, m)
          call p_numerics%mpigo(this%xim(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+3, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+3, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%xim(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 3)
+                              p_domdcomp%lze, p_domdcomp%ijk, 3, m)
 
          call p_numerics%mpigo(this%etm(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+4, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+4, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%etm(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 1)
+                              p_domdcomp%lze, p_domdcomp%ijk, 1, m)
          call p_numerics%mpigo(this%etm(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+5, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+5, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%etm(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 2)
+                              p_domdcomp%lze, p_domdcomp%ijk, 2, m)
          call p_numerics%mpigo(this%etm(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+6, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+6, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%etm(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 3)
+                              p_domdcomp%lze, p_domdcomp%ijk, 3, m)
 
          call p_numerics%mpigo(this%zem(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+7, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+7, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%zem(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, & 
-                              p_domdcomp%lze, p_domdcomp%ijk, 1)
+                              p_domdcomp%lze, p_domdcomp%ijk, 1, m)
          call p_numerics%mpigo(this%zem(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+8, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+8, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%zem(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 2)
+                              p_domdcomp%lze, p_domdcomp%ijk, 2, m)
          call p_numerics%mpigo(this%zem(:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
-                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+9, p_domdcomp%lxi, p_domdcomp%let)
+                              p_domdcomp%mcd, p_domdcomp%nbsize, 1, n45no, 9*(m-1)+9, p_domdcomp%lxi, p_domdcomp%let,m)
          call p_numerics%filte(this%zem(:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                              p_domdcomp%lze, p_domdcomp%ijk, 3)
+                              p_domdcomp%lze, p_domdcomp%ijk, 3, m)
       end do
       this%yaco(:) = three / ( qok(:,1) * this%xim(:,1) + qok(:,2) * this%etm(:,1) + qok(:,3) * this%zem(:,1) &
                              + qak(:,1) * this%xim(:,2) + qak(:,2) * this%etm(:,2) + qak(:,3) * this%zem(:,2) &
