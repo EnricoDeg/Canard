@@ -13,6 +13,7 @@ Help()
    echo "v     Verbose mode [default OFF]"
    echo "d     Debug mode build type [default OFF]"
    echo "c     Specify compiler"
+   echo "p     Specify MPI implementation"
    echo
 }
 
@@ -31,7 +32,7 @@ BTYPE=Release
 VISCOUS=OFF
 MACHINE=
 COMPILER=
-while getopts ":hm:lvdfc:" option; do
+while getopts ":hm:lvdfc:p:" option; do
    case $option in
       h) # display Help
          Help
@@ -56,13 +57,17 @@ while getopts ":hm:lvdfc:" option; do
          COMPILER=${OPTARG}
          echo "Using ${OPTARG} compiler"
 	 ;;
+      p) # MPI
+         MPI_TYPE=${OPTARG}
+         echo "Using ${OPTARG} MPI implementation"
+	 ;;
      \?) # Invalid option
          echo "Error: Invalid option"
          exit;;
    esac
 done
 
-source machine/${MACHINE} ${COMPILER}
+source machine/${MACHINE} ${COMPILER} ${MPI_TYPE}
 
 mkdir build
 cd build

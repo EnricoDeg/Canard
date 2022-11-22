@@ -12,7 +12,13 @@ Help()
 
 if [[ $1 == "gcc" ]]
 then
-  export FC=mpif90
+  if [[ $2 == "openmpi" ]]
+  then
+    export FC=mpif90
+  else
+    echo "Not supported MPI implementation for $1 compiler"
+    exit 1  
+  fi
 elif [[ $1 == "help" ]]
 then
   Help
