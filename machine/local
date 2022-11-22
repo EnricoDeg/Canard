@@ -1,5 +1,24 @@
 #!/bin/bash
+########
+# Help #
+########
+Help()
+{
+   # Display Help
+   echo "Supported compilers local machine:"
+   echo "gcc"
+}
 
-export FC=mpif90
 
+if [[ $1 == "gcc" ]]
+then
+  export FC=mpif90
+elif [[ $1 == "help" ]]
+then
+  Help
+  exit 1
+else
+  echo "Not supported compiler"
+  exit 1
+fi
 export CANARD_DIR=${PWD}

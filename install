@@ -12,6 +12,7 @@ Help()
    echo "f     enable viscosity [default OFF]"
    echo "v     Verbose mode [default OFF]"
    echo "d     Debug mode build type [default OFF]"
+   echo "c     Specify compiler"
    echo
 }
 
@@ -28,13 +29,15 @@ List()
 VERBOSE=OFF
 BTYPE=Release
 VISCOUS=OFF
-while getopts ":hm:lvdf" option; do
+MACHINE=
+COMPILER=
+while getopts ":hm:lvdfc:" option; do
    case $option in
       h) # display Help
          Help
          exit;;
       m) # define machine
-	 source machine/$OPTARG
+         MACHINE=${OPTARG}
 	 echo "Using ${OPTARG} machine"
 	 ;;
       l)  # List machines
@@ -49,11 +52,17 @@ while getopts ":hm:lvdf" option; do
       f) # Viscosity
          VISCOUS=ON
          ;;
+      c) # Compiler
+         COMPILER=${OPTARG}
+         echo "Using ${OPTARG} compiler"
+	 ;;
      \?) # Invalid option
          echo "Error: Invalid option"
          exit;;
    esac
 done
+
+source machine/${MACHINE} ${COMPILER}
 
 mkdir build
 cd build
