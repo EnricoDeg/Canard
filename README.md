@@ -59,7 +59,7 @@ The input parameters are in `input.canard` file.
 - `tmax`: end time of the simulation
 - `ltimer`: enable profiling (`.true.`/`.false.`)
 
-##### input.domdcomp
+##### nml_domdcomp
 
 - `nbpc`: number of `MPI` processes for each domain block (2D array `[0:mbk,1:3]`)
 
