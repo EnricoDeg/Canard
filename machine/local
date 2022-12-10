@@ -5,8 +5,8 @@
 Help()
 {
    # Display Help
-   echo "Supported compilers local machine:"
-   echo "gcc"
+   echo "Supported compilers and MPI implementations:"
+   echo "1. gcc+openmpi"
 }
 
 
