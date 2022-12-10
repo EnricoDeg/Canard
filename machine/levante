@@ -1,9 +1,69 @@
 #!/bin/bash
+########
+# Help #
+########
+Help()
+{
+   # Display Help
+   echo "Supported compilers and MPI implementations:"
+   echo "1. intel + openmpi "
+   echo "2. intel + intelmpi"
+   echo "3. gcc   + openmpi "
+   echo "4. gcc   + intelmpi"
+   echo "5. nvhpc + openmpi "
+}
+
 module purge
-
-module add intel-oneapi-compilers/2022.0.1-gcc-11.2.0
-module add openmpi/4.1.2-intel-2021.5.0
-
-export FC=/sw/spack-levante/openmpi-4.1.2-yfwe6t/bin/mpif90
+if [[ $1 == "intel" ]]
+then
+  if [[ $2 == "openmpi" ]]
+  then
+    module add intel-oneapi-compilers/2022.0.1-gcc-11.2.0
+    module add openmpi/4.1.2-intel-2021.5.0
+    export FC=/sw/spack-levante/openmpi-4.1.2-yfwe6t/bin/mpif90
+  elif [[ $2 == "intelmpi" ]]
+  then
+    module add intel-oneapi-compilers/2022.0.1-gcc-11.2.0
+    module add intel-oneapi-mpi/2021.5.0-intel-2021.5.0
+    export FC=/sw/spack-levante/intel-oneapi-mpi-2021.5.0-mrcss7/mpi/2021.5.0/bin/mpif90
+  else
+    echo "Not supported MPI implementation for $1 compiler"
+    exit 1  
+  fi
+elif [[ $1 == "gcc" ]]
+then
+  if [[ $2 == "openmpi" ]]
+  then
+    module add gcc/11.2.0-gcc-11.2.0
+    module add openmpi/4.1.2-gcc-11.2.0
+    export FC=/sw/spack-levante/openmpi-4.1.2-mnmady/bin/mpif90
+  elif [[ $2 == "intelmpi" ]]
+  then
+    module add gcc/11.2.0-gcc-11.2.0
+    module add intel-oneapi-mpi/2021.5.0-gcc-11.2.0
+    export FC=/sw/spack-levante/intel-oneapi-mpi-2021.5.0-efceba/mpi/2021.5.0/bin/mpif90
+  else
+    echo "Not supported MPI implementation for $1 compiler"
+    exit 1
+  fi
+elif [[ $1 == "nvhpc" ]]
+then
+  if [[ $2 == "openmpi" ]]
+  then
+    module add nvhpc/22.5-gcc-11.2.0
+    spack load openmpi@4.1.2%nvhpc@22.5
+    export FC=/sw/spack-levante/openmpi-4.1.2-hzabdh/bin/mpif90
+  else
+    echo "Not supported MPI implementation for $1 compiler"
+    exit 1
+  fi
+elif [[ $1 == "help" ]]
+then
+  Help
+  exit 1
+else
+  echo "Not supported compiler"
+  exit 1
+fi
 
 export CANARD_DIR=${PWD}
