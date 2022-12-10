@@ -25,13 +25,19 @@ To get a list of all installation options:
 ./install -h
 ```
 
-To get a list of supported machine for installation:
+To get a list of supported machines for installation:
 
 ```bash
 ./install -l
 ```
 
 If you can not find your machine in the supported ones, you can add a file in the `machine` folder and it will be automatically added to the available machines.
+
+To get a list of compilers and `MPI` implementations combinations for a supported machine:
+
+```bash
+./install -m ${MACHINE_NAME} -c help
+```
 
 Once the model is installed, the `canard` executable can be found in the `bin` folder. You can then setup an experiment using a script in the `run` folder or writing your own one.
 
