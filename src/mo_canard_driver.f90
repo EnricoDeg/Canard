@@ -126,7 +126,7 @@ module mo_canard_driver
 
 !===== ALLOCATION OF MAIN ARRAYS
    call p_physics%allocate(p_domdcomp%lmx)
-   call p_numerics%allocate(lim, p_domdcomp%nbsize)
+   call p_numerics%allocate(lim, p_domdcomp%nbsize, p_domdcomp%lmx)
 
    ! main program local arrays
    allocate(times(0:ndata))

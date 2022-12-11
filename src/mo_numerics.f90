@@ -44,6 +44,7 @@ module mo_numerics
       real(kind=nr), private, dimension(:,:,:,:), pointer :: recv
       integer(kind=ni), private, dimension(:),  allocatable :: li
       real(kind=nr), private, dimension(:),     allocatable :: sa, sb
+      real(kind=nr), private, dimension(:),     allocatable :: sar, sbr
 
       ! public vars
       real(kind=nr), public, dimension(:,:,:), pointer :: drva1, drva2, drva3
@@ -74,10 +75,11 @@ module mo_numerics
 
    contains
 
-   SUBROUTINE allocate_numerics(this, limk, nbsizek)
+   SUBROUTINE allocate_numerics(this, limk, nbsizek, lmxk)
       class(t_numerics), intent(inout)          :: this
       integer(kind=ni),intent(in)               :: limk
       integer(kind=ni),intent(in), dimension(3) :: nbsizek
+      integer(kind=ni),intent(in)               :: lmxk
       integer(kind=ni) :: iik, jjk, kkk
 
       iik=nbsizek(1)-1
@@ -86,6 +88,7 @@ module mo_numerics
 
       allocate(this%xu(0:limk,3), this%yu(0:limk,3), this%xl(0:limk,2), this%yl(0:limk,2))
       allocate(this%li(0:limk),   this%sa(0:limk),   this%sb(0:limk))
+      allocate(this%sar(0:lmxk),   this%sbr(0:lmxk))
       allocate(this%send01(0:iik,0:1,0:1), this%send02(0:jjk,0:1,0:1), this%send03(0:kkk,0:1,0:1))
       allocate(this%recv01(0:iik,0:1,0:1,1:5), this%recv02(0:jjk,0:1,0:1,1:5), this%recv03(0:kkk,0:1,0:1,1:5))
       allocate(this%send11(0:iik,0:2,0:1), this%send12(0:jjk,0:2,0:1), this%send13(0:kkk,0:2,0:1))
@@ -796,15 +799,23 @@ module mo_numerics
 
    end subroutine deriv_nooverwrite
 
-   subroutine deriv_overwrite(this, rfield, lmx, lxik, letk, lzek, ijks, nn, nz, m)
+   subroutine deriv_overwrite(this, rfield, lmx, lxik, letk, lzek, ijks, nn, nz, m, luse_acc)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: nn, nz, m
-      integer(kind=ni) :: ntk, nstart, nend, istart, iend
-      integer(kind=ni) :: kkk, jjj, iii, kpp, jkk, lll
+      logical,          intent(in), optional        :: luse_acc
+      logical          :: lacc
+      integer(kind=ni) :: ntk, nstart, nend, istart, iend, ustart, uend
+      integer(kind=ni) :: kkk, jjj, iii, kpp, jkk, lll, ijj, lm
+
+      if (present(luse_acc)) then
+        lacc = luse_acc
+      else
+        lacc = .false.
+      end if
 
       ntk    = 0
       nstart = this%ndf(nn,0,0)
@@ -812,76 +823,206 @@ module mo_numerics
 
       select case(nn)
       case(1)
-         istart =  0
-         iend   =  istart + lxik
+         ustart =  0
+         uend   =  ustart + lxik
          this%recv   => this%recv01
          this%drva   => this%drva1
       case(2)
-         istart =  lxik + 1
-         iend   =  istart + letk
+         ustart =  lxik + 1
+         uend   =  ustart + letk
          this%recv   => this%recv02
          this%drva   => this%drva2
       case(3)
-         istart =  lxik + letk + 2
-         iend   =  istart + lzek
+         ustart =  lxik + letk + 2
+         uend   =  ustart + lzek
          this%recv   => this%recv03
          this%drva   => this%drva3
       end select
 
+      !$ACC PARALLEL LOOP COLLAPSE(3) IF (lacc)
       do kkk = 0,ijks(3,nn)
-         kpp = kkk * ( ijks(2,nn) + 1 )
-         do jjj=  0,ijks(2,nn)
-            jkk = kpp + jjj
-            do iii = istart,iend
-               lll = indx3(iii-istart, jjj, kkk, nn, lxik, letk)
-               this%li(iii) = lll
-               this%sa(iii) = rfield(lll,nz)
+         do jjj = 0,ijks(2,nn)
+            do iii = 0,ijks(1,nn)
+               lll = indx3(iii, jjj, kkk, nn, lxik, letk)
+               ijj = iii + jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+               this%sar(ijj) = rfield(lll,nz)
             end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1)) 
+            iend   = istart + ijks(1,nn)
+
+            kpp = kkk * ( ijks(2,nn) + 1 )
+            jkk = kpp + jjj
 
             select case(nstart)
             case(0)
-               this%sb(istart)   = sum( (/a01,a02,a03,a04/) * ( this%sa(istart+(/1,2,3,4/)) - this%sa(istart)   ) )
-               this%sb(istart+1) = sum( (/a10,a12,a13,a14/) * ( this%sa(istart+(/0,2,3,4/)) - this%sa(istart+1) ) )
+#ifdef _OPENACC
+               this%sbr(istart)   = a01 * (this%sar(istart+1) - this%sar(istart)) + &
+                                    a02 * (this%sar(istart+2) - this%sar(istart)) + &
+                                    a03 * (this%sar(istart+3) - this%sar(istart)) + &
+                                    a04 * (this%sar(istart+4) - this%sar(istart))
+#else
+               this%sbr(istart)   = sum( (/a01,a02,a03,a04/) * ( this%sar(istart+(/1,2,3,4/)) - this%sar(istart)   ) )
+#endif
+#ifdef _OPENACC
+               this%sbr(istart+1) = a10 * (this%sar(istart+0) - this%sar(istart+1)) + &
+                                    a12 * (this%sar(istart+2) - this%sar(istart+1)) + &
+                                    a13 * (this%sar(istart+3) - this%sar(istart+1)) + &
+                                    a14 * (this%sar(istart+4) - this%sar(istart+1))
+#else
+               this%sbr(istart+1) = sum( (/a10,a12,a13,a14/) * ( this%sar(istart+(/0,2,3,4/)) - this%sar(istart+1) ) )
+#endif
             case(1)
-               this%sb(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,0,0,m)
-               this%sb(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,1,0,m)
+#ifdef _OPENACC
+                this%sbr(istart)   = zero
+               !$ACC LOOP SEQ
+               do lm = 0,lmd
+                 this%sbr(istart)  = this%sbr(istart) + this%pbci(lm,0,ntk) * this%sar(istart+lm)
+               end do
+               this%sbr(istart)    = this%sbr(istart) + this%recv(jkk,0,0,m)
+#else
+               this%sbr(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sar(istart:istart+lmd) ) + this%recv(jkk,0,0,m)
+#endif
+#ifdef _OPENACC
+               this%sbr(istart+1)  = zero
+               !$ACC LOOP SEQ
+               do lm = 0,lmd
+                  this%sbr(istart+1)  = this%sbr(istart+1) + this%pbci(lm,1,ntk) * this%sar(istart+lm)
+               end do
+               this%sbr(istart+1)  = this%sbr(istart+1) + this%recv(jkk,1,0,m)
+#else
+               this%sbr(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sar(istart:istart+lmd) ) + this%recv(jkk,1,0,m)
+#endif
             end select
+         end do
+      end do
+      !$ACC END PARALLEL
 
+      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+            iend   = istart + ijks(1,nn)
+            !$ACC LOOP VECTOR
             do iii = istart+2,iend-2
-               this%sb(iii) = aa * ( this%sa(iii+1) - this%sa(iii-1) ) + ab * ( this%sa(iii+2) - this%sa(iii-2) )
+               this%sbr(iii) = aa * ( this%sar(iii+1) - this%sar(iii-1) ) + ab * ( this%sar(iii+2) - this%sar(iii-2) )
             end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+            iend   = istart + ijks(1,nn)
+
+            kpp = kkk * ( ijks(2,nn) + 1 )
+            jkk = kpp + jjj
 
             select case(nend)
             case(0)
-               this%sb(iend)   = sum( (/a01,a02,a03,a04/) * ( this%sa(iend)   - this%sa(iend-(/1,2,3,4/)) ) )
-               this%sb(iend-1) = sum( (/a10,a12,a13,a14/) * ( this%sa(iend-1) - this%sa(iend-(/0,2,3,4/)) ) )
+#ifdef _OPENACC
+               this%sbr(iend)   = a01 * ( this%sar(iend)   - this%sar(iend-1) ) + &
+                                  a02 * ( this%sar(iend)   - this%sar(iend-2) ) + &
+                                  a03 * ( this%sar(iend)   - this%sar(iend-3) ) + &
+                                  a04 * ( this%sar(iend)   - this%sar(iend-4) )
+#else
+               this%sbr(iend)   = sum( (/a01,a02,a03,a04/) * ( this%sar(iend)   - this%sar(iend-(/1,2,3,4/)) ) )
+#endif
+#ifdef _OPENACC
+               this%sbr(iend-1) = a10 * ( this%sar(iend-1) - this%sar(iend  ) ) + &
+                                  a12 * ( this%sar(iend-1) - this%sar(iend-2) ) + &
+                                  a13 * ( this%sar(iend-1) - this%sar(iend-3) ) + &
+                                  a14 * ( this%sar(iend-1) - this%sar(iend-4) )
+#else
+               this%sbr(iend-1) = sum( (/a10,a12,a13,a14/) * ( this%sar(iend-1) - this%sar(iend-(/0,2,3,4/)) ) )
+#endif
             case(1)
-               this%sb(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,0,1,m)
-               this%sb(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,1,1,m)
+#ifdef _OPENACC
+               this%sbr(iend)   = zero
+               !$ACC LOOP SEQ
+               do lm = 0,lmd
+                 this%sbr(iend) = this%sbr(iend) - this%pbci(lm,0,ntk) * this%sar(iend-lm)
+               end do
+               this%sbr(iend)   = this%sbr(iend) - this%recv(jkk,0,1,m)
+#else
+               this%sbr(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sar(iend:iend-lmd:-1) ) - this%recv(jkk,0,1,m)
+#endif
+#ifdef _OPENACC
+               this%sbr(iend-1) = zero
+               !$ACC LOOP SEQ
+               do lm = 0,lmd
+                 this%sbr(iend-1) = this%sbr(iend-1) - this%pbci(lm,1,ntk) * this%sar(iend-lm)
+               end do
+               this%sbr(iend-1) = this%sbr(iend-1) - this%recv(jkk,1,1,m)
+#else
+               this%sbr(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sar(iend:iend-lmd:-1) ) - this%recv(jkk,1,1,m)
+#endif
             end select
-
-            this%sa(istart)   = this%sb(istart)
-            this%sa(istart+1) = this%sb(istart+1) - this%xl(istart+1,2) * this%sa(istart)
-            do iii = istart+2,iend
-               this%sa(iii) = this%sb(iii) - this%xl(iii,1) * this%sa(iii-2) - this%xl(iii,2) * this%sa(iii-1)
-            end do
-
-            this%sb(iend)   = this%xu(iend,1)   * this%sa(iend)
-            this%sb(iend-1) = this%xu(iend-1,1) * this%sa(iend-1) - this%xu(iend-1,2) * this%sb(iend)
-            do iii = iend-2,istart,-1
-               this%sb(iii) = this%xu(iii,1) * this%sa(iii) - this%xu(iii,2) * this%sb(iii+1) - this%xu(iii,3) * this%sb(iii+2)
-            end do
-
-            do iii = istart,iend
-               lll = this%li(iii)
-               rfield(lll,nn) = this%sb(iii)
-            end do
-
-            this%drva(jkk,m,0) = this%sb(istart)
-            this%drva(jkk,m,1) = this%sb(iend)
-
          end do
       end do
+      !$ACC END PARALLEL
+
+      ! inner loop carry dependencies
+      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))  
+            iend   = istart + ijks(1,nn)
+
+            this%sar(istart)   = this%sbr(istart)
+            this%sar(istart+1) = this%sbr(istart+1) - this%xl(ustart+1,2) * this%sar(istart)
+            !$ACC LOOP SEQ
+            do iii = istart+2,iend
+               this%sar(iii) = this%sbr(iii) - this%xl(iii-istart+ustart,1) * this%sar(iii-2) - &
+                                               this%xl(iii-istart+ustart,2) * this%sar(iii-1)
+            end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      ! inner loop carry dependencies
+      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))  
+            iend   = istart + ijks(1,nn)
+
+            kpp = kkk * ( ijks(2,nn) + 1 )
+            jkk = kpp + jjj
+
+            this%sbr(iend)   = this%xu(uend,1)   * this%sar(iend)
+            this%sbr(iend-1) = this%xu(uend-1,1) * this%sar(iend-1) - this%xu(uend-1,2) * this%sbr(iend)
+            !$ACC LOOP SEQ
+            do iii = iend-2,istart,-1
+               this%sbr(iii) = this%xu(iii-iend+uend,1) * this%sar(iii)   - & 
+                               this%xu(iii-iend+uend,2) * this%sbr(iii+1) - &
+                               this%xu(iii-iend+uend,3) * this%sbr(iii+2)
+            end do
+            this%drva(jkk,m,0) = this%sbr(istart)
+            this%drva(jkk,m,1) = this%sbr(iend)
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP COLLAPSE(3) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            do iii = 0,ijks(1,nn)
+               lll = indx3(iii, jjj, kkk, nn, lxik, letk)
+               ijj = iii + jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+               rfield(lll,nn) = this%sbr(ijj)
+            end do
+         end do
+      end do
+      !$ACC END PARALLEL
 
    end subroutine deriv_overwrite
 

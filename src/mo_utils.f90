@@ -52,6 +52,7 @@ module mo_utils
 !===== FUNCTION FOR MAIN INDEX TRANSFORMATION IN 3D
 
    function indx3(i,j,k,nn, lxi, let) result(lm)
+      !$ACC ROUTINE SEQ
 
       integer(kind=ni),intent(in) :: i,j,k,nn
       integer(kind=ni),intent(in) :: lxi, let
