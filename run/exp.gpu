@@ -1,0 +1,82 @@
+#!/bin/bash
+
+EXP_ID=gpurun
+MODEL=canard
+
+mkdir ${EXP_ID}
+cd ${EXP_ID}
+ln -s ../../bin/${MODEL} ${MODEL}
+mkdir misc
+mkdir data
+
+cat > batch << EOF
+#! /bin/bash
+#SBATCH --job-name=canard
+#SBATCH --partition=gpu
+#SBATCH --exclusive
+#SBATCH --ntasks=4
+#SBATCH --ntasks-per-core=1
+#SBATCH --time=00:10:00
+#SBATCH --output=batch.%j.out
+#SBATCH --error=batch.%j.err
+#SBATCH --account=k20200
+
+srun -l --kill-on-bad-exit=1 ../run_wrapper.sh -n 4 -o 0 -e ./${MODEL}
+EOF
+
+cat > input.canard << EOF
+&nml_driver
+nio = 0
+mbk = 0
+ndata = 1
+/
+&nml_canard
+nts = 0
+nrestart = 1
+cfl = 1.4e0
+tmax = 0.1e0
+ltimer = .true.
+/
+&nml_domdcomp
+nbpc(:,1) = 2
+nbpc(:,2) = 2
+nbpc(:,3) = 1
+lximb = 64
+letmb = 64
+lzemb = 16
+nbbc(0,1,:) = 10,10
+nbbc(0,2,:) = 10,10
+nbbc(0,3,:) = 45,45
+mbcd(0,1,:) = -1,-1
+mbcd(0,2,:) = -1,-1
+mbcd(0,3,:) =  0,0
+/
+&nml_numerics
+fltk = 0.65e0
+fltrbc = 0.9e0
+/
+&nml_physics
+reoo = 500000.0e0
+tempoo = 300.0e0
+amach1 = 0.3e0
+amach2 = 0.0e0
+amach3 = 0.0e0
+timf = 0.0e0
+nsmf = 1
+/
+&nml_gridgen
+gridtype = 0
+lxi0 = 64
+let0 = 64
+lze0 = 16
+doml0 = 0.5e0
+doml1 = 1.0e0
+domh = 0.5e0
+span = 0.1e0
+szth0 = 0.0e0
+szth1 = 0.6e0
+/
+nml_sponge
+szco = 10.0e0
+/
+EOF
