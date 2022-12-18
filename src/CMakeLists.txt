@@ -34,7 +34,10 @@ if( ${CMAKE_Fortran_COMPILER_ID} STREQUAL  Intel )
       $<$<CONFIG:RELEASE>:-cpp>
   )
 elseif( ${CMAKE_Fortran_COMPILER_ID} STREQUAL  GNU )
-
+  target_compile_options(canard PUBLIC
+      $<$<CONFIG:DEBUG>:-cpp>
+      $<$<CONFIG:RELEASE>:-cpp>
+  )
 elseif( ${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC )
   target_compile_options(canard PUBLIC
       $<$<CONFIG:DEBUG>:-cpp -Mnofma>
