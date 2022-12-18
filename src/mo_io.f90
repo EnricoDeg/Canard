@@ -181,7 +181,7 @@ MODULE mo_io
 
 !===== SUBROUTINE FOR READING RESTART FILE
 
-   SUBROUTINE read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt)
+   SUBROUTINE read_restart_file(p_domdcomp, qa, lio, dts, dte, timo, ndt, n, dt, pathbase)
       type(t_domdcomp), intent(IN)    :: p_domdcomp
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: qa
       integer(kind=ni), dimension(0:p_domdcomp%let,0:p_domdcomp%lze), intent(in) :: lio
@@ -190,14 +190,22 @@ MODULE mo_io
       integer(kind=ni), intent(inout) :: ndt
       integer(kind=ni), intent(inout) :: n
       real(kind=nr), intent(inout)    :: dt
+      character(len=*), intent(in), optional :: pathbase
+      character(len=500) :: path_restart
       integer(kind=ni) :: lp, i, j, k, lq, l
       integer(kind=ni) :: ll, nrecd
       integer(kind=ni) :: myid
 
+      if (present(pathbase)) then
+         path_restart=trim(pathbase)//"/"//trim(crestart)
+      else
+         path_restart=trim(crestart)
+      endif
+
       myid = p_get_process_ID()
       inquire(iolength=ll) real(1.0,kind=ieee64); nrecd=ll
 
-      open(9,file=crestart,access='direct',form='unformatted',recl=5*nrecd,status='old')
+      open(9,file=trim(path_restart),access='direct',form='unformatted',recl=5*nrecd,status='old')
       read(9,rec=1) cha(:)
       read(9,rec=2) dha(:)
       n    = cha(1)
