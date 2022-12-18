@@ -1,0 +1,62 @@
+#!/bin/bash
+########
+# Help #
+########
+Help()
+{
+   # Display Help
+   echo "Development tool options:"
+   echo "h     Print this Help"
+   echo "r     reference results directory path"
+   echo "d     development results directory path"
+   echo "t     tolerance of relative difference (default 1.0E-15)"
+   echo
+}
+
+DIRPATH=
+DIRPATHREF=
+TOL="1.0E-15"
+while getopts ":hr:d:t:" option; do
+   case $option in
+      h) # display Help
+         Help
+         mpirun -n 1 ../bin/dcanard -h
+         exit;;
+      d) # directory path
+         DIRPATH=${OPTARG}
+	 ;;
+      r) # directory path
+         DIRPATHREF=${OPTARG}
+         ;;
+      t) # tolerance
+         TOL=${OPTARG}
+         ;;
+     \?) # Invalid option
+         echo "Error: Invalid option"
+         exit;;
+   esac
+done
+
+cat > input.canard << EOF
+&nml_driver
+nio = 0
+mbk = 0
+ndata = 1
+/
+&nml_domdcomp
+nbpc(:,1) = 1
+nbpc(:,2) = 1
+nbpc(:,3) = 1
+lximb = 50
+letmb = 50
+lzemb = 16
+nbbc(0,1,:) = 10,10
+nbbc(0,2,:) = 10,10
+nbbc(0,3,:) = 45,45
+mbcd(0,1,:) = -1,-1
+mbcd(0,2,:) = -1,-1
+mbcd(0,3,:) =  0,0
+/
+EOF
+
+mpirun -n 1 ../bin/dcanard -t ${TOL} -d ${DIRPATHREF} ${DIRPATH}
