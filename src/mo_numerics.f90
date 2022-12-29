@@ -839,7 +839,7 @@ module mo_numerics
          this%drva   => this%drva3
       end select
 
-      !$ACC PARALLEL LOOP COLLAPSE(3) IF (lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(3) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
             do iii = 0,ijks(1,nn)
@@ -851,7 +851,7 @@ module mo_numerics
       end do
       !$ACC END PARALLEL
 
-      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
             istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1)) 
@@ -862,43 +862,11 @@ module mo_numerics
 
             select case(nstart)
             case(0)
-#ifdef _OPENACC
-               this%sbr(istart)   = a01 * (this%sar(istart+1) - this%sar(istart)) + &
-                                    a02 * (this%sar(istart+2) - this%sar(istart)) + &
-                                    a03 * (this%sar(istart+3) - this%sar(istart)) + &
-                                    a04 * (this%sar(istart+4) - this%sar(istart))
-#else
                this%sbr(istart)   = sum( (/a01,a02,a03,a04/) * ( this%sar(istart+(/1,2,3,4/)) - this%sar(istart)   ) )
-#endif
-#ifdef _OPENACC
-               this%sbr(istart+1) = a10 * (this%sar(istart+0) - this%sar(istart+1)) + &
-                                    a12 * (this%sar(istart+2) - this%sar(istart+1)) + &
-                                    a13 * (this%sar(istart+3) - this%sar(istart+1)) + &
-                                    a14 * (this%sar(istart+4) - this%sar(istart+1))
-#else
                this%sbr(istart+1) = sum( (/a10,a12,a13,a14/) * ( this%sar(istart+(/0,2,3,4/)) - this%sar(istart+1) ) )
-#endif
             case(1)
-#ifdef _OPENACC
-                this%sbr(istart)   = zero
-               !$ACC LOOP SEQ
-               do lm = 0,lmd
-                 this%sbr(istart)  = this%sbr(istart) + this%pbci(lm,0,ntk) * this%sar(istart+lm)
-               end do
-               this%sbr(istart)    = this%sbr(istart) + this%recv(jkk,0,0,m)
-#else
                this%sbr(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sar(istart:istart+lmd) ) + this%recv(jkk,0,0,m)
-#endif
-#ifdef _OPENACC
-               this%sbr(istart+1)  = zero
-               !$ACC LOOP SEQ
-               do lm = 0,lmd
-                  this%sbr(istart+1)  = this%sbr(istart+1) + this%pbci(lm,1,ntk) * this%sar(istart+lm)
-               end do
-               this%sbr(istart+1)  = this%sbr(istart+1) + this%recv(jkk,1,0,m)
-#else
                this%sbr(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sar(istart:istart+lmd) ) + this%recv(jkk,1,0,m)
-#endif
             end select
          end do
       end do
@@ -917,7 +885,7 @@ module mo_numerics
       end do
       !$ACC END PARALLEL
 
-      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
             istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
@@ -928,50 +896,18 @@ module mo_numerics
 
             select case(nend)
             case(0)
-#ifdef _OPENACC
-               this%sbr(iend)   = a01 * ( this%sar(iend)   - this%sar(iend-1) ) + &
-                                  a02 * ( this%sar(iend)   - this%sar(iend-2) ) + &
-                                  a03 * ( this%sar(iend)   - this%sar(iend-3) ) + &
-                                  a04 * ( this%sar(iend)   - this%sar(iend-4) )
-#else
                this%sbr(iend)   = sum( (/a01,a02,a03,a04/) * ( this%sar(iend)   - this%sar(iend-(/1,2,3,4/)) ) )
-#endif
-#ifdef _OPENACC
-               this%sbr(iend-1) = a10 * ( this%sar(iend-1) - this%sar(iend  ) ) + &
-                                  a12 * ( this%sar(iend-1) - this%sar(iend-2) ) + &
-                                  a13 * ( this%sar(iend-1) - this%sar(iend-3) ) + &
-                                  a14 * ( this%sar(iend-1) - this%sar(iend-4) )
-#else
                this%sbr(iend-1) = sum( (/a10,a12,a13,a14/) * ( this%sar(iend-1) - this%sar(iend-(/0,2,3,4/)) ) )
-#endif
             case(1)
-#ifdef _OPENACC
-               this%sbr(iend)   = zero
-               !$ACC LOOP SEQ
-               do lm = 0,lmd
-                 this%sbr(iend) = this%sbr(iend) - this%pbci(lm,0,ntk) * this%sar(iend-lm)
-               end do
-               this%sbr(iend)   = this%sbr(iend) - this%recv(jkk,0,1,m)
-#else
                this%sbr(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sar(iend:iend-lmd:-1) ) - this%recv(jkk,0,1,m)
-#endif
-#ifdef _OPENACC
-               this%sbr(iend-1) = zero
-               !$ACC LOOP SEQ
-               do lm = 0,lmd
-                 this%sbr(iend-1) = this%sbr(iend-1) - this%pbci(lm,1,ntk) * this%sar(iend-lm)
-               end do
-               this%sbr(iend-1) = this%sbr(iend-1) - this%recv(jkk,1,1,m)
-#else
                this%sbr(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sar(iend:iend-lmd:-1) ) - this%recv(jkk,1,1,m)
-#endif
             end select
          end do
       end do
       !$ACC END PARALLEL
 
       ! inner loop carry dependencies
-      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
             istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))  
@@ -989,7 +925,7 @@ module mo_numerics
       !$ACC END PARALLEL
 
       ! inner loop carry dependencies
-      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
             istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))  
@@ -1012,7 +948,7 @@ module mo_numerics
       end do
       !$ACC END PARALLEL
 
-      !$ACC PARALLEL LOOP COLLAPSE(3) IF (lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(3) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
             do iii = 0,ijks(1,nn)
