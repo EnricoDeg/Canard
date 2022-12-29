@@ -42,10 +42,10 @@ elseif( ${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC )
   )
   if(${ENABLE_OPENACC})
     target_compile_options(canard PUBLIC
-        $<$<CONFIG:DEBUG>:-cpp -acc -gpu=math_uniform,cuda11.7,cc80 -Minfo=accel,inline>
+        $<$<CONFIG:DEBUG>:-cpp -acc -gpu=debug,math_uniform,cuda11.7,cc80 -Minfo=accel,inline>
         $<$<CONFIG:RELEASE>:-cpp -acc -gpu=cc80 -Minfo=accel,inline>
     )
-    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-acc -gpu=math_uniform,cuda11.7,cc80")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-acc -gpu=debug,math_uniform,cuda11.7,cc80")
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-acc -gpu=cc80")
   endif()
 endif()
