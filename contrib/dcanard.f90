@@ -10,7 +10,7 @@ program dcanard
    integer(kind=ni)    :: nio
    integer(kind=ni)    :: mbk
    integer(kind=ni)    :: ndata
-   logical             :: lmodel_role
+   logical             :: lmodel_role = .TRUE.
    logical             :: laio
    integer(kind=ni)    :: ll, ix
    real(kind=nr)       :: dts, dte
@@ -113,8 +113,8 @@ program dcanard
    sa1 = SHAPE(qa1)
    sa2 = SHAPE(qa2)
    if (all(sa1 == sa2)) then
-      do j = 1,sa1(2)
-         do i = 1,sa1(1)
+      do j = 1,5
+         do i = 0,p_domdcomp%lmx
             if (abs((REAL(qa1(i,j),KIND=NR)-REAL(qa2(i,j),KIND=NR))/(REAL(qa1(i,j),KIND=NR))) > wtol) then
                write(fileunit, '(a,i8,a,i8,a,e15.7,a,e15.7,a,e15.7,a,e15.7)')                        &
                      " i=",i," j=",j," v1=",qa1(i,j)," v2=",qa2(i,j),                      &
