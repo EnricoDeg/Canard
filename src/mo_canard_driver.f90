@@ -293,6 +293,8 @@ module mo_canard_driver
             if (ltimer) call timer_stop(timer_timestep)
          end if
 
+         !$ACC DATA COPY(p_physics, p_numerics, p_grid, p_domdcomp,     &
+         !$ACC           p_grid%xim, p_grid%etm, p_grid%zem, p_grid%yaco)
          if (ltimer) call timer_start(timer_VSstress)
          call p_physics%calc_viscous_shear_stress(p_domdcomp, p_numerics, p_grid, de, ss(:,1))
          if (ltimer) call timer_stop(timer_VSstress)
@@ -300,6 +302,7 @@ module mo_canard_driver
          if (ltimer) call timer_start(timer_fluxes)
          call p_physics%calc_fluxes(p_domdcomp, p_numerics, p_grid, qa, p, de)
          if (ltimer) call timer_stop(timer_fluxes)
+         !$ACC END DATA
 
          if (ltimer) call timer_start(timer_GCBC)
 !----- PREPARATION FOR GCBC & GCIC

@@ -215,88 +215,137 @@ MODULE mo_physics
 
    subroutine calc_viscous_shear_stress(this, p_domdcomp, p_numerics, p_grid, de, ssk)
       class(t_physics), INTENT(INOUT) :: this
-      type(t_domdcomp), intent(IN)    :: p_domdcomp
+      type(t_domdcomp), intent(inout)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
-      type(t_grid),     intent(in)    :: p_grid
+      type(t_grid),     intent(inout)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in)    :: ssk
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       real(kind=nr), dimension(0:p_domdcomp%lmx,3,2:5) :: rr
 
-      integer(kind=ni) :: m
+      integer(kind=ni) :: m, i
+
 #ifdef VISCOUS
-      de(:,1) = ssk(:)
+      !$ACC PARALLEL LOOP GANG VECTOR
+      do i=0,p_domdcomp%lmx
+         de(i,1) = ssk(i)
+      end do
+      !$ACC END PARALLEL
 
       ! Halo exchange
       do m=2,5
-         rr(:,1,m) = de(:,m)
+         !$ACC PARALLEL LOOP GANG VECTOR
+         do i=0,p_domdcomp%lmx
+            rr(i,1,m) = de(i,m)
+         end do
+         !$ACC END PARALLEL
          call p_numerics%mpigo(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                                p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
                                p_domdcomp%lxi, p_domdcomp%let, m)
       end do
 
       m = 2
-      call p_numerics%deriv(rr(:,1,m), rr(:,3,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                                   p_domdcomp%lze, p_domdcomp%ijk, 3, m)
-      call p_numerics%deriv(rr(:,1,m), rr(:,2,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                                   p_domdcomp%lze, p_domdcomp%ijk, 2, m)
-      call p_numerics%deriv(rr(:,1,m), rr(:,1,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, &
-                                   p_domdcomp%lze, p_domdcomp%ijk, 1, m)
-      this%txx(:) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
-      this%hzz(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
-      this%tzx(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
+      call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
+      !$ACC PARALLEL LOOP GANG VECTOR
+      do i=0,p_domdcomp%lmx
+         this%txx(i) = p_grid%xim(i,1) * rr(i,1,m) + &
+                       p_grid%etm(i,1) * rr(i,2,m) + &
+                       p_grid%zem(i,1) * rr(i,3,m)
+         this%hzz(i) = p_grid%xim(i,2) * rr(i,1,m) + &
+                       p_grid%etm(i,2) * rr(i,2,m) + &
+                       p_grid%zem(i,2) * rr(i,3,m)
+         this%tzx(i) = p_grid%xim(i,3) * rr(i,1,m) + &
+                       p_grid%etm(i,3) * rr(i,2,m) + &
+                       p_grid%zem(i,3) * rr(i,3,m)
+      end do
+      !$ACC END PARALLEL
 
       m = 3
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
-                     p_domdcomp%ijk, 2, 1, m)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m)
-      this%txy(:) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
-      this%tyy(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
-      this%hxx(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
+      !$ACC PARALLEL LOOP GANG VECTOR
+      do i=0,p_domdcomp%lmx
+         this%txy(i) = p_grid%xim(i,1) * rr(i,1,m) + &
+                       p_grid%etm(i,1) * rr(i,2,m) + &
+                       p_grid%zem(i,1) * rr(i,3,m)
+         this%tyy(i) = p_grid%xim(i,2) * rr(i,1,m) + &
+                       p_grid%etm(i,2) * rr(i,2,m) + &
+                       p_grid%zem(i,2) * rr(i,3,m)
+         this%hxx(i) = p_grid%xim(i,3) * rr(i,1,m) + & 
+                       p_grid%etm(i,3) * rr(i,2,m) + &
+                       p_grid%zem(i,3) * rr(i,3,m)
+      end do
+      !$ACC END PARALLEL
 
       m = 4
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 2, 1, m)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m)
-      this%hyy(:) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
-      this%tyz(:) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
-      this%tzz(:) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
+      !$ACC PARALLEL LOOP GANG VECTOR
+      do i=0,p_domdcomp%lmx
+         this%hyy(i) = p_grid%xim(i,1) * rr(i,1,m) + &
+                       p_grid%etm(i,1) * rr(i,2,m) + &
+                       p_grid%zem(i,1) * rr(i,3,m)
+         this%tyz(i) = p_grid%xim(i,2) * rr(i,1,m) + &
+                       p_grid%etm(i,2) * rr(i,2,m) + &
+                       p_grid%zem(i,2) * rr(i,3,m)
+         this%tzz(i) = p_grid%xim(i,3) * rr(i,1,m) + &
+                       p_grid%etm(i,3) * rr(i,2,m) + &
+                       p_grid%zem(i,3) * rr(i,3,m)
+      end do
+      !$ACC END PARALLEL
 
       m = 5
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 2, 1, m)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m)
-      ss(:,1) = p_grid%xim(:,1) * rr(:,1,m) + p_grid%etm(:,1) * rr(:,2,m) + p_grid%zem(:,1) * rr(:,3,m)
-      ss(:,2) = p_grid%xim(:,2) * rr(:,1,m) + p_grid%etm(:,2) * rr(:,2,m) + p_grid%zem(:,2) * rr(:,3,m)
-      ss(:,3) = p_grid%xim(:,3) * rr(:,1,m) + p_grid%etm(:,3) * rr(:,2,m) + p_grid%zem(:,3) * rr(:,3,m)
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
+      !$ACC PARALLEL LOOP GANG VECTOR
+      do i=0,p_domdcomp%lmx
+         ss(i,1) = p_grid%xim(i,1) * rr(i,1,m) + &
+                   p_grid%etm(i,1) * rr(i,2,m) + &
+                   p_grid%zem(i,1) * rr(i,3,m)
+         ss(i,2) = p_grid%xim(i,2) * rr(i,1,m) + &
+                   p_grid%etm(i,2) * rr(i,2,m) + &
+                   p_grid%zem(i,2) * rr(i,3,m)
+         ss(i,3) = p_grid%xim(i,3) * rr(i,1,m) + &
+                   p_grid%etm(i,3) * rr(i,2,m) + &
+                   p_grid%zem(i,3) * rr(i,3,m)
 
-      rr(:,1,m) = de(:,1) * p_grid%yaco(:)
-      rr(:,2,m) = gamm1prndtli * rr(:,1,m)
-      de(:,5) = twothirds * ( this%txx(:) + this%tyy(:) + this%tzz(:) )
+         rr(i,1,m) = de(i,1) * p_grid%yaco(i)
+         rr(i,2,m) = gamm1prndtli * rr(i,1,m)
+         de(i,5)   = twothirds * ( this%txx(i) + this%tyy(i) + this%tzz(i) )
 
-      this%txx(:) = rr(:,1,m) * ( this%txx(:) + this%txx(:) - de(:,5) )
-      this%tyy(:) = rr(:,1,m) * ( this%tyy(:) + this%tyy(:) - de(:,5) )
-      this%tzz(:) = rr(:,1,m) * ( this%tzz(:) + this%tzz(:) - de(:,5) )
+         this%txx(i) = rr(i,1,m) * ( this%txx(i) + this%txx(i) - de(i,5) )
+         this%tyy(i) = rr(i,1,m) * ( this%tyy(i) + this%tyy(i) - de(i,5) )
+         this%tzz(i) = rr(i,1,m) * ( this%tzz(i) + this%tzz(i) - de(i,5) )
 
-      this%txy(:) = rr(:,1,m) * ( this%txy(:) + this%hzz(:) )
-      this%tyz(:) = rr(:,1,m) * ( this%tyz(:) + this%hxx(:) )
-      this%tzx(:) = rr(:,1,m) * ( this%tzx(:) + this%hyy(:) )
+         this%txy(i) = rr(i,1,m) * ( this%txy(i) + this%hzz(i) )
+         this%tyz(i) = rr(i,1,m) * ( this%tyz(i) + this%hxx(i) )
+         this%tzx(i) = rr(i,1,m) * ( this%tzx(i) + this%hyy(i) )
 
-      this%hxx(:) = rr(:,2,m) * ss(:,1) + de(:,2) * this%txx(:) + &
-                    de(:,3) * this%txy(:) + de(:,4) * this%tzx(:)
-      this%hyy(:) = rr(:,2,m) * ss(:,2) + de(:,2) * this%txy(:) + &
-                    de(:,3) * this%tyy(:) + de(:,4) * this%tyz(:)
-      this%hzz(:) = rr(:,2,m) * ss(:,3) + de(:,2) * this%tzx(:) + &
-                    de(:,3) * this%tyz(:) + de(:,4) * this%tzz(:)
+         this%hxx(i) = rr(i,2,m) * ss(i,1) + de(i,2) * this%txx(i) + &
+                       de(i,3) * this%txy(i) + de(i,4) * this%tzx(i)
+         this%hyy(i) = rr(i,2,m) * ss(i,2) + de(i,2) * this%txy(i) + &
+                       de(i,3) * this%tyy(i) + de(i,4) * this%tyz(i)
+         this%hzz(i) = rr(i,2,m) * ss(i,3) + de(i,2) * this%tzx(i) + &
+                       de(i,3) * this%tyz(i) + de(i,4) * this%tzz(i)
+      end do
+      !$ACC END PARALLEL
 #endif
    end subroutine calc_viscous_shear_stress
 
@@ -305,82 +354,112 @@ MODULE mo_physics
 
    subroutine calc_fluxes(this, p_domdcomp, p_numerics, p_grid, qa, p, de)
       class(t_physics), INTENT(INOUT) :: this
-      type(t_domdcomp), intent(IN)    :: p_domdcomp
+      type(t_domdcomp), intent(inout)    :: p_domdcomp
       type(t_numerics), intent(inout) :: p_numerics
-      type(t_grid),     intent(in)    :: p_grid
+      type(t_grid),     intent(inout)    :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
 
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       real(kind=nr), dimension(0:p_domdcomp%lmx,3,5) :: rr
-      integer(kind=ni) :: m
+      integer(kind=ni) :: m,i
 
-      rr(:,1,1) = de(:,2) + this%umf(1)
-      rr(:,2,1) = de(:,3) + this%umf(2)
-      rr(:,3,1) = de(:,4) + this%umf(3)
+      !$ACC PARALLEL LOOP GANG VECTOR
+      do i=0,p_domdcomp%lmx
+         rr(i,1,1) = de(i,2) + this%umf(1)
+         rr(i,2,1) = de(i,3) + this%umf(2)
+         rr(i,3,1) = de(i,4) + this%umf(3)
 
-      ss(:,1) = p_grid%xim(:,1) * rr(:,1,1) + p_grid%xim(:,2) * rr(:,2,1) + p_grid%xim(:,3) * rr(:,3,1)
-      ss(:,2) = p_grid%etm(:,1) * rr(:,1,1) + p_grid%etm(:,2) * rr(:,2,1) + p_grid%etm(:,3) * rr(:,3,1)
-      ss(:,3) = p_grid%zem(:,1) * rr(:,1,1) + p_grid%zem(:,2) * rr(:,2,1) + p_grid%zem(:,3) * rr(:,3,1)
+         ss(i,1) = p_grid%xim(i,1) * rr(i,1,1) + &
+                   p_grid%xim(i,2) * rr(i,2,1) + &
+                   p_grid%xim(i,3) * rr(i,3,1)
+         ss(i,2) = p_grid%etm(i,1) * rr(i,1,1) + &
+                   p_grid%etm(i,2) * rr(i,2,1) + &
+                   p_grid%etm(i,3) * rr(i,3,1)
+         ss(i,3) = p_grid%zem(i,1) * rr(i,1,1) + &
+                   p_grid%zem(i,2) * rr(i,2,1) + &
+                   p_grid%zem(i,3) * rr(i,3,1)
 
-      rr(:,1,1) = qa(:,1) * ss(:,1)
-      rr(:,2,1) = qa(:,1) * ss(:,2)
-      rr(:,3,1) = qa(:,1) * ss(:,3)
+         rr(i,1,1) = qa(i,1) * ss(i,1)
+         rr(i,2,1) = qa(i,1) * ss(i,2)
+         rr(i,3,1) = qa(i,1) * ss(i,3)
 
 
-      rr(:,1,2) = qa(:,2) * ss(:,1) + p_grid%xim(:,1) * p(:)
-      rr(:,2,2) = qa(:,2) * ss(:,2) + p_grid%etm(:,1) * p(:)
-      rr(:,3,2) = qa(:,2) * ss(:,3) + p_grid%zem(:,1) * p(:)
+         rr(i,1,2) = qa(i,2) * ss(i,1) + p_grid%xim(i,1) * p(i)
+         rr(i,2,2) = qa(i,2) * ss(i,2) + p_grid%etm(i,1) * p(i)
+         rr(i,3,2) = qa(i,2) * ss(i,3) + p_grid%zem(i,1) * p(i)
 #ifdef VISCOUS
-      rr(:,1,2) = rr(:,1,2) - p_grid%xim(:,1) * this%txx(:) - &
-                          p_grid%xim(:,2) * this%txy(:) - p_grid%xim(:,3) * this%tzx(:)
-      rr(:,2,2) = rr(:,2,2) - p_grid%etm(:,1) * this%txx(:) - &
-                          p_grid%etm(:,2) * this%txy(:) - p_grid%etm(:,3) * this%tzx(:)
-      rr(:,3,2) = rr(:,3,2) - p_grid%zem(:,1) * this%txx(:) - &
-                          p_grid%zem(:,2) * this%txy(:) - p_grid%zem(:,3) * this%tzx(:)
+         rr(i,1,2) = rr(i,1,2) - p_grid%xim(i,1) * this%txx(i) - &
+                                 p_grid%xim(i,2) * this%txy(i) - &
+                                 p_grid%xim(i,3) * this%tzx(i)
+         rr(i,2,2) = rr(i,2,2) - p_grid%etm(i,1) * this%txx(i) - &
+                                 p_grid%etm(i,2) * this%txy(i) - &
+                                 p_grid%etm(i,3) * this%tzx(i)
+         rr(i,3,2) = rr(i,3,2) - p_grid%zem(i,1) * this%txx(i) - &
+                                 p_grid%zem(i,2) * this%txy(i) - &
+                                 p_grid%zem(i,3) * this%tzx(i)
 #endif
 
 
-      rr(:,1,3) = qa(:,3) * ss(:,1) + p_grid%xim(:,2) * p(:)
-      rr(:,2,3) = qa(:,3) * ss(:,2) + p_grid%etm(:,2) * p(:)
-      rr(:,3,3) = qa(:,3) * ss(:,3) + p_grid%zem(:,2) * p(:)
+         rr(i,1,3) = qa(i,3) * ss(i,1) + p_grid%xim(i,2) * p(i)
+         rr(i,2,3) = qa(i,3) * ss(i,2) + p_grid%etm(i,2) * p(i)
+         rr(i,3,3) = qa(i,3) * ss(i,3) + p_grid%zem(i,2) * p(i)
 #ifdef VISCOUS
-      rr(:,1,3) = rr(:,1,3) - p_grid%xim(:,1) * this%txy(:) - &
-                          p_grid%xim(:,2) * this%tyy(:) - p_grid%xim(:,3) * this%tyz(:)
-      rr(:,2,3) = rr(:,2,3) - p_grid%etm(:,1) * this%txy(:) - &
-                          p_grid%etm(:,2) * this%tyy(:) - p_grid%etm(:,3) * this%tyz(:)
-      rr(:,3,3) = rr(:,3,3) - p_grid%zem(:,1) * this%txy(:) - &
-                          p_grid%zem(:,2) * this%tyy(:) - p_grid%zem(:,3) * this%tyz(:)
+         rr(i,1,3) = rr(i,1,3) - p_grid%xim(i,1) * this%txy(i) - &
+                                 p_grid%xim(i,2) * this%tyy(i) - &
+                                 p_grid%xim(i,3) * this%tyz(i)
+         rr(i,2,3) = rr(i,2,3) - p_grid%etm(i,1) * this%txy(i) - &
+                                 p_grid%etm(i,2) * this%tyy(i) - &
+                                 p_grid%etm(i,3) * this%tyz(i)
+         rr(i,3,3) = rr(i,3,3) - p_grid%zem(i,1) * this%txy(i) - &
+                                 p_grid%zem(i,2) * this%tyy(i) - &
+                                 p_grid%zem(i,3) * this%tyz(i)
 #endif
 
 
-      rr(:,1,4) = qa(:,4) * ss(:,1) + p_grid%xim(:,3) * p(:)
-      rr(:,2,4) = qa(:,4) * ss(:,2) + p_grid%etm(:,3) * p(:)
-      rr(:,3,4) = qa(:,4) * ss(:,3) + p_grid%zem(:,3) * p(:)
+         rr(i,1,4) = qa(i,4) * ss(i,1) + p_grid%xim(i,3) * p(i)
+         rr(i,2,4) = qa(i,4) * ss(i,2) + p_grid%etm(i,3) * p(i)
+         rr(i,3,4) = qa(i,4) * ss(i,3) + p_grid%zem(i,3) * p(i)
 #ifdef VISCOUS
-      rr(:,1,4) = rr(:,1,4) - p_grid%xim(:,1) * this%tzx(:) - &
-                          p_grid%xim(:,2) * this%tyz(:) - p_grid%xim(:,3) * this%tzz(:)
-      rr(:,2,4) = rr(:,2,4) - p_grid%etm(:,1) * this%tzx(:) - &
-                          p_grid%etm(:,2) * this%tyz(:) - p_grid%etm(:,3) * this%tzz(:)
-      rr(:,3,4) = rr(:,3,4) - p_grid%zem(:,1) * this%tzx(:) - &
-                          p_grid%zem(:,2) * this%tyz(:) - p_grid%zem(:,3) * this%tzz(:)
+         rr(i,1,4) = rr(i,1,4) - p_grid%xim(i,1) * this%tzx(i) - &
+                                 p_grid%xim(i,2) * this%tyz(i) - &
+                                 p_grid%xim(i,3) * this%tzz(i)
+         rr(i,2,4) = rr(i,2,4) - p_grid%etm(i,1) * this%tzx(i) - &
+                                 p_grid%etm(i,2) * this%tyz(i) - &
+                                 p_grid%etm(i,3) * this%tzz(i)
+         rr(i,3,4) = rr(i,3,4) - p_grid%zem(i,1) * this%tzx(i) - &
+                                 p_grid%zem(i,2) * this%tyz(i) - & 
+                                 p_grid%zem(i,3) * this%tzz(i)
 #endif
 
 
-      de(:,5) = qa(:,5) + p(:)
-      rr(:,1,5) = de(:,5) * ss(:,1) - p(:) * &
-              ( this%umf(1) * p_grid%xim(:,1) + this%umf(2) * p_grid%xim(:,2) + this%umf(3) * p_grid%xim(:,3) )
-      rr(:,2,5) = de(:,5) * ss(:,2) - p(:) * &
-              ( this%umf(1) * p_grid%etm(:,1) + this%umf(2) * p_grid%etm(:,2) + this%umf(3) * p_grid%etm(:,3) )
-      rr(:,3,5) = de(:,5) * ss(:,3) - p(:) * &
-              ( this%umf(1) * p_grid%zem(:,1) + this%umf(2) * p_grid%zem(:,2) + this%umf(3) * p_grid%zem(:,3) )
+         de(i,5)   = qa(i,5) + p(i)
+         rr(i,1,5) = de(i,5) * ss(i,1) - p(i) *      &
+                   ( this%umf(1) * p_grid%xim(i,1) + &
+                     this%umf(2) * p_grid%xim(i,2) + &
+                     this%umf(3) * p_grid%xim(i,3) )
+         rr(i,2,5) = de(i,5) * ss(i,2) - p(i) *      &
+                   ( this%umf(1) * p_grid%etm(i,1) + &
+                     this%umf(2) * p_grid%etm(i,2) + &
+                     this%umf(3) * p_grid%etm(i,3) )
+         rr(i,3,5) = de(i,5) * ss(i,3) - p(i) *      &
+                   ( this%umf(1) * p_grid%zem(i,1) + & 
+                     this%umf(2) * p_grid%zem(i,2) + &
+                     this%umf(3) * p_grid%zem(i,3) )
 #ifdef VISCOUS
-      rr(:,1,5) = rr(:,1,5) - p_grid%xim(:,1) * this%hxx(:) - p_grid%xim(:,2) * this%hyy(:) - p_grid%xim(:,3) * this%hzz(:)
-      rr(:,2,5) = rr(:,2,5) - p_grid%etm(:,1) * this%hxx(:) - p_grid%etm(:,2) * this%hyy(:) - p_grid%etm(:,3) * this%hzz(:)
-      rr(:,3,5) = rr(:,3,5) - p_grid%zem(:,1) * this%hxx(:) - p_grid%zem(:,2) * this%hyy(:) - p_grid%zem(:,3) * this%hzz(:)
+         rr(i,1,5) = rr(i,1,5) - p_grid%xim(i,1) * this%hxx(i) - &
+                                 p_grid%xim(i,2) * this%hyy(i) - &
+                                 p_grid%xim(i,3) * this%hzz(i)
+         rr(i,2,5) = rr(i,2,5) - p_grid%etm(i,1) * this%hxx(i) - &
+                                 p_grid%etm(i,2) * this%hyy(i) - &
+                                 p_grid%etm(i,3) * this%hzz(i)
+         rr(i,3,5) = rr(i,3,5) - p_grid%zem(i,1) * this%hxx(i) - & 
+                                 p_grid%zem(i,2) * this%hyy(i) - &
+                                 p_grid%zem(i,3) * this%hzz(i)
 #endif
-
+      end do
+      !$ACC END PARALLEL
 
       ! Halo exchange
       do m=1,5
@@ -391,12 +470,16 @@ MODULE mo_physics
 
       do m=1,5
          call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                        p_domdcomp%ijk, 1, 1, m)
+                        p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
          call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                        p_domdcomp%ijk, 2, 2, m)
+                        p_domdcomp%ijk, 2, 2, m, luse_acc = .true.)
          call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                        p_domdcomp%ijk, 3, 3, m)
-         de(:,m) = rr(:,1,m) + rr(:,2,m) + rr(:,3,m)
+                        p_domdcomp%ijk, 3, 3, m, luse_acc = .true.)
+         !$ACC PARALLEL LOOP GANG VECTOR
+         do i=0,p_domdcomp%lmx
+           de(i,m) = rr(i,1,m) + rr(i,2,m) + rr(i,3,m)
+         end do
+         !$ACC END PARALLEL
       end do
 
    end subroutine calc_fluxes
