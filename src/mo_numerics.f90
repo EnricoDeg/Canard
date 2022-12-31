@@ -66,9 +66,7 @@ module mo_numerics
       procedure, public :: mpigo_1d
       procedure, public :: mpigo_2d
       generic,   public :: mpigo => mpigo_1d,mpigo_2d
-      procedure, public :: deriv_nooverwrite
-      procedure, public :: deriv_overwrite
-      generic,   public :: deriv => deriv_overwrite,deriv_nooverwrite
+      procedure, public :: deriv
       procedure, public :: filte
 
    end type t_numerics
@@ -709,97 +707,7 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FINITE DIFFERENTIATING
 
-   subroutine deriv_nooverwrite(this, rfieldin, rfieldout, lmx, lxik, letk, lzek, ijks, nn, m)
-      class(t_numerics), intent(inout) :: this
-      real(kind=nr),    intent(in),  dimension(0:lmx) :: rfieldin
-      real(kind=nr),    intent(out), dimension(0:lmx) :: rfieldout
-      integer(kind=ni), intent(in)                  :: lmx
-      integer(kind=ni), intent(in)                  :: lxik, letk, lzek
-      integer(kind=ni), intent(in), dimension(3,3)  :: ijks
-      integer(kind=ni), intent(in)                  :: nn, m
-      integer(kind=ni) :: ntk, nstart, nend, istart, iend
-      integer(kind=ni) :: kkk, jjj, iii, kpp, jkk, lll
-
-      ntk    = 0
-      nstart = this%ndf(nn,0,0)
-      nend   = this%ndf(nn,1,0)
-
-      select case(nn)
-      case(1)
-         istart =  0
-         iend   =  istart + lxik
-         this%recv   => this%recv01
-         this%drva   => this%drva1
-      case(2)
-         istart =  lxik + 1
-         iend   =  istart + letk
-         this%recv   => this%recv02
-         this%drva   => this%drva2
-      case(3)
-         istart =  lxik + letk + 2
-         iend   =  istart + lzek
-         this%recv   => this%recv03
-         this%drva   => this%drva3
-      end select
-
-      do kkk = 0,ijks(3,nn)
-         kpp = kkk * ( ijks(2,nn) + 1 )
-         do jjj=  0,ijks(2,nn)
-            jkk = kpp + jjj
-            do iii = istart,iend
-               lll = indx3(iii-istart, jjj, kkk, nn, lxik, letk)
-               this%li(iii) = lll
-               this%sa(iii) = rfieldin(lll)
-            end do
-
-            select case(nstart)
-            case(0)
-               this%sb(istart)   = sum( (/a01,a02,a03,a04/) * ( this%sa(istart+(/1,2,3,4/)) - this%sa(istart)   ) )
-               this%sb(istart+1) = sum( (/a10,a12,a13,a14/) * ( this%sa(istart+(/0,2,3,4/)) - this%sa(istart+1) ) )
-            case(1)
-               this%sb(istart)   = sum( this%pbci(0:lmd,0,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,0,0,m)
-               this%sb(istart+1) = sum( this%pbci(0:lmd,1,ntk) * this%sa(istart:istart+lmd) ) + this%recv(jkk,1,0,m)
-            end select
-
-            do iii = istart+2,iend-2
-               this%sb(iii) = aa * ( this%sa(iii+1) - this%sa(iii-1) ) + ab * ( this%sa(iii+2) - this%sa(iii-2) )
-            end do
-
-            select case(nend)
-            case(0)
-               this%sb(iend)   = sum( (/a01,a02,a03,a04/) * ( this%sa(iend)   - this%sa(iend-(/1,2,3,4/)) ) )
-               this%sb(iend-1) = sum( (/a10,a12,a13,a14/) * ( this%sa(iend-1) - this%sa(iend-(/0,2,3,4/)) ) )
-            case(1)
-               this%sb(iend)   = -sum( this%pbci(0:lmd,0,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,0,1,m)
-               this%sb(iend-1) = -sum( this%pbci(0:lmd,1,ntk) * this%sa(iend:iend-lmd:-1) ) - this%recv(jkk,1,1,m)
-            end select
-
-            this%sa(istart)   = this%sb(istart)
-            this%sa(istart+1) = this%sb(istart+1) - this%xl(istart+1,2) * this%sa(istart)
-            do iii = istart+2,iend
-               this%sa(iii) = this%sb(iii) - this%xl(iii,1) * this%sa(iii-2) - this%xl(iii,2) * this%sa(iii-1)
-            end do
-
-            this%sb(iend)   = this%xu(iend,1)   * this%sa(iend)
-            this%sb(iend-1) = this%xu(iend-1,1) * this%sa(iend-1) - this%xu(iend-1,2) * this%sb(iend)
-            do iii = iend-2,istart,-1
-               this%sb(iii) = this%xu(iii,1) * this%sa(iii) - this%xu(iii,2) * this%sb(iii+1) - this%xu(iii,3) * this%sb(iii+2)
-            end do
-
-            do iii = istart,iend
-               lll = this%li(iii)
-               rfieldout(lll) = this%sb(iii)
-            end do
-
-            this%drva(jkk,m,0) = this%sb(istart)
-            this%drva(jkk,m,1) = this%sb(iend)
-
-         end do
-      end do
-
-   end subroutine deriv_nooverwrite
-
-   subroutine deriv_overwrite(this, rfield, lmx, lxik, letk, lzek, ijks, nn, nz, m, luse_acc)
+   subroutine deriv(this, rfield, lmx, lxik, letk, lzek, ijks, nn, nz, m, luse_acc)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                  :: lmx
@@ -960,7 +868,7 @@ module mo_numerics
       end do
       !$ACC END PARALLEL
 
-   end subroutine deriv_overwrite
+   end subroutine deriv
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
