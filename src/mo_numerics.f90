@@ -872,16 +872,24 @@ module mo_numerics
 
 !===== SUBROUTINE FOR COMPACT FILTERING
 
-   subroutine filte(this, rfield, lmx, lxik, letk, lzek, ijks, inn, m)
+   subroutine filte(this, rfield, lmx, lxik, letk, lzek, ijks, inn, m, luse_acc)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                  :: lmx
       integer(kind=ni), intent(in)                  :: lxik, letk, lzek
       integer(kind=ni), intent(in), dimension(3,3)  :: ijks
       integer(kind=ni), intent(in)                  :: inn, m
-      integer(kind=ni) :: nstart, nend, istart, iend, ntk, nn
-      integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk
+      logical, intent(in), optional                 :: luse_acc
+      logical          :: lacc
+      integer(kind=ni) :: nstart, nend, istart, iend, ntk, nn, ustart, uend
+      integer(kind=ni) :: kkk, jjj, iii, lll, kpp, jkk, ijj
       real(kind=nr)    :: resk, ra2k
+
+      if (present(luse_acc)) then
+        lacc = luse_acc
+      else
+        lacc = .false.
+      end if
 
       nn = nnf(inn)
 
@@ -891,83 +899,143 @@ module mo_numerics
 
       select case(nn)
       case(1)
-         istart =  0
-         iend   =  istart + lxik
+         ustart =  0
+         uend   =  ustart + lxik
          this%recv   => this%recv11
       case(2)
-         istart =  lxik + 1
-         iend   =  istart + letk
+         ustart =  lxik + 1
+         uend   =  ustart + letk
          this%recv   => this%recv12
       case(3)
-         istart =  lxik + letk + 2
-         iend   =  istart + lzek
+         ustart =  lxik + letk + 2
+         uend   =  ustart + lzek
          this%recv   => this%recv13
       end select
 
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(3) IF (lacc)
       do kkk = 0,ijks(3,nn)
-         kpp = kkk * ( ijks(2,nn) + 1 )
          do jjj = 0,ijks(2,nn)
-            jkk = kpp + jjj
-            do iii = istart,iend
-               lll     = indx3(iii-istart, jjj, kkk, nn, lxik, letk)
-               this%li(iii) = lll
-               this%sa(iii) = rfield(lll)
+            do iii = 0,ijks(1,nn)
+               lll = indx3(iii, jjj, kkk, nn, lxik, letk)
+               ijj = iii + jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+               this%sar(ijj) = rfield(lll)
             end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1)) 
+            iend   = istart + ijks(1,nn)
+            kpp = kkk * ( ijks(2,nn) + 1 )
+            jkk = kpp + jjj
 
             select case(nstart)
             case(0)
-               this%sb(istart)   = sum( this%fbc(:,0) * ( this%sa(istart+(/1,2,3,4,5/)) - this%sa(istart)   ) )
-               this%sb(istart+1) = sum( this%fbc(:,1) * ( this%sa(istart+(/0,2,3,4,5/)) - this%sa(istart+1) ) )
-               this%sb(istart+2) = sum( this%fbc(:,2) * ( this%sa(istart+(/0,1,3,4,5/)) - this%sa(istart+2) ) )
+               this%sbr(istart)   = sum( this%fbc(:,0) * ( this%sar(istart+(/1,2,3,4,5/)) - this%sar(istart)   ) )
+               this%sbr(istart+1) = sum( this%fbc(:,1) * ( this%sar(istart+(/0,2,3,4,5/)) - this%sar(istart+1) ) )
+               this%sbr(istart+2) = sum( this%fbc(:,2) * ( this%sar(istart+(/0,1,3,4,5/)) - this%sar(istart+2) ) )
             case(1)
-               ra2k              = this%sa(istart+2) + this%sa(istart+2)
-               this%sb(istart)   = sum( this%pbci(0:lmf,0,ntk) * this%sa(istart:istart+lmf) ) + this%recv(jkk,0,0,m)
-               this%sb(istart+1) = sum( this%pbci(0:lmf,1,ntk) * this%sa(istart:istart+lmf) ) + this%recv(jkk,1,0,m)
-               this%sb(istart+2) = this%fa * ( this%sa(istart+1)  + this%sa(istart+3) - ra2k ) + &
-                                   this%fb * ( this%sa(istart)    + this%sa(istart+4) - ra2k ) + &
-                                   this%fc * ( this%recv(jkk,2,0,m) + this%sa(istart+5) - ra2k )
+               ra2k              = this%sar(istart+2) + this%sar(istart+2)
+               this%sbr(istart)   = sum( this%pbci(0:lmf,0,ntk) * this%sar(istart:istart+lmf) ) + this%recv(jkk,0,0,m)
+               this%sbr(istart+1) = sum( this%pbci(0:lmf,1,ntk) * this%sar(istart:istart+lmf) ) + this%recv(jkk,1,0,m)
+               this%sbr(istart+2) = this%fa * ( this%sar(istart+1)  + this%sar(istart+3) - ra2k ) + &
+                                    this%fb * ( this%sar(istart)    + this%sar(istart+4) - ra2k ) + &
+                                    this%fc * ( this%recv(jkk,2,0,m) + this%sar(istart+5) - ra2k )
             end select
-
-            do iii = istart+3,iend-3
-               resk         = this%sa(iii) + this%sa(iii)
-               this%sb(iii) = this%fa * ( this%sa(iii-1) + this%sa(iii+1) - resk ) + &
-                              this%fb * ( this%sa(iii-2) + this%sa(iii+2) - resk ) + &
-                              this%fc * ( this%sa(iii-3) + this%sa(iii+3) - resk )
-            end do
-
-            select case(nend)
-            case(0)
-               this%sb(iend)   = sum( this%fbc(:,0) * ( this%sa(iend-(/1,2,3,4,5/)) - this%sa(iend)   ) )
-               this%sb(iend-1) = sum( this%fbc(:,1) * ( this%sa(iend-(/0,2,3,4,5/)) - this%sa(iend-1) ) )
-               this%sb(iend-2) = sum( this%fbc(:,2) * ( this%sa(iend-(/0,1,3,4,5/)) - this%sa(iend-2) ) )
-            case(1)
-               ra2k       = this%sa(iend-2) + this%sa(iend-2)
-               this%sb(iend)   = sum( this%pbci(0:lmf,0,ntk) * this%sa(iend:iend-lmf:-1) ) + this%recv(jkk,0,1,m)
-               this%sb(iend-1) = sum( this%pbci(0:lmf,1,ntk) * this%sa(iend:iend-lmf:-1) ) + this%recv(jkk,1,1,m)
-               this%sb(iend-2) = this%fa * ( this%sa(iend-3) + this%sa(iend-1)    - ra2k ) + &
-                                 this%fb * ( this%sa(iend-4) + this%sa(iend)      - ra2k ) + &
-                                 this%fc * ( this%sa(iend-5) + this%recv(jkk,2,1,m) - ra2k )
-            end select
-
-            this%sa(istart)   = this%sb(istart)
-            this%sa(istart+1) = this%sb(istart+1) - this%yl(istart+1,2) * this%sa(istart)
-            do iii = istart+2,iend
-               this%sa(iii) = this%sb(iii) - this%yl(iii,1) * this%sa(iii-2) - this%yl(iii,2) * this%sa(iii-1)
-            end do
-            
-            this%sb(iend)   = this%yu(iend,1)   * this%sa(iend)
-            this%sb(iend-1) = this%yu(iend-1,1) * this%sa(iend-1) - this%yu(iend-1,2) * this%sb(iend)
-            do iii = iend-2,istart,-1
-               this%sb(iii) = this%yu(iii,1) * this%sa(iii) - this%yu(iii,2) * this%sb(iii+1) - this%yu(iii,3) * this%sb(iii+2)
-            end do
-
-            do iii = istart,iend
-               lll         = this%li(iii)
-               rfield(lll) = rfield(lll) + this%sb(iii)
-            end do
-
          end do
       end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+            iend   = istart + ijks(1,nn)
+            !$ACC LOOP VECTOR
+            do iii = istart+3,iend-3
+               resk         = this%sar(iii) + this%sar(iii)
+               this%sbr(iii) = this%fa * ( this%sar(iii-1) + this%sar(iii+1) - resk ) + &
+                               this%fb * ( this%sar(iii-2) + this%sar(iii+2) - resk ) + &
+                               this%fc * ( this%sar(iii-3) + this%sar(iii+3) - resk )
+            end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            kpp = kkk * ( ijks(2,nn) + 1 )
+            jkk = kpp + jjj
+            
+            select case(nend)
+            case(0)
+               this%sbr(iend)   = sum( this%fbc(:,0) * ( this%sar(iend-(/1,2,3,4,5/)) - this%sar(iend)   ) )
+               this%sbr(iend-1) = sum( this%fbc(:,1) * ( this%sar(iend-(/0,2,3,4,5/)) - this%sar(iend-1) ) )
+               this%sbr(iend-2) = sum( this%fbc(:,2) * ( this%sar(iend-(/0,1,3,4,5/)) - this%sar(iend-2) ) )
+            case(1)
+               ra2k             = this%sar(iend-2) + this%sar(iend-2)
+               this%sbr(iend)   = sum( this%pbci(0:lmf,0,ntk) * this%sar(iend:iend-lmf:-1) ) + this%recv(jkk,0,1,m)
+               this%sbr(iend-1) = sum( this%pbci(0:lmf,1,ntk) * this%sar(iend:iend-lmf:-1) ) + this%recv(jkk,1,1,m)
+               this%sbr(iend-2) = this%fa * ( this%sar(iend-3) + this%sar(iend-1)    - ra2k ) + &
+                                 this%fb * ( this%sar(iend-4) + this%sar(iend)      - ra2k ) + &
+                                 this%fc * ( this%sar(iend-5) + this%recv(jkk,2,1,m) - ra2k )
+            end select
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      ! inner loop carry dependencies
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+            iend   = istart + ijks(1,nn)
+
+            this%sar(istart)   = this%sbr(istart)
+            this%sar(istart+1) = this%sbr(istart+1) - this%yl(ustart+1,2) * this%sar(istart)
+            !$ACC LOOP SEQ
+            do iii = istart+2,iend
+               this%sar(iii) = this%sbr(iii) - this%yl(iii-istart+ustart,1) * this%sar(iii-2) - &
+                                               this%yl(iii-istart+ustart,2) * this%sar(iii-1)
+            end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      ! inner loop carry dependencies
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+            iend   = istart + ijks(1,nn)
+
+            this%sbr(iend)   = this%yu(uend,1)   * this%sar(iend)
+            this%sbr(iend-1) = this%yu(uend-1,1) * this%sar(iend-1) - this%yu(uend-1,2) * this%sbr(iend)
+            !$ACC LOOP SEQ
+            do iii = iend-2,istart,-1
+               this%sbr(iii) = this%yu(iii-iend+uend,1) * this%sar(iii)   - &
+                               this%yu(iii-iend+uend,2) * this%sbr(iii+1) - &
+                               this%yu(iii-iend+uend,3) * this%sbr(iii+2)
+            end do
+         end do
+      end do
+      !$ACC END PARALLEL
+
+      !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(3) IF (lacc)
+      do kkk = 0,ijks(3,nn)
+         do jjj = 0,ijks(2,nn)
+            do iii = 0,ijks(1,nn)
+               lll = indx3(iii, jjj, kkk, nn, lxik, letk)
+               ijj = iii + jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+               rfield(lll) = rfield(lll) + this%sbr(ijj)
+            end do
+         end do
+      end do
+      !$ACC END PARALLEL
 
    end subroutine filte
 
