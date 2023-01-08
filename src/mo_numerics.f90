@@ -965,9 +965,13 @@ module mo_numerics
       end do
       !$ACC END PARALLEL
 
+
       !$ACC PARALLEL LOOP GANG VECTOR COLLAPSE(2) IF (lacc)
       do kkk = 0,ijks(3,nn)
          do jjj = 0,ijks(2,nn)
+            istart = jjj * (ijks(1,nn)+1) + kkk * ((ijks(1,nn)+1)*(ijks(2,nn)+1))
+            iend   = istart + ijks(1,nn)
+
             kpp = kkk * ( ijks(2,nn) + 1 )
             jkk = kpp + jjj
             
