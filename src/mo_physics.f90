@@ -213,20 +213,28 @@ MODULE mo_physics
 
 !===== VISCOUS SHEAR STRESSES & HEAT FLUXES
 
-   subroutine calc_viscous_shear_stress(this, p_domdcomp, p_numerics, p_grid, de, ssk)
-      class(t_physics), INTENT(INOUT) :: this
-      type(t_domdcomp), intent(inout)    :: p_domdcomp
-      type(t_numerics), intent(inout) :: p_numerics
-      type(t_grid),     intent(inout)    :: p_grid
+   subroutine calc_viscous_shear_stress(this, p_domdcomp, p_numerics, p_grid, de, ssk, luse_acc)
+      class(t_physics), intent(inout)                             :: this
+      type(t_domdcomp), intent(inout)                             :: p_domdcomp
+      type(t_numerics), intent(inout)                             :: p_numerics
+      type(t_grid),     intent(inout)                             :: p_grid
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
-      real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in)    :: ssk
+      real(kind=nr), dimension(0:p_domdcomp%lmx),   intent(in)    :: ssk
+      logical,          intent(in), optional                      :: luse_acc
+
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       real(kind=nr), dimension(0:p_domdcomp%lmx,3,2:5) :: rr
-
       integer(kind=ni) :: m, i
+      logical          :: lacc
 
 #ifdef VISCOUS
-      !$ACC PARALLEL LOOP GANG VECTOR
+      if (present(luse_acc)) then
+        lacc = luse_acc
+      else
+        lacc = .false.
+      end if
+
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do i=0,p_domdcomp%lmx
          de(i,1) = ssk(i)
       end do
@@ -234,24 +242,24 @@ MODULE mo_physics
 
       ! Halo exchange
       do m=2,5
-         !$ACC PARALLEL LOOP GANG VECTOR
+         !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
          do i=0,p_domdcomp%lmx
             rr(i,1,m) = de(i,m)
          end do
          !$ACC END PARALLEL
          call p_numerics%mpigo(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc, &
                                p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrone, n45no, m, &
-                               p_domdcomp%lxi, p_domdcomp%let, m)
+                               p_domdcomp%lxi, p_domdcomp%let, m, luse_acc = .false.)
       end do
 
       m = 2
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
-      !$ACC PARALLEL LOOP GANG VECTOR
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do i=0,p_domdcomp%lmx
          this%txx(i) = p_grid%xim(i,1) * rr(i,1,m) + &
                        p_grid%etm(i,1) * rr(i,2,m) + &
@@ -267,12 +275,12 @@ MODULE mo_physics
 
       m = 3
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, & 
-                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
-      !$ACC PARALLEL LOOP GANG VECTOR
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do i=0,p_domdcomp%lmx
          this%txy(i) = p_grid%xim(i,1) * rr(i,1,m) + &
                        p_grid%etm(i,1) * rr(i,2,m) + &
@@ -288,12 +296,12 @@ MODULE mo_physics
 
       m = 4
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
-      !$ACC PARALLEL LOOP GANG VECTOR
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do i=0,p_domdcomp%lmx
          this%hyy(i) = p_grid%xim(i,1) * rr(i,1,m) + &
                        p_grid%etm(i,1) * rr(i,2,m) + &
@@ -309,12 +317,12 @@ MODULE mo_physics
 
       m = 5
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 3, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 3, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 2, 1, m, luse_acc = .true.)
+                     p_domdcomp%ijk, 2, 1, m, luse_acc = lacc)
       call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                     p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
-      !$ACC PARALLEL LOOP GANG VECTOR
+                     p_domdcomp%ijk, 1, 1, m, luse_acc = lacc)
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do i=0,p_domdcomp%lmx
          ss(i,1) = p_grid%xim(i,1) * rr(i,1,m) + &
                    p_grid%etm(i,1) * rr(i,2,m) + &
@@ -352,20 +360,28 @@ MODULE mo_physics
 
 !===== CALCULATION OF FLUX DERIVATIVES
 
-   subroutine calc_fluxes(this, p_domdcomp, p_numerics, p_grid, qa, p, de)
-      class(t_physics), INTENT(INOUT) :: this
-      type(t_domdcomp), intent(inout)    :: p_domdcomp
-      type(t_numerics), intent(inout) :: p_numerics
-      type(t_grid),     intent(inout)    :: p_grid
-      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in) :: qa
-      real(kind=nr), dimension(0:p_domdcomp%lmx), intent(in) :: p
+   subroutine calc_fluxes(this, p_domdcomp, p_numerics, p_grid, qa, p, de, luse_acc)
+      class(t_physics), intent(inout)                             :: this
+      type(t_domdcomp), intent(inout)                             :: p_domdcomp
+      type(t_numerics), intent(inout)                             :: p_numerics
+      type(t_grid),     intent(inout)                             :: p_grid
+      real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(in)    :: qa
+      real(kind=nr), dimension(0:p_domdcomp%lmx),   intent(in)    :: p
       real(kind=nr), dimension(0:p_domdcomp%lmx,5), intent(inout) :: de
+      logical,          intent(in), optional                      :: luse_acc
 
       real(kind=nr), dimension(0:p_domdcomp%lmx,3) :: ss
       real(kind=nr), dimension(0:p_domdcomp%lmx,3,5) :: rr
       integer(kind=ni) :: m,i
+      logical          :: lacc
 
-      !$ACC PARALLEL LOOP GANG VECTOR
+      if (present(luse_acc)) then
+        lacc = luse_acc
+      else
+        lacc = .false.
+      end if
+
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do i=0,p_domdcomp%lmx
          rr(i,1,1) = de(i,2) + this%umf(1)
          rr(i,2,1) = de(i,3) + this%umf(2)
@@ -465,17 +481,17 @@ MODULE mo_physics
       do m=1,5
          call p_numerics%mpigo(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%ijk, p_domdcomp%nbc,        &
                         p_domdcomp%mcd, p_domdcomp%nbsize, 0, nrall, n45no, m, &
-                        p_domdcomp%lxi, p_domdcomp%let, m)
+                        p_domdcomp%lxi, p_domdcomp%let, m, luse_acc = .false.)
       end do
 
       do m=1,5
          call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                        p_domdcomp%ijk, 1, 1, m, luse_acc = .true.)
+                        p_domdcomp%ijk, 1, 1, m, luse_acc = lacc)
          call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                        p_domdcomp%ijk, 2, 2, m, luse_acc = .true.)
+                        p_domdcomp%ijk, 2, 2, m, luse_acc = lacc)
          call p_numerics%deriv(rr(:,:,m), p_domdcomp%lmx, p_domdcomp%lxi, p_domdcomp%let, p_domdcomp%lze, &
-                        p_domdcomp%ijk, 3, 3, m, luse_acc = .true.)
-         !$ACC PARALLEL LOOP GANG VECTOR
+                        p_domdcomp%ijk, 3, 3, m, luse_acc = lacc)
+         !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
          do i=0,p_domdcomp%lmx
            de(i,m) = rr(i,1,m) + rr(i,2,m) + rr(i,3,m)
          end do
