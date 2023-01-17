@@ -237,13 +237,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_barrier  
 
-  SUBROUTINE p_send_int(buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_send_int(buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    INTEGER, INTENT(in) :: buffer
-    INTEGER, INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    INTEGER, INTENT(IN)           :: buffer
+    INTEGER, INTENT(IN)           :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -252,11 +260,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_SEND (buffer, p_count, MPI_INTEGER4, p_destination, p_tag, &
             p_comm, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_SEND (buffer, 1, MPI_INTEGER4, p_destination, p_tag, &
             p_comm, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -270,13 +282,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_send_int
 
-  SUBROUTINE p_send_double(buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_send_double(buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    real(kind=nr), INTENT(in) :: buffer
-    INTEGER, INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(KIND=NR), INTENT(IN)     :: buffer
+    INTEGER, INTENT(IN)           :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -285,11 +305,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_SEND (buffer, p_count, MPI_REAL8, p_destination, p_tag, &
             p_comm, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_SEND (buffer, 1, MPI_REAL8, p_destination, p_tag, &
             p_comm, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -303,13 +327,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_send_double
 
-  SUBROUTINE p_send_long_int(buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_send_long_int(buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    INTEGER(nli), INTENT(in) :: buffer
-    INTEGER, INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    INTEGER(NLI), INTENT(IN)      :: buffer
+    INTEGER, INTENT(IN)           :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -318,11 +350,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_SEND (buffer, p_count, MPI_INTEGER8, p_destination, p_tag, &
             p_comm, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_SEND (buffer, 1, MPI_INTEGER8, p_destination, p_tag, &
             p_comm, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -336,13 +372,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_send_long_int
 
-  SUBROUTINE p_send_real_1d_sp (buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_send_real_1d_sp (buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    REAL(nsp), INTENT(in) :: buffer(:)
-    INTEGER,   INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NSP), INTENT(IN)         :: buffer(:)
+    INTEGER, INTENT(IN)           :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -351,11 +395,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+      !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
       CALL MPI_SEND (buffer, p_count, MPI_REAL4, p_destination, p_tag, &
            p_comm, ierr)
+      !$ACC END HOST_DATA
     ELSE
+      !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
       CALL MPI_SEND (buffer, SIZE(buffer), MPI_REAL4, p_destination, p_tag, &
            p_comm, ierr)
+      !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -371,12 +419,20 @@ MODULE mo_mpi
   END SUBROUTINE p_send_real_1d_sp
 
 
-  SUBROUTINE p_recv_int(buffer, p_source, p_tag, p_count, comm)
-    INTEGER, INTENT(out) :: buffer
-    INTEGER, INTENT(in)  :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+  SUBROUTINE p_recv_int(buffer, p_source, p_tag, p_count, comm, luse_acc)
+    INTEGER, INTENT(OUT)          :: buffer
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -385,11 +441,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, p_count, MPI_INTEGER4, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, 1, MPI_INTEGER4, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -402,12 +462,20 @@ MODULE mo_mpi
 #endif
   END SUBROUTINE p_recv_int
 
-  SUBROUTINE p_recv_double(buffer, p_source, p_tag, p_count, comm)
-    real(kind=nr), INTENT(out) :: buffer
-    INTEGER, INTENT(in)  :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+  SUBROUTINE p_recv_double(buffer, p_source, p_tag, p_count, comm, luse_acc)
+    REAL(KIND=NR), INTENT(OUT)    :: buffer
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -416,11 +484,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, p_count, MPI_REAL8, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, 1, MPI_REAL8, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -433,12 +505,20 @@ MODULE mo_mpi
 #endif
   END SUBROUTINE p_recv_double
 
-  SUBROUTINE p_recv_long_int(buffer, p_source, p_tag, p_count, comm)
-    INTEGER(nli), INTENT(out) :: buffer
-    INTEGER, INTENT(in)  :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+  SUBROUTINE p_recv_long_int(buffer, p_source, p_tag, p_count, comm, luse_acc)
+    INTEGER(NLI), INTENT(OUT)     :: buffer
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -447,11 +527,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, p_count, MPI_INTEGER8, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, 1, MPI_INTEGER8, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -465,13 +549,21 @@ MODULE mo_mpi
   END SUBROUTINE p_recv_long_int
 
 
-  SUBROUTINE p_recv_real_1d_sp (buffer, p_source, p_tag, p_count, comm)
+  SUBROUTINE p_recv_real_1d_sp (buffer, p_source, p_tag, p_count, comm, luse_acc)
 
-    REAL(nsp), INTENT(out) :: buffer(:)
-    INTEGER,   INTENT(in)  :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NSP), INTENT(OUT)        :: buffer(:)
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -480,11 +572,15 @@ MODULE mo_mpi
     ENDIF
 
     IF (PRESENT(p_count)) THEN
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, p_count, MPI_REAL4, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     ELSE
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_RECV (buffer, SIZE(buffer), MPI_REAL4, p_source, p_tag, &
             p_comm, p_status, ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -653,13 +749,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_min_all_dp_0d
 
-  SUBROUTINE p_isend_real_1d (buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_isend_real_1d (buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    REAL(nr), INTENT(inout) :: buffer(:)
-    INTEGER,   INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NR), INTENT(INOUT)       :: buffer(:)
+    INTEGER, INTENT(IN)           :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -673,16 +777,20 @@ MODULE mo_mpi
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_ISEND (buffer, p_count, MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     ELSE
        ir = ir + 1
        if (ir > max_req) then
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_ISEND (buffer, SIZE(buffer), MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -697,13 +805,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_isend_real_1d
 
-  SUBROUTINE p_isend_real_1d_sp (buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_isend_real_1d_sp (buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    REAL(nsp), INTENT(inout) :: buffer(:)
-    INTEGER,   INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NSP), INTENT(INOUT)      :: buffer(:)
+    INTEGER, INTENT(IN)           :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -717,16 +833,20 @@ MODULE mo_mpi
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_ISEND (buffer, p_count, MPI_REAL4, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     ELSE
        ir = ir + 1
        if (ir > max_req) then
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_ISEND (buffer, SIZE(buffer), MPI_REAL4, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -741,14 +861,22 @@ MODULE mo_mpi
 
   END SUBROUTINE p_isend_real_1d_sp
 
-  SUBROUTINE p_isend_real_2d (buffer, p_destination, p_tag, p_count, comm)
+  SUBROUTINE p_isend_real_2d (buffer, p_destination, p_tag, p_count, comm, luse_acc)
 
-    REAL(nr), INTENT(inout) :: buffer(:,:)
-    INTEGER,   INTENT(in) :: p_destination, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NR), INTENT(INOUT) :: buffer(:,:)
+    INTEGER, INTENT(IN) :: p_destination, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -762,16 +890,20 @@ MODULE mo_mpi
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_ISEND (buffer, p_count, MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     ELSE
        ir = ir + 1
        if (ir > max_req) then
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_ISEND (buffer, SIZE(buffer), MPI_REAL8, p_destination, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -786,13 +918,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_isend_real_2d
 
-  SUBROUTINE p_irecv_real_1d (buffer, p_source, p_tag, p_count, comm)
+  SUBROUTINE p_irecv_real_1d (buffer, p_source, p_tag, p_count, comm, luse_acc)
 
-    REAL(nr), INTENT(out) :: buffer(:)
-    INTEGER,   INTENT(in) :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NR), INTENT(OUT)         :: buffer(:)
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -806,16 +946,20 @@ MODULE mo_mpi
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_IRECV (buffer, p_count, MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     ELSE
        ir = ir + 1
        if (ir > max_req) then
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_IRECV (buffer, SIZE(buffer), MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -830,13 +974,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_irecv_real_1d
 
-  SUBROUTINE p_irecv_real_1d_sp (buffer, p_source, p_tag, p_count, comm)
+  SUBROUTINE p_irecv_real_1d_sp (buffer, p_source, p_tag, p_count, comm, luse_acc)
 
-    REAL(nsp), INTENT(out) :: buffer(:)
-    INTEGER,   INTENT(in) :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
+    REAL(NSP), INTENT(OUT)        :: buffer(:)
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -850,16 +1002,20 @@ MODULE mo_mpi
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_IRECV (buffer, p_count, MPI_REAL4, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     ELSE
        ir = ir + 1
        if (ir > max_req) then
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_IRECV (buffer, SIZE(buffer), MPI_REAL4, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -874,14 +1030,21 @@ MODULE mo_mpi
 
   END SUBROUTINE p_irecv_real_1d_sp
 
-  SUBROUTINE p_irecv_real_2d (buffer, p_source, p_tag, p_count, comm)
+  SUBROUTINE p_irecv_real_2d (buffer, p_source, p_tag, p_count, comm, luse_acc)
 
-    REAL(nr), INTENT(out) :: buffer(:,:)
-    INTEGER,   INTENT(in) :: p_source, p_tag
-    INTEGER, OPTIONAL, INTENT(in) :: p_count, comm
-
+    REAL(NR), INTENT(OUT)         :: buffer(:,:)
+    INTEGER, INTENT(IN)           :: p_source, p_tag
+    INTEGER, INTENT(IN), OPTIONAL :: p_count, comm
+    LOGICAL, INTENT(IN), OPTIONAL :: luse_acc
 #ifndef NOMPI
     INTEGER :: p_comm
+    LOGICAL :: lacc
+
+    IF (PRESENT(luse_acc)) THEN
+      lacc = luse_acc
+    ELSE
+      lacc = .false.
+    END IF
 
     IF (PRESENT(comm)) THEN
        p_comm = comm
@@ -895,16 +1058,20 @@ MODULE mo_mpi
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_IRECV (buffer, p_count, MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     ELSE
        ir = ir + 1
        if (ir > max_req) then
          write(*,*) "ir > max_req -> ir =", ir
          call p_abort
        end if
+       !$ACC HOST_DATA USE_DEVICE(buffer) IF(lacc)
        CALL MPI_IRECV (buffer, SIZE(buffer), MPI_REAL8, p_source, p_tag, &
             p_comm, ireq(ir), ierr)
+       !$ACC END HOST_DATA
     END IF
 
 #ifdef DEBUG
@@ -974,13 +1141,12 @@ MODULE mo_mpi
        WRITE (nerr,'(a)') ' MPI_FINALIZE failed.'
        STOP 1
     END IF
-!    DEALLOCATE(p_request)
 #endif
 
   END SUBROUTINE p_stop
 
   SUBROUTINE p_abort
-
+#ifndef NOMPI
     CALL MPI_ABORT (MPI_COMM_WORLD, 1, ierr)
 
     IF (ierr /= MPI_SUCCESS) THEN
@@ -988,7 +1154,7 @@ MODULE mo_mpi
        WRITE (nerr,'(a,i4)') ' Error =  ', ierr
        STOP 1
     END IF
-
+#endif
     deallocate(ista,ireq)
 
   END SUBROUTINE p_abort
