@@ -72,18 +72,28 @@ MODULE mo_sponge
 
  !===== SPONGE IMPLEMENTATION
 
-   subroutine spongego(lmx, qa, de)
+   subroutine spongego(lmx, qa, de, luse_acc)
       integer(kind=ni), intent(in) :: lmx
       real(kind=nr), dimension(0:lmx,5), intent(in) :: qa
       real(kind=nr), dimension(0:lmx,5), intent(inout) :: de
+      logical, intent(in), optional :: luse_acc
       integer(kind=ni) :: l, ll
+      logical :: lacc
 
+      IF (PRESENT(luse_acc)) THEN
+         lacc = luse_acc
+      ELSE
+         lacc = .false.
+      END IF
+
+      !$ACC PARALLEL LOOP GANG VECTOR IF (lacc)
       do ll=0,lsz
          l=lcsz(ll)
          de(l,1)=de(l,1)+asz(ll)*(qa(l,1)-one)
          de(l,2:4)=de(l,2:4)+bsz(ll)*(qa(l,2:4)-zero)
          de(l,5)=de(l,5)+asz(ll)*(qa(l,5)-hamhamm1)
       end do
+      !$ACC END PARALLEL
 
    end subroutine spongego
 
