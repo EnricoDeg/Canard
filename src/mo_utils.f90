@@ -4,7 +4,7 @@
 
 module mo_utils
    use mo_kind,       ONLY : ni, nr
-   use mo_parameters, ONLY : one
+   use mo_parameters, ONLY : one, zero
    implicit none
    public
 
@@ -49,11 +49,31 @@ module mo_utils
 
    end subroutine mtrxi
 
+!===== SUBROUTINE FOR MATRIX VECTOR MULTIPLICATION
+
+   subroutine mtrx_vec_mult(a, x, b)
+      !$ACC ROUTINE SEQ
+      real(kind=nr), dimension(5,5) :: a
+      real(kind=nr), dimension(5)   :: x,b
+      real(kind=nr)    :: rsum, rsumaux
+      integer(kind=ni) :: i,j,k
+
+      do i=1,5
+         rsumaux = zero
+         rsum    = zero
+         do k=1,5
+            rsumaux = a(i,k) * x(k)
+            rsum    = rsum + rsumaux
+         enddo
+         b(i) = rsum
+      enddo
+
+   end subroutine mtrx_vec_mult
+
 !===== FUNCTION FOR MAIN INDEX TRANSFORMATION IN 3D
 
    function indx3(i,j,k,nn, lxi, let) result(lm)
       !$ACC ROUTINE SEQ
-
       integer(kind=ni),intent(in) :: i,j,k,nn
       integer(kind=ni),intent(in) :: lxi, let
       integer(kind=ni) :: lm
