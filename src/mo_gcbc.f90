@@ -15,7 +15,7 @@ MODULE mo_gcbc
    use mo_grid,       ONLY : t_grid
    use mo_domdcomp,   ONLY : t_domdcomp
    use mo_mpi,        ONLY : p_null_req, p_irecv, p_isend, p_waitall
-   use mo_utils,      ONLY : indx3, mtrxi
+   use mo_utils,      ONLY : indx3, mtrxi, mtrx_vec_mult
    IMPLICIT NONE
    PUBLIC
 
@@ -32,6 +32,7 @@ MODULE mo_gcbc
    real(kind=nr),    private, dimension(5,5) :: xt
    real(kind=nr),    private, dimension(5) :: cha, dha
    real(kind=nr),    private :: aoi, hv2, ao
+   !$ACC DECLARE CREATE(ve, dm, aoi, ao, hv2, vn, xt, vs)
 
    private :: eleme, xtq2r, xtr2q
 
@@ -174,7 +175,7 @@ MODULE mo_gcbc
                      call eleme(cm(jk,:,ip), qa(l,1), qa(l,2:4), p(l), umf)
                      call xtq2r(cm(jk,:,ip))
                      cha(:) = ra0 * drva(jk,:,ip) + ra1 * de(l,:)
-                     drva(jk,:,ip) = matmul( xt(:,:), p_grid%yaco(l) * cha(:) )
+                     call mtrx_vec_mult(xt(:,:), p_grid%yaco(l) * cha(:), drva(jk,:,ip))
                   end do
                end do
             end if
@@ -274,7 +275,7 @@ MODULE mo_gcbc
                         cha(5) = zero
                      end if
                      call xtr2q(cm(jk,:,ip))
-                     dha(:) = matmul(xt(:,:),(cha(:)-drva(jk,:,ip)))
+                     call mtrx_vec_mult(xt(:,:), (cha(:)-drva(jk,:,ip)), dha(:))
                      do ii=0,mbci
                         l  = indx3(i+iq*ii, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
                         ll = ll + 1
@@ -298,7 +299,7 @@ MODULE mo_gcbc
                                    ( sum(cm(jk,:,ip)*dudtmf(:)) + dtwi * ( vn + vs ) )
                      end select
                      call xtr2q(cm(jk,:,ip))
-                     dha(:) = matmul(xt(:,:),(cha(:)-drva(jk,:,ip)))
+                     call mtrx_vec_mult(xt(:,:), (cha(:)-drva(jk,:,ip)), dha(:))
                      do ii=0,mbci
                         l  = indx3(i+iq*ii, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
                         ll = ll + 1
@@ -325,7 +326,7 @@ MODULE mo_gcbc
                         cha(5) = dha(5)
                      end if
                      call xtr2q(cm(jk,:,ip))
-                     dha(:) = matmul(xt(:,:),(cha(:)-drva(jk,:,ip)))
+                     call mtrx_vec_mult(xt(:,:), (cha(:)-drva(jk,:,ip)), dha(:))
                      do ii=0,mbci
                         l  = indx3(i+iq*ii, j, k, nn, p_domdcomp%lxi, p_domdcomp%let)
                         ll = ll + 1
@@ -504,7 +505,7 @@ MODULE mo_gcbc
 !===== SUBROUTINE FOR TRANSFORMATION FROM Q TO R IN GCBC/GCIC
 
    subroutine xtq2r(cm)
-
+      !$ACC ROUTINE SEQ
       real(kind=nr),dimension(3),intent(in) :: cm
       real(kind=nr),dimension(3) :: rv
       real(kind=nr) :: ho, bo, co
@@ -550,7 +551,7 @@ MODULE mo_gcbc
 !===== SUBROUTINE FOR INVERSE TRANSFORMATION FROM R TO Q IN GCBC/GCIC
 
    subroutine xtr2q(cm)
-
+      !$ACC ROUTINE SEQ
       real(kind=nr),dimension(3),intent(in) :: cm
       real(kind=nr) :: bo, co
 
@@ -593,6 +594,7 @@ MODULE mo_gcbc
 !===== SUBROUTINE FOR ELEMENTARY VARIABLES IN GCBC/GCIC
 
    subroutine eleme(cm, qa1, qa24, pp, umf)
+      !$ACC ROUTINE SEQ
       real(kind=nr), dimension(3), intent(in) :: cm
       real(kind=nr),               intent(in) :: qa1
       real(kind=nr), dimension(3), intent(in) :: qa24
