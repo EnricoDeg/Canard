@@ -427,7 +427,8 @@ module mo_numerics
 
 !===== SUBROUTINE FOR HALO EXCHANGE
 
-   subroutine mpigo_1d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, itag, lxi, let, m)
+   subroutine mpigo_1d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, n45, &
+                             itag, lxi, let, m, luse_acc)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx) :: rfield
       integer(kind=ni), intent(in)                   :: lmx
@@ -437,9 +438,20 @@ module mo_numerics
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,n45,itag
       integer(kind=ni), intent(in)                   :: lxi, let, m
+      logical, intent(in), optional                  :: luse_acc
+      real(kind=nr) :: sap(0:lmd)
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
+      logical          :: lacc
+
+      if (present(luse_acc)) then
+         lacc = luse_acc
+      else
+         lacc = .false.
+      end if
+
+      !$ACC DATA CREATE(sap) IF (lacc)
 
       select case(nt)
       case(0)
@@ -495,27 +507,34 @@ module mo_numerics
             end select
 
             if ( this%ndf(nnk,ipk,nt) == 1 ) then
+               !$ACC DATA COPY(this%send) COPYIN(rfield(0:), this%pbco(0:,0:,0:), this%pbcot(0:,0:), ijks(:,:)) IF (lacc)
+               !$ACC PARALLEL LOOP GANG PRIVATE (sap(0:mpk)) IF (lacc)
                do kkk = 0,ijks(3,nnk)
                   kpp = kkk * ( ijks(2,nnk) + 1 )
+                  !$ACC LOOP VECTOR
                   do jjj = 0,ijks(2,nnk)
                      jkk  = kpp + jjj
-                     lll  = indx3(istart, jjj, kkk, nnk,lxi,let)
+                     lll  = indx3(istart, jjj, kkk, nnk, lxi, let)
                      resk = ra0k * rfield(lll)
+                  !   !$ACC LOOP SEQ
                      do iii = 0,mpk
                         lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk,lxi,let)
-                        this%sap(iii) = rfield(lll)
+                        sap(iii) = rfield(lll)
                      end do
-                     this%send(jkk,0,ipk)    = sum( this%pbco(0:mpk,0,nt) * this%sap(0:mpk) ) - resk * this%pbcot(0,nt)
-                     this%send(jkk,1,ipk)    = sum( this%pbco(0:mpk,1,nt) * this%sap(0:mpk) ) - resk * this%pbcot(1,nt)
-                     this%send(jkk,nt+1,ipk) = this%send(jkk,nt+1,ipk) + nt * ( this%sap(0) - resk - this%send(jkk,nt+1,ipk) )
+                     this%send(jkk,0,ipk)    = sum( this%pbco(0:mpk,0,nt) * sap(0:mpk) ) - resk * this%pbcot(0,nt)
+                     this%send(jkk,1,ipk)    = sum( this%pbco(0:mpk,1,nt) * sap(0:mpk) ) - resk * this%pbcot(1,nt)
+                     this%send(jkk,nt+1,ipk) = this%send(jkk,nt+1,ipk) + nt * ( sap(0) - resk - this%send(jkk,nt+1,ipk) )
                   end do
                end do
+               !$ACC END PARALLEL
+               !$ACC END DATA
                if ( nt == 0 ) then
-                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
+                  ! lacc = .false. until data are all on gpu - right now copied back and forth
+                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk), luse_acc = .false.)
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk), luse_acc = .false.)
                else
-                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
+                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk), luse_acc = .false.)
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk), luse_acc = .false.)
                end if
             end if
          end do
@@ -548,8 +567,10 @@ module mo_numerics
             do ipk = 0,1
                istart = ipk * ijks(1,nnk)
                if ( nbck(nnk,ipk) == BC_PERIODIC ) then
+                  !$ACC PARALLEL LOOP GANG IF (lacc)
                   do kkk = 0,ijks(3,nnk)
                      kpp = kkk * ( ijks(2,nnk) + 1 )
+                     !$ACC LOOP VECTOR
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
                         lll = indx3(istart, jjj, kkk, nnk,lxi,let)
@@ -558,14 +579,17 @@ module mo_numerics
                         this%recv(jkk,nt+1,ipk,m) = this%recv(jkk,nt+1,ipk,m) + nt * rfield(lll)
                      end do
                   end do
+                  !$ACC END PARALLEL
                end if
             end do
          end do
       end if
+      !$ACC END DATA
 
    end subroutine mpigo_1d
 
-   subroutine mpigo_2d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, itag, lxi, let, m)
+   subroutine mpigo_2d(this, rfield, lmx, ijks, nbck, mcdk, nbsizek, nt, nrt, n45, &
+                             itag, lxi, let, m, luse_acc)
       class(t_numerics), intent(inout) :: this
       real(kind=nr),    intent(inout), dimension(0:lmx,3) :: rfield
       integer(kind=ni), intent(in)                   :: lmx
@@ -575,9 +599,17 @@ module mo_numerics
       integer(kind=ni), intent(in), dimension(3)     :: nbsizek
       integer(kind=ni), intent(in)                   :: nt,nrt,n45,itag
       integer(kind=ni), intent(in)                   :: lxi, let, m
+      logical,          intent(in), optional         :: luse_acc
       integer(kind=ni) :: mpk, nnk, nzk, ipk, iqk, istart, iend
       integer(kind=ni) :: iik, iii, jjj, kkk, kpp, jkk, lll
       real(kind=nr)    :: ra0k, resk
+      logical          :: lacc
+
+      IF (PRESENT(luse_acc)) THEN
+        lacc = luse_acc
+      ELSE
+        lacc = .false.
+      END IF
 
       select case(nt)
       case(0)
@@ -634,12 +666,15 @@ module mo_numerics
             end select
 
             if ( this%ndf(nnk,ipk,nt) == 1 ) then
+               !$ACC PARALLEL LOOP GANG PRIVATE (this%sap(0:mpk)) IF (lacc)
                do kkk = 0,ijks(3,nnk)
                   kpp = kkk * ( ijks(2,nnk) + 1 )
+                  !$ACC LOOP VECTOR
                   do jjj = 0,ijks(2,nnk)
                      jkk  = kpp + jjj
                      lll  = indx3(istart, jjj, kkk, nnk,lxi,let)
                      resk = ra0k * rfield(lll,nzk)
+                     !$ACC LOOP SEQ
                      do iii = 0,mpk
                         lll = indx3(istart+iend*(iii+iik), jjj, kkk, nnk,lxi,let)
                         this%sap(iii) = rfield(lll,nzk)
@@ -649,12 +684,14 @@ module mo_numerics
                      this%send(jkk,nt+1,ipk) = this%send(jkk,nt+1,ipk) + nt * ( this%sap(0) - resk - this%send(jkk,nt+1,ipk) )
                   end do
                end do
+               !$ACC END PARALLEL
                if ( nt == 0 ) then
-                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk))
+                  ! lacc = .false. until data are all on gpu - right now copied back and forth
+                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 2*nbsizek(nnk), luse_acc = .false.)
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 2*nbsizek(nnk), luse_acc = .false.)
                else
-                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk))
-                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk))
+                  call p_isend(this%send(:,:,ipk), mcdk(nnk,ipk), itag+iqk, 3*nbsizek(nnk), luse_acc = .false.)
+                  call p_irecv(this%recv(:,:,ipk,m), mcdk(nnk,ipk), itag+ipk, 3*nbsizek(nnk), luse_acc = .false.)
                end if
             end if
          end do
@@ -688,8 +725,10 @@ module mo_numerics
             do ipk = 0,1
                istart = ipk * ijks(1,nnk)
                if ( nbck(nnk,ipk) == BC_PERIODIC ) then
+                  !$ACC PARALLEL LOOP GANG IF (lacc)
                   do kkk = 0,ijks(3,nnk)
                      kpp = kkk * ( ijks(2,nnk) + 1 )
+                     !$ACC LOOP VECTOR
                      do jjj = 0,ijks(2,nnk)
                         jkk = kpp + jjj
                         lll = indx3(istart, jjj, kkk, nnk,lxi,let)
@@ -698,6 +737,7 @@ module mo_numerics
                         this%recv(jkk,nt+1,ipk,m) = this%recv(jkk,nt+1,ipk,m) + nt * rfield(lll,nzk)
                      end do
                   end do
+                  !$ACC END PARALLEL
                end if
             end do
          end do
